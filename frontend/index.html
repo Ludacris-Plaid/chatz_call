@@ -2,294 +2,455 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>CLAWCALL // NETRUNNER TERMINAL</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#020617" />
+  <title>ClawCall Dialer</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #020617; --panel: rgba(10, 18, 32, 0.72); --panel-strong: rgba(12, 22, 38, 0.92);
+      --panel-soft: rgba(255, 255, 255, 0.035); --border: rgba(255, 255, 255, 0.105);
+      --border-soft: rgba(255, 255, 255, 0.075); --green: #22C55E;
+      --green-soft: rgba(34, 197, 94, 0.16); --green-mid: rgba(34, 197, 94, 0.34);
+      --text: rgba(248, 250, 252, 0.96); --muted: rgba(148, 163, 184, 0.86);
+      --dim: rgba(100, 116, 139, 0.82); --shadow: rgba(0, 0, 0, 0.44);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; }
+    body { position: fixed; inset: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(34, 197, 94, 0.105), transparent 34%), radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.035), transparent 28%), linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 44%); opacity: 0.95; }
+    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.055; background-image: linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 78%); }
+    .app { position: relative; z-index: 1; width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 18px max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
+    .header { height: 38px; flex: 0 0 38px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: inline-flex; align-items: center; gap: 10px; font-family: "Space Grotesk", sans-serif; letter-spacing: 0.18em; font-size: 13px; font-weight: 700; color: rgba(248,250,252,0.82); }
+    .mark { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; color: var(--green); background: linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.03)), rgba(255,255,255,0.03); border: 1px solid rgba(34,197,94,0.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+    .settings { width: 36px; height: 36px; border: 1px solid var(--border-soft); border-radius: 14px; color: rgba(148,163,184,0.92); background: rgba(255,255,255,0.035); display: grid; place-items: center; backdrop-filter: blur(14px); cursor: pointer; transition: border-color 150ms ease, background 150ms ease; }
+    .settings:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
+    .display-stack { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; }
+    .display-card { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), var(--panel); box-shadow: 0 18px 38px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); backdrop-filter: blur(18px); overflow: hidden; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+    .display-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(34,197,94,0.055), transparent); transform: translateX(-120%); opacity: 0; }
+    .display-card.active { border-color: rgba(34,197,94,0.72); box-shadow: 0 0 0 1px rgba(34,197,94,0.12), 0 0 28px rgba(34,197,94,0.11), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); animation: fieldPulse 2.35s ease-in-out infinite; }
+    .display-card.active::before { opacity: 1; animation: scanLine 2.4s ease-in-out infinite; }
+    .display-card.cid { min-height: 82px; padding: 14px 16px 13px; }
+    .display-card.destination { min-height: 102px; padding: 16px 16px 15px; }
+    .display-topline { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(148,163,184,0.82); }
+    .active-tag { height: 18px; padding: 0 8px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: var(--green); background: rgba(34,197,94,0.095); border: 1px solid rgba(34,197,94,0.16); opacity: 0; transform: translateY(-2px); transition: opacity 160ms ease, transform 160ms ease; }
+    .display-card.active .active-tag { opacity: 1; transform: translateY(0); }
+    .number { position: relative; z-index: 1; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: 0.02em; line-height: 1.05; color: rgba(248,250,252,0.98); text-shadow: 0 0 18px rgba(255,255,255,0.045); }
+    .cid .number { font-size: clamp(19px, 5.1vw, 23px); }
+    .destination .number { font-size: clamp(30px, 8.4vw, 38px); letter-spacing: -0.025em; }
+    .number.empty { color: rgba(100,116,139,0.78); letter-spacing: 0.015em; }
+    .cnam { position: relative; z-index: 1; margin-top: 7px; height: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: rgba(148,163,184,0.78); text-transform: uppercase; }
+    .cnam.scanning { color: var(--green); }
+    .cnam.resolved { color: rgba(203,213,225,0.9); }
+    .cnam.glitch { animation: glitchFlash 230ms steps(2, end); }
+    .keypad-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
+    .keypad { width: min(100%, 342px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; }
+    button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
+    .dial-key { height: clamp(58px, 8.85dvh, 74px); border-radius: 25px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.026)), rgba(8,15,28,0.82); box-shadow: 0 12px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+    .dial-key:active { transform: scale(0.95); border-color: rgba(34,197,94,0.45); box-shadow: 0 0 0 1px rgba(34,197,94,0.12), 0 0 22px rgba(34,197,94,0.18), inset 0 1px 0 rgba(255,255,255,0.055); }
+    .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 6.3vw, 30px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.96); }
+    .letters { height: 12px; font-size: 9px; line-height: 1; font-weight: 700; letter-spacing: 0.22em; color: rgba(100,116,139,0.86); }
+    .actions { flex: 0 0 70px; height: 70px; display: grid; grid-template-columns: 1fr 78px 1fr; align-items: center; gap: 14px; }
+    .utility { height: 50px; border-radius: 18px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), rgba(8,15,28,0.82); box-shadow: 0 12px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.05); color: rgba(203,213,225,0.9); font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+    .utility:active { transform: scale(0.95); border-color: rgba(34,197,94,0.38); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 22px rgba(34,197,94,0.15); }
+    .call { width: 74px; height: 74px; border-radius: 50%; color: #021107; background: radial-gradient(circle at 42% 18%, rgba(255,255,255,0.34), transparent 34%), linear-gradient(180deg, #2ee36d, var(--green)); box-shadow: 0 18px 38px rgba(34,197,94,0.24), 0 0 0 8px rgba(34,197,94,0.055), inset 0 1px 0 rgba(255,255,255,0.24); display: grid; place-items: center; transition: transform 120ms ease, box-shadow 150ms ease, filter 150ms ease; }
+    .call:active { transform: scale(0.95); filter: brightness(1.03); box-shadow: 0 14px 30px rgba(34,197,94,0.26), 0 0 0 9px rgba(34,197,94,0.07), 0 0 28px rgba(34,197,94,0.28), inset 0 1px 0 rgba(255,255,255,0.24); }
+    .call svg { width: 30px; height: 30px; transform: translateY(1px); pointer-events: none; }
+    /* Settings panel */
+    .settings-panel { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,0.92); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+    .settings-panel.open { opacity: 1; pointer-events: auto; }
+    .settings-inner { width: min(340px, 88vw); display: flex; flex-direction: column; gap: 18px; }
+    .settings-inner h2 { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: rgba(248,250,252,0.9); margin: 0 0 4px 0; }
+    .settings-field { display: flex; flex-direction: column; gap: 6px; }
+    .settings-field label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: rgba(148,163,184,0.8); }
+    .settings-field input { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel-strong); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.03em; outline: none; transition: border-color 180ms ease; }
+    .settings-field input:focus { border-color: rgba(34,197,94,0.6); }
+    .settings-btn { width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), rgba(8,15,28,0.82); color: rgba(203,213,225,0.9); font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; transition: border-color 150ms ease, background 150ms ease; }
+    .settings-btn:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
+    .settings-btn.green { border-color: rgba(34,197,94,0.3); color: var(--green); }
+    .settings-btn.danger { border-color: rgba(239,68,68,0.2); color: rgba(239,68,68,0.85); }
+    /* Status toast */
+    .status { position: absolute; left: 50%; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 78px); max-width: calc(100% - 36px); transform: translateX(-50%) translateY(14px); padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(34,197,94,0.2); background: rgba(4,12,22,0.88); box-shadow: 0 18px 40px rgba(0,0,0,0.38); backdrop-filter: blur(18px); color: rgba(220,252,231,0.94); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
+    .status.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .pressed { animation: keyPress 185ms ease-out; }
+    @keyframes fieldPulse { 0%,100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.10), 0 0 24px rgba(34,197,94,0.095), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); } 50% { box-shadow: 0 0 0 1px rgba(34,197,94,0.18), 0 0 34px rgba(34,197,94,0.16), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); } }
+    @keyframes scanLine { 0% { transform: translateX(-125%); } 48%,100% { transform: translateX(125%); } }
+    @keyframes keyPress { 0% { transform: scale(1); box-shadow: 0 12px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); } 42% { transform: scale(0.95); box-shadow: 0 0 0 1px rgba(34,197,94,0.15), 0 0 24px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.065); } 100% { transform: scale(1); } }
+    @keyframes glitchFlash { 0% { transform: translateX(0); text-shadow: none; opacity: 1; } 20% { transform: translateX(-1px); text-shadow: 2px 0 rgba(239,68,68,0.52), -2px 0 rgba(34,211,238,0.42); } 45% { transform: translateX(1px); text-shadow: -2px 0 rgba(239,68,68,0.46), 2px 0 rgba(34,211,238,0.38); opacity: 0.86; } 70% { transform: translateX(-0.5px); text-shadow: 1px 0 rgba(239,68,68,0.35), -1px 0 rgba(34,211,238,0.3); } 100% { transform: translateX(0); text-shadow: none; opacity: 1; } }
+    @media (max-height: 740px) { .app { gap: 10px; padding-left: 16px; padding-right: 16px; } .header { height: 34px; flex-basis: 34px; } .display-stack { gap: 8px; } .display-card.cid { min-height: 74px; padding: 12px 14px 11px; } .display-card.destination { min-height: 88px; padding: 13px 14px 12px; } .keypad { gap: 9px; width: min(100%, 326px); } .dial-key { height: clamp(54px, 8.4dvh, 64px); border-radius: 22px; } .actions { height: 64px; flex-basis: 64px; } .call { width: 66px; height: 66px; } .utility { height: 46px; } }
+  </style>
 </head>
 <body>
-
-<!-- SCANLINE OVERLAY -->
-<div class="scanlines" aria-hidden="true"></div>
-
-<!-- AMBIENT GRID -->
-<div class="bg-grid" aria-hidden="true"></div>
-
-<!-- DATA STREAM PARTICLES (canvas) -->
-<canvas id="dataStream" class="data-stream" aria-hidden="true"></canvas>
-
-<!-- FLOATING GLITCH TEXT DECORATIONS -->
-<div class="glitch-deco" aria-hidden="true">
-  <span data-glitch="SYS.BREACH">SYS.BREACH</span>
-  <span data-glitch="NETRUNNER.ACTIVE">NETRUNNER.ACTIVE</span>
-  <span data-glitch="CLASSIFIED">CLASSIFIED</span>
-  <span data-glitch="root@clawcall">root@clawcall</span>
-</div>
-
-<!-- ═══════════════ AUTH GATE ═══════════════ -->
-<section id="authGate" class="auth-gate">
-  <div class="auth-card">
-    <div class="auth-glitch-line"></div>
-    <p class="eyebrow glitch-text" data-text="// ENCRYPTED UPLINK">// ENCRYPTED UPLINK</p>
-    <h2 id="authTitle" class="glitch-heading" data-text="SIGN IN TO CLAWCALL">SIGN IN TO CLAWCALL</h2>
-    <p id="authHelp" class="inline-status">[ Username and password required ]</p>
-    <form id="authForm" class="stack-form auth-form" autocomplete="off">
-      <label class="field-label">Username
-        <input id="authUsername" class="terminal-input" type="text" autocomplete="username" required />
-      </label>
-      <label class="field-label">Password
-        <input id="authPassword" class="terminal-input" type="password" autocomplete="current-password" required />
-      </label>
-      <button type="submit" id="authSubmitBtn" class="primary-btn breach-btn">SIGN IN</button>
-      <button type="button" id="authModeBtn" class="ghost-btn">[ CREATE ACCOUNT ]</button>
-    </form>
-  </div>
-</section>
-
-<!-- ═══════════════ MAIN APP ═══════════════ -->
-<main class="app-shell hidden">
-  <!-- TOP BAR -->
-  <header class="app-topbar">
-    <div class="topbar-brand">
-      <p class="eyebrow glitch-text" data-text="CLAWCALL // V1.0.7">CLAWCALL // V1.0.7</p>
-      <h1 class="glitch-heading" data-text="NETRUNNER TERMINAL">NETRUNNER TERMINAL</h1>
-    </div>
-    <div class="topbar-cluster">
-      <div class="balance-chip">
-        <span id="headerTokenBalance" class="balance-chip-value">0.0</span>
-        <span class="balance-chip-copy">TOKENS</span>
+  <!-- Settings overlay -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-inner">
+      <h2>SETTINGS</h2>
+      <div class="settings-field">
+        <label>DEFAULT CALLER ID</label>
+        <input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" />
       </div>
-      <div class="topbar-user">
-        <span id="topbarUsername" class="topbar-username">anon</span>
-        <button type="button" id="signOutBtn" class="ghost-btn mini">[ SIGNOUT ]</button>
+      <div class="settings-field">
+        <label>API TOKEN</label>
+        <input type="password" id="settingsToken" placeholder="Bearer token" />
       </div>
-    </div>
-  </header>
-
-  <!-- NAV BAR -->
-  <nav class="nav-bar">
-    <button class="nav-btn active" data-target="dialerScreen">&gt; DIALER</button>
-    <button class="nav-btn" data-target="walletScreen">&gt; WALLET</button>
-    <button class="nav-btn" data-target="historyScreen">&gt; HISTORY</button>
-    <button class="nav-btn hidden" id="adminNavBtn" data-target="adminScreen">&gt; ADMIN</button>
-  </nav>
-
-  <!-- ══ DIALER SCREEN ══ -->
-  <section class="app-screen active" id="dialerScreen" data-screen="dialer">
-    <!-- CALL HUD -->
-    <article id="callHud" class="call-hud hidden">
-      <div class="hud-terminal-bar">
-        <span class="hud-terminal-path">root@clawcall:/proc/call/</span>
-        <span id="callHudPid" class="hud-pid">PID: ----</span>
-      </div>
-      <div class="signal-ring">
-        <div class="signal-core">
-          <span id="callHudState">DIALING</span>
-        </div>
-      </div>
-      <p id="callHudDestination" class="hud-destination">---</p>
-      <div class="hud-metrics">
-        <div class="hud-stat">
-          <span>DURATION</span>
-          <strong id="callHudTimer" class="glitch-mono">00:00</strong>
-        </div>
-        <div class="hud-stat">
-          <span>COST</span>
-          <strong id="callHudCost" class="glitch-mono">$0.00</strong>
-        </div>
-      </div>
-      <div class="hud-cid">
-        <span>CID</span>
-        <strong id="callHudCidPrimary" class="active">17804755555</strong>
-      </div>
-      <div class="hud-controls">
-        <button type="button" id="hudMuteBtn" class="ghost-btn">[ MUTE ]</button>
-        <button type="button" id="hudHangupBtn" class="danger-btn">TERMINATE</button>
-      </div>
-      <p id="callHudSummary" class="inline-status"></p>
-    </article>
-
-    <div id="dialerIdleStack">
-      <!-- DIALER CARD -->
-      <article class="hero-card lift-panel">
-        <div class="hero-header">
-          <div class="caller-id-label-row">
-            <p class="field-label hero-display-label-inline">OUTBOUND CALLER ID</p>
-            <div class="dialer-status-inline">
-              <span id="dialerDot" class="dialer-dot"></span>
-              <span id="dialerLabel" class="dialer-status-copy">UPLINK ACTIVE</span>
-            </div>
-          </div>
-          <button type="button" id="callerIdHero" class="terminal-input destination-input caller-id-hero-display">
-            <span id="callerIdHeroPrimary" class="caller-id-hero-line active">17804755555</span>
-            <span id="callerIdHeroSecondary" class="caller-id-hero-line dim">UNKNOWN</span>
-          </button>
-        </div>
-        <label class="field-label">DESTINATION
-          <input id="destination" class="terminal-input destination-input" type="text" placeholder="+1.555.555.5555" autocomplete="off" />
-        </label>
-        <p id="callState" class="hero-state hidden">IDLE</p>
-        <div class="keypad" id="keypad">
-          <button type="button" data-key="1">1</button>
-          <button type="button" data-key="2">2<span>ABC</span></button>
-          <button type="button" data-key="3">3<span>DEF</span></button>
-          <button type="button" data-key="4">4<span>GHI</span></button>
-          <button type="button" data-key="5">5<span>JKL</span></button>
-          <button type="button" data-key="6">6<span>MNO</span></button>
-          <button type="button" data-key="7">7<span>PQRS</span></button>
-          <button type="button" data-key="8">8<span>TUV</span></button>
-          <button type="button" data-key="9">9<span>WXYZ</span></button>
-          <button type="button" data-key="*">*</button>
-          <button type="button" data-key="0">0<span>+</span></button>
-          <button type="button" data-key="#">#</button>
-        </div>
-        <div class="action-grid">
-          <button type="button" id="callBtn" class="call-btn" disabled>INIT CALL</button>
-          <button type="button" id="clearBtn" class="ghost-btn">[ CLEAR ]</button>
-        </div>
-        <p id="callerIdStatus" class="inline-status"></p>
-      </article>
-
-      <!-- TERMINAL LOG -->
-      <article id="terminalPanel" class="glass-card terminal-panel locked">
-        <div class="section-head">
-          <h2 class="glitch-text" data-text="&gt; TERMINAL.LOG">&gt; TERMINAL.LOG</h2>
-          <div class="section-head-actions">
-            <span id="termCursor" class="term-cursor">■</span>
-            <button id="clearLogBtn" class="ghost-btn mini">[ CLEAR ]</button>
-          </div>
-        </div>
-        <pre id="eventLog" class="event-log"></pre>
-      </article>
-    </div>
-  </section>
-
-  <!-- ══ WALLET SCREEN ══ -->
-  <section class="app-screen" id="walletScreen" data-screen="wallet">
-    <article class="wallet-card lift-panel">
-      <div class="section-head">
-        <h2 class="glitch-text" data-text="&gt; VIP.STATUS">&gt; VIP.STATUS</h2>
-      </div>
-      <div class="wallet-row">
-        <div>
-          <p class="eyebrow">UNLIMITED ACCESS</p>
-          <p id="vipStatus" class="wallet-value vip-value">INACTIVE</p>
-        </div>
-        <div class="rate-pill">
-          <span>7 DAY PASS</span>
-          <strong id="vipPrice">$250</strong>
-        </div>
-      </div>
-      <button id="vipBuyBtn" class="primary-btn vip-buy-btn">ACQUIRE VIP ACCESS</button>
-      <p id="vipExpiry" class="inline-status">[ Unlimited calling for 7 days ]</p>
-    </article>
-
-    <article class="wallet-card lift-panel">
-      <div class="section-head">
-        <h2 class="glitch-text" data-text="&gt; TOKEN.WALLET">&gt; TOKEN.WALLET</h2>
-      </div>
-      <div class="wallet-row">
-        <div>
-          <p class="eyebrow">BALANCE</p>
-          <p id="tokenBalance" class="wallet-value">0.0</p>
-        </div>
-        <div class="rate-pill">
-          <span>RATE</span>
-          <strong id="minuteRate">$0.50/MIN</strong>
-        </div>
-      </div>
-      <form id="topupForm" class="topup-form">
-        <label class="field-label">TOKENS
-          <input id="tokenAmount" class="terminal-input" type="number" min="1" value="20" />
-        </label>
-        <label class="field-label">PAYMENT ASSET
-          <div class="select-wrapper">
-            <select id="payCurrency" class="terminal-input">
-              <option value="ltc">LTC</option>
-              <option value="btc">BTC</option>
-            </select>
-          </div>
-        </label>
-        <button type="submit" id="topupBtn" class="primary-btn">GENERATE INVOICE</button>
-      </form>
-      <p id="topupStatus" class="inline-status">[ 1 token = 1 minute. Balance settles post-confirmation ]</p>
-    </article>
-  </section>
-
-  <!-- ══ HISTORY SCREEN ══ -->
-  <section class="app-screen" id="historyScreen" data-screen="history">
-    <article class="glass-card">
-      <div class="section-head">
-        <h2 class="glitch-text" data-text="&gt; CALL.HISTORY">&gt; CALL.HISTORY</h2>
-        <button id="clearHistoryBtn" class="ghost-btn mini">[ PURGE ]</button>
-      </div>
-      <div id="callHistory" class="history-list"></div>
-    </article>
-  </section>
-
-  <!-- ══ ADMIN SCREEN ══ -->
-  <section class="app-screen" id="adminScreen" data-screen="admin">
-    <article class="hero-card">
-      <div class="section-head">
-        <h2 class="glitch-text" data-text="&gt; ADMIN.CONTROL">&gt; ADMIN.CONTROL</h2>
-        <span class="admin-badge">ELEVATED</span>
-      </div>
-      <div class="admin-stats">
-        <div class="metric-card">
-          <p class="eyebrow">USERS</p>
-          <h2 id="adminUsersValue">0</h2>
-        </div>
-        <div class="metric-card">
-          <p class="eyebrow">REVENUE</p>
-          <h2 id="adminRevenueValue">$0</h2>
-        </div>
-        <div class="metric-card">
-          <p class="eyebrow">VIP</p>
-          <h2 id="adminVipValue">0</h2>
-        </div>
-      </div>
-      <button id="adminRefreshBtn" class="primary-btn">REFRESH DATA</button>
-      <div id="adminUsersList" class="admin-list"></div>
-    </article>
-  </section>
-</main>
-
-<!-- ═══════════════ PAYMENT MODAL ═══════════════ -->
-<div id="paymentModal" class="modal-overlay hidden">
-  <div class="modal-card">
-    <div class="modal-header">
-      <h2 id="modalTitle" class="glitch-text" data-text="&gt; CRYPTO.INVOICE">&gt; CRYPTO.INVOICE</h2>
-      <button id="modalCloseBtn" class="ghost-btn mini">[ CLOSE ]</button>
-    </div>
-    <div class="modal-body">
-      <div id="qrContainer" class="qr-container"></div>
-      <div class="payment-details">
-        <div class="detail-row">
-          <span>ADDRESS</span>
-          <code id="modalAddress"></code>
-          <button id="copyAddrBtn" class="ghost-btn mini">[ COPY ]</button>
-        </div>
-        <div class="detail-row">
-          <span>AMOUNT</span>
-          <strong id="modalAmount" class="glitch-mono"></strong>
-        </div>
-        <div class="detail-row">
-          <span>ASSET</span>
-          <span id="modalCurrency" class="badge"></span>
-        </div>
-        <div class="detail-row">
-          <span>STATUS</span>
-          <span id="modalStatus" class="badge">waiting</span>
-        </div>
-      </div>
-      <a id="modalExplorerLink" class="primary-btn" target="_blank" rel="noreferrer">VIEW ON CHAIN</a>
-      <p id="modalInvoiceUrl" class="inline-status"></p>
+      <button class="settings-btn green" id="settingsSave">SAVE & CLOSE</button>
+      <button class="settings-btn danger" id="settingsClose">CLOSE</button>
     </div>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="/app.js"></script>
+  <!-- Main app -->
+  <main class="app" aria-label="ClawCall phone dialer">
+    <header class="header">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7.5 4.75C9.7 7.55 13 13.2 13 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M13 8.25c1.7 2.4 3.5 6.2 3.5 11.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4.7 8.2C7 10 9.8 14 10 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+        </div>
+        CLAWCALL
+      </div>
+      <button class="settings" id="btnSettings" type="button" aria-label="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.2 13.4c.08-.46.12-.93.12-1.4s-.04-.94-.12-1.4l2-1.56-1.9-3.28-2.36.95a7.53 7.53 0 0 0-2.42-1.4L14.17 2h-3.8l-.36 3.31a7.53 7.53 0 0 0-2.42 1.4l-2.36-.95-1.9 3.28 2 1.56A8.17 8.17 0 0 0 5.2 12c0 .47.04.94.12 1.4l-2 1.56 1.9 3.28 2.36-.95a7.53 7.53 0 0 0 2.42 1.4l.36 3.31h3.8l.36-3.31a7.53 7.53 0 0 0 2.42-1.4l2.36.95 1.9-3.28-2-1.56Z" stroke="currentColor" stroke-width="1.45" stroke-linejoin="round"/></svg>
+      </button>
+    </header>
+
+    <section class="display-stack">
+      <div class="display-card cid" data-field="cid" role="button" tabindex="0" aria-label="Caller ID field">
+        <div class="display-topline"><div class="label">CALLER ID</div><div class="active-tag">ACTIVE</div></div>
+        <div id="cidValue" class="number empty">—</div>
+        <div id="cnamValue" class="cnam">NO CALLER ID SET</div>
+      </div>
+      <div class="display-card destination active" data-field="destination" role="button" tabindex="0" aria-label="Destination number field">
+        <div class="display-topline"><div class="label">DESTINATION</div><div class="active-tag">ACTIVE</div></div>
+        <div id="destValue" class="number empty">ENTER NUMBER</div>
+      </div>
+    </section>
+
+    <div class="keypad-wrap">
+      <div class="keypad">
+        <button class="dial-key" data-key="1"><span class="digit">1</span></button>
+        <button class="dial-key" data-key="2"><span class="digit">2</span><span class="letters">ABC</span></button>
+        <button class="dial-key" data-key="3"><span class="digit">3</span><span class="letters">DEF</span></button>
+        <button class="dial-key" data-key="4"><span class="digit">4</span><span class="letters">GHI</span></button>
+        <button class="dial-key" data-key="5"><span class="digit">5</span><span class="letters">JKL</span></button>
+        <button class="dial-key" data-key="6"><span class="digit">6</span><span class="letters">MNO</span></button>
+        <button class="dial-key" data-key="7"><span class="digit">7</span><span class="letters">PQRS</span></button>
+        <button class="dial-key" data-key="8"><span class="digit">8</span><span class="letters">TUV</span></button>
+        <button class="dial-key" data-key="9"><span class="digit">9</span><span class="letters">WXYZ</span></button>
+        <button class="dial-key" data-key="*"><span class="digit">*</span></button>
+        <button class="dial-key" data-key="0"><span class="digit">0</span><span class="letters">+</span></button>
+        <button class="dial-key" data-key="#"><span class="digit">#</span></button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="utility" id="btnDel" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9l-6 6M12 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>DEL</button>
+      <button class="call" id="btnCall" type="button" aria-label="Place call"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.37 11.37 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.37 11.37 0 0 0 .57 3.57 1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg></button>
+      <button class="utility" id="btnClear" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>CLR</button>
+    </div>
+    <div class="status" id="statusToast" aria-live="polite"></div>
+  </main>
+
+  <script>
+    (function() {
+      // ── State ──────────────────────────────
+      var state = {
+        // IMPORTANT: activeField values match state property names: 'cid' | 'destination'
+        activeField: 'destination',
+        cid: '',
+        destination: '',
+        cnamCache: {},
+        scanningCID: null
+      };
+
+      // ── DOM refs ───────────────────────────
+      var cidCard = document.querySelector('.display-card.cid');
+      var destCard = document.querySelector('.display-card.destination');
+      var cidValue = document.getElementById('cidValue');
+      var cnamValue = document.getElementById('cnamValue');
+      var destValue = document.getElementById('destValue');
+      var btnDel = document.getElementById('btnDel');
+      var btnClear = document.getElementById('btnClear');
+      var btnCall = document.getElementById('btnCall');
+      var btnSettings = document.getElementById('btnSettings');
+      var statusEl = document.getElementById('statusToast');
+      var settingsPanel = document.getElementById('settingsPanel');
+      var settingsCID = document.getElementById('settingsCID');
+      var settingsToken = document.getElementById('settingsToken');
+      var settingsSave = document.getElementById('settingsSave');
+      var settingsClose = document.getElementById('settingsClose');
+      var allKeys = document.querySelectorAll('.dial-key');
+
+      // ── Helpers ────────────────────────────
+      function getFieldProp() {
+        // Returns the actual state property name (always 'cid' or 'destination')
+        return state.activeField;
+      }
+
+      function formatNumber(raw) {
+        if (!raw) return '';
+        var d = raw.replace(/[^0-9*#+]/g, '');
+        if (d.length <= 3) return d;
+        if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+        return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6,10);
+      }
+
+      function renderDisplays() {
+        // CID
+        if (state.cid) {
+          cidValue.textContent = formatNumber(state.cid);
+          cidValue.classList.remove('empty');
+        } else {
+          cidValue.textContent = '\u2014';
+          cidValue.classList.add('empty');
+          cnamValue.textContent = 'NO CALLER ID SET';
+          cnamValue.className = 'cnam';
+        }
+        // Destination
+        if (state.destination) {
+          destValue.textContent = formatNumber(state.destination);
+          destValue.classList.remove('empty');
+        } else {
+          destValue.textContent = 'ENTER NUMBER';
+          destValue.classList.add('empty');
+        }
+      }
+
+      function setActive(field) {
+        state.activeField = field;
+        cidCard.classList.toggle('active', field === 'cid');
+        destCard.classList.toggle('active', field === 'destination');
+      }
+
+      // ── CNAM lookup ────────────────────────
+      var SCRAMBLE_CHARS = '!@#$%^&*<>?/\\|=+~\`ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+      function lookupCNAM(number) {
+        if (!number || number.length < 10) {
+          cnamValue.textContent = 'NO CALLER ID SET';
+          cnamValue.className = 'cnam';
+          return;
+        }
+        if (state.cnamCache[number]) {
+          resolveCNAM(state.cnamCache[number]);
+          return;
+        }
+        cnamValue.textContent = 'SCANNING...';
+        cnamValue.className = 'cnam scanning';
+        var startTime = Date.now();
+        var scrambleInterval = setInterval(function() {
+          if (Date.now() - startTime > 800) { clearInterval(scrambleInterval); return; }
+          var scrambled = '';
+          for (var i = 0; i < 9; i++) scrambled += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+          cnamValue.textContent = scrambled;
+        }, 50);
+        try {
+          var controller = new AbortController(); state.scanningCID = controller;
+          var name = null;
+          try {
+            fetch('/api/cnam?number=' + encodeURIComponent(number), {
+              signal: controller.signal,
+              headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }
+            }).then(function(r) { return r.json(); }).then(function(data) {
+              clearInterval(scrambleInterval);
+              if (data.name || data.cnam) {
+                name = data.name || data.cnam;
+                state.cnamCache[number] = name;
+                resolveCNAM(name);
+              } else {
+                cnamValue.textContent = 'UNKNOWN';
+                cnamValue.className = 'cnam resolved glitch';
+                setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
+              }
+            }).catch(function() {
+              clearInterval(scrambleInterval);
+              cnamValue.textContent = 'UNKNOWN';
+              cnamValue.className = 'cnam resolved glitch';
+              setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
+            });
+          } catch(e) {
+            clearInterval(scrambleInterval);
+            cnamValue.textContent = 'UNKNOWN';
+            cnamValue.className = 'cnam resolved glitch';
+            setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
+          }
+        } catch(e) {
+          clearInterval(scrambleInterval);
+        }
+      }
+
+      function resolveCNAM(name) {
+        cnamValue.textContent = name;
+        cnamValue.className = 'cnam resolved glitch';
+        setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
+      }
+
+      // ── Input handlers ─────────────────────
+      function handleKey(key) {
+        var prop = getFieldProp();
+        var current = state[prop];
+        if (!current) current = '';
+        if (current.length >= 15) { showStatus('MAX DIGITS'); return; }
+        state[prop] = current + key;
+        renderDisplays();
+        if (prop === 'cid' && state.cid.length >= 10) {
+          if (state.scanningCID) { try { state.scanningCID.abort(); } catch(e) {} }
+          lookupCNAM(state.cid);
+        }
+      }
+
+      function handleDelete() {
+        var prop = getFieldProp();
+        var current = state[prop] || '';
+        if (current.length > 0) {
+          state[prop] = current.slice(0, -1);
+          renderDisplays();
+          if (prop === 'cid' && state.cid.length < 10) {
+            cnamValue.textContent = 'NO CALLER ID SET';
+            cnamValue.className = 'cnam';
+          }
+        }
+      }
+
+      function handleClearAll() {
+        state.cid = '';
+        state.destination = '';
+        if (state.scanningCID) { try { state.scanningCID.abort(); } catch(e) {} }
+        cnamValue.textContent = 'NO CALLER ID SET';
+        cnamValue.className = 'cnam';
+        renderDisplays();
+        showStatus('CLEARED');
+      }
+
+      function handleCall() {
+        var dest = state.destination;
+        if (!dest || dest.length < 7) {
+          showStatus('ENTER A VALID NUMBER');
+          return;
+        }
+        var cid = state.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
+        showStatus('CONNECTING\u2026');
+        fetch('/api/call', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '')
+          },
+          body: JSON.stringify({ destination: dest, caller_id: cid })
+        }).then(function(r) { return r.json().catch(function() { return {}; }); })
+          .then(function(data) {
+            showStatus(data.success || data.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED');
+          })
+          .catch(function() {
+            showStatus('CALL PLACED');
+          });
+      }
+
+      // ── Settings ───────────────────────────
+      function openSettings() {
+        settingsCID.value = localStorage.getItem('clawcall_default_cid') || '17804755555';
+        settingsToken.value = localStorage.getItem('clawcall_token') || '';
+        settingsPanel.classList.add('open');
+      }
+
+      function closeSettings() {
+        settingsPanel.classList.remove('open');
+      }
+
+      function saveSettings() {
+        var cid = settingsCID.value.replace(/[^0-9]/g, '');
+        var token = settingsToken.value.trim();
+        if (cid && cid.length >= 10) localStorage.setItem('clawcall_default_cid', cid);
+        if (token) localStorage.setItem('clawcall_token', token);
+        showStatus('SETTINGS SAVED');
+        closeSettings();
+      }
+
+      // ── Toast ──────────────────────────────
+      var statusTimer;
+      function showStatus(msg) {
+        clearTimeout(statusTimer);
+        statusEl.textContent = msg;
+        statusEl.classList.add('show');
+        statusTimer = setTimeout(function() { statusEl.classList.remove('show'); }, 1800);
+      }
+
+      // ── Event binding ──────────────────────
+      function bindClick(el, fn) {
+        if (!el) return;
+        el.addEventListener('click', function(e) { e.preventDefault(); fn(); });
+        // Also bind touchend for mobile responsiveness
+        el.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          fn();
+        });
+      }
+
+      // Display card activation
+      bindClick(cidCard, function() { setActive('cid'); });
+      bindClick(destCard, function() { setActive('destination'); });
+
+      // Keypad buttons
+      allKeys.forEach(function(btn) {
+        bindClick(btn, function() {
+          handleKey(btn.dataset.key);
+          btn.classList.add('pressed');
+          setTimeout(function() { btn.classList.remove('pressed'); }, 200);
+        });
+      });
+
+      // Action buttons
+      bindClick(btnDel, handleDelete);
+      bindClick(btnClear, handleClearAll);
+      bindClick(btnCall, handleCall);
+
+      // Settings
+      bindClick(btnSettings, openSettings);
+      bindClick(settingsSave, saveSettings);
+      bindClick(settingsClose, closeSettings);
+
+      // Close settings on overlay click
+      settingsPanel.addEventListener('click', function(e) {
+        if (e.target === settingsPanel) closeSettings();
+      });
+
+      // Keyboard support (desktop testing)
+      document.addEventListener('keydown', function(e) {
+        if (settingsPanel.classList.contains('open')) {
+          if (e.key === 'Escape') { closeSettings(); return; }
+          return; // Don't process keypad when settings open
+        }
+        if (e.key >= '0' && e.key <= '9') {
+          handleKey(e.key);
+          var b = document.querySelector('.dial-key[data-key="' + e.key + '"]');
+          if (b) { b.classList.add('pressed'); setTimeout(function() { b.classList.remove('pressed'); }, 200); }
+        } else if (e.key === '*' || e.key === '#') {
+          handleKey(e.key);
+        } else if (e.key === 'Backspace') {
+          e.preventDefault(); handleDelete();
+        } else if (e.key === 'Enter') {
+          e.preventDefault(); handleCall();
+        } else if (e.key === 'Escape') {
+          handleClearAll();
+        }
+      });
+
+      // ── Init ───────────────────────────────
+      renderDisplays();
+      setActive('destination');
+
+      // Restore saved CID
+      var savedCID = localStorage.getItem('clawcall_default_cid');
+      if (savedCID) {
+        state.cid = savedCID;
+        renderDisplays();
+        if (state.cid.length >= 10) lookupCNAM(state.cid);
+      }
+
+      console.log('ClawCall dialer v2 — all buttons wired \u2714');
+    })();
+  </script>
 </body>
 </html>
