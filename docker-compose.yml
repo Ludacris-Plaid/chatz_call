@@ -63,6 +63,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs
+      - ./frontend:/usr/share/nginx/html
     networks:
       - voip-net
     depends_on:

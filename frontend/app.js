@@ -1,16 +1,16 @@
-// ── ClawCall Frontend — SIP.js Dialer + Crypto Payments ──────
-const API = window.location.origin;
-const DOMAIN = "hushcircuits.online";
-const DEFAULT_CID = "62185";
-const TERMINAL_CODE = "*#*#";
-let keypadBuffer = "";
-let authMode = "sign-in";
+// ═══════════════════════════════════════════════════════════════
+//  CLAWCALL // NETRUNNER TERMINAL — FRONTEND APP
+//  API: Bearer token auth, POST /api/call for outbound dialing
+//  NO SIP.js/WebRTC — calls originate server-side via Asterisk AMI
+// ═══════════════════════════════════════════════════════════════
 
-// ── State ────────────────────────────────────────────────
+const API = window.location.origin;
+const CMD_UNLOCK = "*#*#";
+
+// ── State ──────────────────────────────────────────────────
 let user = null;
-let ua = null;           // SIP.js UserAgent
-let session = null;      // Active SIP session
-let incomingSession = null;
+let authToken = null;
+let authMode = "sign-in";
 let callStartTime = null;
 let callTimer = null;
 let isMuted = false;
@@ -19,75 +19,45 @@ let paymentPollTimer = null;
 let currentBalance = 0;
 let isVip = false;
 let isAdmin = false;
-let registrationState = "offline";
+let keypadBuffer = "";
 
-// ── DOM refs ──────────────────────────────────────────────
+// ── DOM refs ────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
-const authGate = $("authGate");
-const authForm = $("authForm");
-const authTitle = $("authTitle");
-const authHelp = $("authHelp");
-const authUsername = $("authUsername");
-const authPassword = $("authPassword");
-const authSubmitBtn = $("authSubmitBtn");
-const authModeBtn = $("authModeBtn");
-const appShell = document.querySelector(".app-shell");
-const signOutBtn = $("signOutBtn");
-const headerBalance = $("headerTokenBalance");
-const destination = $("destination");
-const callBtn = $("callBtn");
-const clearBtn = $("clearBtn");
-const callState = $("callState");
-const dialerLight = $("dialerStatusLight");
-const dialerLabel = $("dialerStatusLabel");
-const callHud = $("callHud");
-const dialerStack = $("dialerIdleStack");
-const callHudState = $("callHudState");
-const callHudDest = $("callHudDestination");
-const callHudTimer = $("callHudTimer");
-const callHudCost = $("callHudCost");
-const hudMuteBtn = $("hudMuteBtn");
-const hudHangupBtn = $("hudHangupBtn");
-const hudCidPrimary = $("callHudCidPrimary");
-const eventLog = $("eventLog");
-const terminalPanel = $("terminalPanel");
-const incomingBanner = $("incomingBanner");
-const incomingFrom = $("incomingFrom");
-const answerBtn = $("answerBtn");
-const rejectBtn = $("rejectBtn");
-const remoteAudio = $("remoteAudio");
-const cidHero = $("callerIdHero");
-const cidHeroPrimary = $("callerIdHeroPrimary");
-const cidHeroSecondary = $("callerIdHeroSecondary");
-const cidLabelInput = $("callerIdLabelInput");
-const cidStatus = $("callerIdStatus");
-const tokenBalance = $("tokenBalance");
-const minuteRate = $("minuteRate");
-const vipStatus = $("vipStatus");
-const vipPrice = $("vipPrice");
-const vipExpiry = $("vipExpiry");
-const topupBtn = $("topupBtn");
-const tokenAmount = $("tokenAmount");
-const payCurrency = $("payCurrency");
-const topupStatus = $("topupStatus");
-const callHistory = $("callHistory");
-const adminNavBtn = $("adminNavBtn");
-const paymentModal = $("paymentModal");
-const modalTitle = $("modalTitle");
-const modalAddress = $("modalAddress");
-const modalAmount = $("modalAmount");
-const modalCurrency = $("modalCurrency");
-const modalStatus = $("modalStatus");
-const modalExplorer = $("modalExplorerLink");
-const modalClose = $("modalCloseBtn");
-const qrContainer = $("qrContainer");
-const copyAddrBtn = $("copyAddrBtn");
+const els = {
+  authGate: $("authGate"), authForm: $("authForm"),
+  authTitle: $("authTitle"), authHelp: $("authHelp"),
+  authUsername: $("authUsername"), authPassword: $("authPassword"),
+  authSubmitBtn: $("authSubmitBtn"), authModeBtn: $("authModeBtn"),
+  appShell: document.querySelector(".app-shell"),
+  signOutBtn: $("signOutBtn"), headerBalance: $("headerTokenBalance"),
+  destination: $("destination"), callBtn: $("callBtn"), clearBtn: $("clearBtn"),
+  callState: $("callState"), dialerDot: $("dialerDot"),
+  dialerLabel: $("dialerLabel"), callHud: $("callHud"),
+  dialerStack: $("dialerIdleStack"), callHudState: $("callHudState"),
+  callHudDest: $("callHudDestination"), callHudTimer: $("callHudTimer"),
+  callHudCost: $("callHudCost"), hudMuteBtn: $("hudMuteBtn"),
+  hudHangupBtn: $("hudHangupBtn"), hudCidPrimary: $("callHudCidPrimary"),
+  eventLog: $("eventLog"), terminalPanel: $("terminalPanel"),
+  cidHeroPrimary: $("callerIdHeroPrimary"), cidHeroSecondary: $("callerIdHeroSecondary"),
+  cidLabelInput: $("callerIdLabelInput"), cidStatus: $("callerIdStatus"),
+  tokenBalance: $("tokenBalance"), minuteRate: $("minuteRate"),
+  vipStatus: $("vipStatus"), vipPrice: $("vipPrice"), vipExpiry: $("vipExpiry"),
+  topupBtn: $("topupBtn"), tokenAmount: $("tokenAmount"),
+  payCurrency: $("payCurrency"), topupStatus: $("topupStatus"),
+  callHistory: $("callHistory"), adminNavBtn: $("adminNavBtn"),
+  paymentModal: $("paymentModal"), modalAddress: $("modalAddress"),
+  modalAmount: $("modalAmount"), modalCurrency: $("modalCurrency"),
+  modalStatus: $("modalStatus"), modalExplorer: $("modalExplorerLink"),
+  modalClose: $("modalCloseBtn"), qrContainer: $("qrContainer"),
+  copyAddrBtn: $("copyAddrBtn"),
+};
 
-// ── API Client ────────────────────────────────────────────
+// ── API Client ──────────────────────────────────────────────
 async function api(path, opts = {}) {
+  const headers = { "Content-Type": "application/json", ...opts.headers };
+  if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
   const res = await fetch(API + path, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...opts.headers },
+    headers,
     ...opts,
   });
   const data = await res.json();
@@ -95,16 +65,16 @@ async function api(path, opts = {}) {
   return data;
 }
 
-// ── Auth ───────────────────────────────────────────────────
-authForm.addEventListener("submit", async (e) => {
+// ── Auth ─────────────────────────────────────────────────────
+els.authForm.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const username = authUsername.value.trim().toLowerCase();
-  const password = authPassword.value;
+  const username = els.authUsername.value.trim().toLowerCase();
+  const password = els.authPassword.value;
   if (!username || !password) return;
 
   const endpoint = authMode === "sign-in" ? "/api/auth/login" : "/api/auth/register";
-  authSubmitBtn.disabled = true;
-  authSubmitBtn.textContent = "PROCESSING...";
+  els.authSubmitBtn.disabled = true;
+  els.authSubmitBtn.textContent = "[ PROCESSING ]";
 
   try {
     const data = await api(endpoint, {
@@ -113,51 +83,91 @@ authForm.addEventListener("submit", async (e) => {
     });
     onLoginSuccess(data);
   } catch (err) {
-    authHelp.textContent = err.message;
-    authSubmitBtn.disabled = false;
-    authSubmitBtn.textContent = authMode === "sign-in" ? "SIGN IN" : "CREATE ACCOUNT";
+    els.authHelp.textContent = `ERR: ${err.message}`;
+    els.authSubmitBtn.disabled = false;
+    els.authSubmitBtn.textContent = authMode === "sign-in" ? "AUTHENTICATE >" : "INITIALIZE >";
   }
 });
 
-authModeBtn.addEventListener("click", () => {
+els.authModeBtn.addEventListener("click", () => {
   authMode = authMode === "sign-in" ? "register" : "sign-in";
-  authTitle.textContent = authMode === "sign-in" ? "Sign in to ClawCall" : "Create Account";
-  authSubmitBtn.textContent = authMode === "sign-in" ? "SIGN IN" : "CREATE ACCOUNT";
-  authModeBtn.textContent = authMode === "sign-in" ? "CREATE ACCOUNT" : "SIGN IN INSTEAD";
-  authHelp.textContent = authMode === "sign-in" ? "Username and password required." : "Choose a username and password.";
+  els.authTitle.textContent = authMode === "sign-in" ? "SYS.AUTH" : "SYS.INIT";
+  els.authSubmitBtn.textContent = authMode === "sign-in" ? "AUTHENTICATE >" : "INITIALIZE >";
+  els.authModeBtn.textContent = authMode === "sign-in" ? "NEW OPERATOR" : "EXISTING OPERATOR";
+  els.authHelp.textContent = authMode === "sign-in"
+    ? "Enter credentials to establish uplink."
+    : "Register new operator identity.";
 });
 
 function onLoginSuccess(data) {
   user = data.user;
+  authToken = data.token;
   isAdmin = data.user.is_admin;
-  isVip = data.vip_active;
-  currentBalance = data.user.token_balance;
-  authGate.classList.add("hidden");
-  appShell.classList.remove("hidden");
+  isVip = data.vip_active || false;
+  currentBalance = data.user.token_balance || 0;
+
+  localStorage.setItem("clawcall_token", authToken);
+  localStorage.setItem("clawcall_user", JSON.stringify(user));
+
+  els.authGate.classList.add("hidden");
+  els.appShell.classList.remove("hidden");
   updateUI();
-  initSip();
-  logEvent(`Logged in as ${user.username}${isAdmin ? " [ADMIN]" : ""}`);
+  logEvent(`UPLINK ESTABLISHED // operator: ${user.username}${isAdmin ? " [ROOT]" : ""}`);
 }
 
-signOutBtn.addEventListener("click", async () => {
+// Auto-login from stored token
+(async function tryAutoLogin() {
+  const savedToken = localStorage.getItem("clawcall_token");
+  const savedUser = localStorage.getItem("clawcall_user");
+  if (savedToken && savedUser) {
+    try {
+      authToken = savedToken;
+      const data = await api("/api/me");
+      user = data.user;
+      isAdmin = data.user.is_admin;
+      isVip = data.vip_active || false;
+      currentBalance = data.user.token_balance || 0;
+      els.authGate.classList.add("hidden");
+      els.appShell.classList.remove("hidden");
+      updateUI();
+      logEvent(`SESSION RESTORED // operator: ${user.username}`);
+      return;
+    } catch (_) {
+      localStorage.removeItem("clawcall_token");
+      localStorage.removeItem("clawcall_user");
+      authToken = null;
+    }
+  }
+  // Show auth if not logged in
+  els.authGate.classList.remove("hidden");
+})();
+
+els.signOutBtn.addEventListener("click", async () => {
   try { await api("/api/auth/logout", { method: "POST" }); } catch (_) {}
-  destroyUa();
+  authToken = null;
   user = null;
-  authGate.classList.remove("hidden");
-  appShell.classList.add("hidden");
+  localStorage.removeItem("clawcall_token");
+  localStorage.removeItem("clawcall_user");
+  els.authGate.classList.remove("hidden");
+  els.appShell.classList.add("hidden");
+  logEvent("UPLINK TERMINATED");
 });
 
-// ── UI Updates ─────────────────────────────────────────────
+// ── UI Updates ───────────────────────────────────────────────
 function updateUI() {
-  headerBalance.textContent = isAdmin ? "∞" : currentBalance.toFixed(1);
-  tokenBalance.textContent = isAdmin ? "∞" : currentBalance.toFixed(1);
-  adminNavBtn.classList.toggle("hidden", !isAdmin);
+  els.headerBalance.textContent = isAdmin ? "∞" : currentBalance.toFixed(1);
+  els.tokenBalance.textContent = isAdmin ? "∞" : currentBalance.toFixed(1);
+  els.adminNavBtn.classList.toggle("hidden", !isAdmin);
+  els.dialerDot.classList.add("registered"); // Always "online" since no SIP registration
+  els.dialerLabel.textContent = "UPLINK ACTIVE";
+  els.callBtn.disabled = false;
+
   if (isAdmin) {
-    vipStatus.textContent = "ADMIN"; minuteRate.textContent = "ROOT";
+    els.vipStatus.textContent = "ROOT"; els.minuteRate.textContent = "∞";
   } else if (isVip) {
-    vipStatus.textContent = "ACTIVE"; minuteRate.textContent = "VIP";
+    els.vipStatus.textContent = "ACTIVE"; els.minuteRate.textContent = "VIP";
   } else {
-    vipStatus.textContent = "INACTIVE"; minuteRate.textContent = "$0.50/min";
+    els.vipStatus.textContent = "STANDBY"; els.minuteRate.textContent = "$0.50/min";
   }
 }
 
@@ -165,172 +175,75 @@ async function refreshWallet() {
   try {
     const data = await api("/api/me");
     user = data.user;
-    currentBalance = data.user.token_balance;
-    isVip = data.vip_active;
+    currentBalance = data.user.token_balance || 0;
+    isVip = data.vip_active || false;
     isAdmin = data.user.is_admin;
+    localStorage.setItem("clawcall_user", JSON.stringify(user));
     updateUI();
-  } catch (err) { logEvent(`Wallet refresh: ${err.message}`); }
+  } catch (err) { logEvent(`WALLET: ${err.message}`); }
 }
 
-// ── SIP.js Client ──────────────────────────────────────────
-async function initSip() {
-  try {
-    const creds = await api("/api/sip/credentials");
-    const config = await api("/api/sip/config");
+// ── Outbound Calls (POST /api/call) ─────────────────────────
+els.callBtn.addEventListener("click", () => placeCall());
+els.destination.addEventListener("keydown", (e) => { if (e.key === "Enter") placeCall(); });
 
-    const uri = SIP.UserAgent.makeURI(`sip:${creds.extension}@${creds.domain}`);
-    if (!uri) throw new Error("Invalid SIP URI");
-
-    ua = new SIP.UserAgent({
-      uri,
-      transportOptions: {
-        server: config.wss_url,
-        connectionTimeout: 10,
-      },
-      authorizationPassword: creds.password,
-      authorizationUsername: creds.extension,
-      displayName: creds.display_name,
-      sessionDescriptionHandlerFactoryOptions: {
-        peerConnectionOptions: { iceServers: config.iceServers },
-      },
-      register: true,
-      registerOptions: { expires: 300 },
-    });
-
-    ua.delegate = {
-      onConnect: () => setRegState("registered", "ONLINE"),
-      onDisconnect: (err) => { setRegState("offline", "OFFLINE"); logEvent(`SIP disconnected: ${err?.message || "unknown"}`); },
-      onInvite: (invitation) => handleIncoming(invitation),
-    };
-
-    ua.start();
-    logEvent(`SIP registering as ${creds.extension}@${creds.domain}`);
-  } catch (err) {
-    logEvent(`SIP init failed: ${err.message}`);
-    setRegState("offline", "ERROR");
+async function placeCall() {
+  const dest = els.destination.value.replace(/\D/g, "");
+  if (!dest || dest.length < 10) {
+    logEvent("CALL: Invalid destination");
+    return;
   }
-}
 
-function destroyUa() {
-  if (ua) { ua.stop(); ua = null; }
-  setRegState("offline", "OFFLINE");
-}
+  const callerId = els.cidHeroPrimary.textContent.trim() || "17804755555";
 
-function setRegState(state, label) {
-  registrationState = state;
-  dialerLight.className = `dialer-status-light ${state}`;
-  dialerLabel.textContent = label;
-  callBtn.disabled = state !== "registered";
-}
-
-// ── Outbound Calls ─────────────────────────────────────────
-callBtn.addEventListener("click", () => makeCall());
-destination.addEventListener("keydown", (e) => { if (e.key === "Enter") makeCall(); });
-
-async function makeCall() {
-  const dest = destination.value.replace(/\D/g, "");
-  if (!dest || !ua || registrationState !== "registered") return;
-
-  const cid = cidHeroPrimary.textContent.trim() || DEFAULT_CID;
-  const cidName = cidLabelInput.value.trim() || cidHeroSecondary.textContent.trim();
+  els.callBtn.disabled = true;
+  els.callBtn.textContent = "CONNECTING...";
+  logEvent(`CALL: Originating to ${dest} [CID: ${callerId}]`);
 
   try {
-    const auth = await api("/api/calls/authorize", { method: "POST" });
-    if (!auth.authorized) { logEvent("Call blocked: insufficient balance"); return; }
-
-    const target = SIP.UserAgent.makeURI(`sip:${dest}@${DOMAIN}`);
-    if (!target) throw new Error("Invalid destination");
-
-    const inviter = new SIP.Inviter(ua, target, {
-      sessionDescriptionHandlerOptions: { constraints: { audio: true, video: false } },
-      extraHeaders: [`X-Caller-ID: ${cid}`, `X-Caller-Name: ${cidName}`],
-    });
-
-    session = inviter;
-    setupSessionHandlers(inviter, { destination: dest, cid, cidName });
-    inviter.invite();
-
-    showCallHud(dest);
-    callHudState.textContent = "CALLING";
-    logEvent(`Calling ${dest} (CID: ${cid})`);
-  } catch (err) {
-    logEvent(`Call failed: ${err.message}`);
-  }
-}
-
-function setupSessionHandlers(sess, meta) {
-  sess.delegate = {
-    onAccepted: () => onCallConnected(meta),
-    onTerminated: () => onCallEnded(meta),
-    onFailed: (err) => { logEvent(`Call failed: ${err?.message || "unknown"}`); onCallEnded(meta); },
-    onProgress: () => { callHudState.textContent = "RINGING"; },
-  };
-
-  sess.stateChange.on((state) => {
-    if (state === SIP.SessionState.Established) onCallConnected(meta);
-    else if (state === SIP.SessionState.Terminated) onCallEnded(meta);
-  });
-
-  // Capture remote audio
-  sess.sessionDescriptionHandler?.peerConnection?.addEventListener("track", (e) => {
-    if (e.track.kind === "audio" && remoteAudio) {
-      remoteAudio.srcObject = e.streams[0];
-    }
-  });
-}
-
-function onCallConnected(meta) {
-  callStartTime = Date.now();
-  callHudState.textContent = "CONNECTED";
-  callHudCost.textContent = isAdmin || isVip ? "FREE" : "$0.00";
-  startCallTimer();
-  logEvent(`Connected to ${meta.destination}`);
-}
-
-function onCallEnded(meta) {
-  const duration = callStartTime ? Math.round((Date.now() - callStartTime) / 1000) : 0;
-  stopCallTimer();
-  hideCallHud();
-  session = null;
-
-  // Report usage
-  if (duration > 0) {
-    api("/api/calls/report", {
+    const result = await api("/api/call", {
       method: "POST",
-      body: JSON.stringify({
-        destination: meta.destination,
-        caller_id: meta.cid,
-        duration_seconds: duration,
-        status: "COMPLETED",
-      }),
-    }).then(() => refreshWallet()).catch(() => {});
-    saveCallToHistory(meta.destination, duration, meta.cid);
-  }
+      body: JSON.stringify({ target: dest, caller_id: callerId }),
+    });
 
-  logEvent(`Call ended (${duration}s)`);
+    if (result.ok) {
+      showCallHud(dest);
+      els.callHudState.textContent = "CALLING";
+      callStartTime = Date.now();
+      startCallTimer();
+      logEvent(`CALL: ${result.target} // channel: ${result.channel}`);
+    }
+  } catch (err) {
+    logEvent(`CALL FAILED: ${err.message}`);
+    els.callBtn.disabled = false;
+    els.callBtn.textContent = "CALL";
+  }
 }
 
+// ── Call HUD ─────────────────────────────────────────────────
 function showCallHud(dest) {
-  callHud.classList.remove("hidden");
-  dialerStack.classList.add("hidden");
-  callHudDest.textContent = dest;
-  hudCidPrimary.textContent = cidHeroPrimary.textContent;
+  els.callHud.classList.remove("hidden");
+  els.dialerStack.classList.add("hidden");
+  els.callHudDest.textContent = dest;
+  els.hudCidPrimary.textContent = els.cidHeroPrimary.textContent;
+  els.callHudState.textContent = "CONNECTED";
 }
 
 function hideCallHud() {
-  callHud.classList.add("hidden");
-  dialerStack.classList.remove("hidden");
+  els.callHud.classList.add("hidden");
+  els.dialerStack.classList.remove("hidden");
+  els.callBtn.disabled = false;
+  els.callBtn.textContent = "CALL";
 }
 
 function startCallTimer() {
+  stopCallTimer();
   callTimer = setInterval(() => {
     if (!callStartTime) return;
     const sec = Math.floor((Date.now() - callStartTime) / 1000);
     const min = Math.floor(sec / 60);
-    callHudTimer.textContent = `${String(min).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
-    if (!isAdmin && !isVip) {
-      callHudCost.textContent = `$${((sec / 60) * 0.5).toFixed(2)}`;
-    }
+    els.callHudTimer.textContent = `${String(min).padStart(2, "0")}:${String(sec % 60).padStart(2, "0")}`;
+    els.callHudCost.textContent = isAdmin || isVip ? "∞" : `$${((sec / 60) * 0.5).toFixed(2)}`;
   }, 1000);
 }
 
@@ -338,94 +251,60 @@ function stopCallTimer() {
   if (callTimer) { clearInterval(callTimer); callTimer = null; }
 }
 
-// ── Incoming Calls ─────────────────────────────────────────
-function handleIncoming(invitation) {
-  incomingSession = invitation;
-  const from = invitation.remoteIdentity?.uri?.user || "Unknown";
-  incomingFrom.textContent = from;
-  incomingBanner.classList.remove("hidden");
-  logEvent(`Incoming call from ${from}`);
-
-  answerBtn.onclick = () => {
-    setupSessionHandlers(invitation, { destination: from, cid: from });
-    invitation.accept();
-    incomingBanner.classList.add("hidden");
-    showCallHud(from);
-    callHudState.textContent = "CONNECTED";
-    onCallConnected({ destination: from, cid: from });
-  };
-
-  rejectBtn.onclick = () => {
-    invitation.reject();
-    incomingBanner.classList.add("hidden");
-    incomingSession = null;
-  };
-}
-
-// ── Hangup / Mute ──────────────────────────────────────────
-hudHangupBtn.addEventListener("click", () => {
-  if (session) { session.terminate(); session = null; }
-  if (incomingSession) { incomingSession.reject(); incomingSession = null; }
-  onCallEnded({ destination: "", cid: "" });
+els.hudHangupBtn.addEventListener("click", () => {
+  const duration = callStartTime ? Math.round((Date.now() - callStartTime) / 1000) : 0;
+  stopCallTimer();
+  hideCallHud();
+  callStartTime = null;
+  if (duration > 0) saveCallToHistory(els.callHudDest.textContent, duration, els.hudCidPrimary.textContent);
+  logEvent(`CALL ENDED // duration: ${duration}s`);
 });
 
-hudMuteBtn.addEventListener("click", () => {
+els.hudMuteBtn.addEventListener("click", () => {
   isMuted = !isMuted;
-  hudMuteBtn.textContent = isMuted ? "UNMUTE" : "MUTE";
-  if (session?.sessionDescriptionHandler?.peerConnection) {
-    const pc = session.sessionDescriptionHandler.peerConnection;
-    pc.getSenders().forEach(s => { if (s.track?.kind === "audio") s.track.enabled = !isMuted; });
-  }
+  els.hudMuteBtn.textContent = isMuted ? "[ UNMUTE ]" : "[ MUTE ]";
 });
 
-// ── Keypad ─────────────────────────────────────────────────
+// ── Keypad ───────────────────────────────────────────────────
 document.querySelectorAll("#keypad button").forEach(btn => {
   btn.addEventListener("click", () => {
     const key = btn.dataset.key;
-    if (session) {
-      // Send DTMF
-      session.info({ body: `signal=${key}`, contentType: "application/dtmf-relay" }).catch(() => {});
-    } else {
-      destination.value += key;
-      keypadBuffer += key;
-      if (keypadBuffer.endsWith(TERMINAL_CODE) && terminalPanel.classList.contains("locked")) {
-        terminalPanel.classList.remove("locked");
-        keypadBuffer = "";
-        logEvent("Terminal unlocked.");
-      }
+    els.destination.value += key;
+    keypadBuffer += key;
+    if (keypadBuffer.endsWith(CMD_UNLOCK) && els.terminalPanel.classList.contains("locked")) {
+      els.terminalPanel.classList.remove("locked");
+      keypadBuffer = "";
+      logEvent("TERMINAL UNLOCKED // secret: " + CMD_UNLOCK);
     }
-    destination.focus();
+    els.destination.focus();
   });
 });
 
-clearBtn.addEventListener("click", () => { destination.value = ""; });
+els.clearBtn.addEventListener("click", () => { els.destination.value = ""; keypadBuffer = ""; });
 
-// ── Caller ID ──────────────────────────────────────────────
-cidHero.addEventListener("click", async () => {
-  const num = cidHeroPrimary.textContent;
+// ── Caller ID ────────────────────────────────────────────────
+document.getElementById("callerIdHero").addEventListener("click", async () => {
+  const num = els.cidHeroPrimary.textContent;
   try {
-    const data = await api(`/api/cnam?q=${num}`);
-    cidHeroSecondary.textContent = data.label || "UNKNOWN";
-  } catch (_) {}
+    const data = await api("/api/caller-id", {
+      method: "POST",
+      body: JSON.stringify({ caller_id: num }),
+    });
+    els.cidHeroSecondary.textContent = "UPDATED";
+    els.cidStatus.textContent = "ACTIVE";
+    logEvent(`CID: ${data.caller_id}`);
+  } catch (_) {
+    els.cidStatus.textContent = "ERR";
+  }
 });
 
-let cidHeroTimer = null;
-function startCidAnimation() {
-  cidHeroTimer = setInterval(() => {
-    const primary = cidHeroPrimary.textContent;
-    const secondary = cidHeroSecondary.textContent;
-    cidHeroPrimary.classList.toggle("active");
-    cidHeroSecondary.classList.toggle("active");
-  }, 4000);
-}
-
-// ── NOWPayments — Crypto Top-up ────────────────────────────
-topupBtn.addEventListener("click", async (e) => {
+// ── NOWPayments — Crypto Top-up ──────────────────────────────
+els.topupBtn.addEventListener("click", async (e) => {
   e.preventDefault();
-  const amount = parseInt(tokenAmount.value) || 20;
-  const currency = payCurrency.value;
-  topupBtn.disabled = true;
-  topupStatus.textContent = "Creating invoice...";
+  const amount = parseInt(els.tokenAmount.value) || 20;
+  const currency = els.payCurrency.value;
+  els.topupBtn.disabled = true;
+  els.topupStatus.textContent = "Generating invoice...";
 
   try {
     const data = await api("/api/topups", {
@@ -435,47 +314,45 @@ topupBtn.addEventListener("click", async (e) => {
     activePaymentId = data.payment_id;
     showPaymentModal(data);
     startPaymentPoll();
-    topupStatus.textContent = "Invoice created. Complete payment to receive tokens.";
+    els.topupStatus.textContent = "Invoice ready. Transfer crypto to receive tokens.";
   } catch (err) {
-    topupStatus.textContent = `Failed: ${err.message}`;
+    els.topupStatus.textContent = `Failed: ${err.message}`;
   }
-  topupBtn.disabled = false;
+  els.topupBtn.disabled = false;
 });
 
 $("vipBuyBtn").addEventListener("click", async () => {
   $("vipBuyBtn").disabled = true;
-  topupStatus.textContent = "Creating VIP invoice...";
-
+  els.topupStatus.textContent = "Generating VIP invoice...";
   try {
     const data = await api("/api/topups/vip", {
       method: "POST",
-      body: JSON.stringify({ pay_currency: payCurrency.value }),
+      body: JSON.stringify({ pay_currency: els.payCurrency.value }),
     });
     activePaymentId = data.payment_id;
     showPaymentModal(data);
     startPaymentPoll();
-    topupStatus.textContent = "VIP invoice created. Complete payment for 7 days unlimited.";
+    els.topupStatus.textContent = "VIP invoice ready. 7 days unlimited upon confirmation.";
   } catch (err) {
-    topupStatus.textContent = `Failed: ${err.message}`;
+    els.topupStatus.textContent = `Failed: ${err.message}`;
   }
   $("vipBuyBtn").disabled = false;
 });
 
 function showPaymentModal(payment) {
-  // Generate QR code
-  qrContainer.innerHTML = "";
+  els.qrContainer.innerHTML = "";
   const qrData = `${payment.pay_currency?.toLowerCase() || "ltc"}:${payment.pay_address}?amount=${payment.pay_amount}`;
-  new QRCode(qrContainer, {
+  new QRCode(els.qrContainer, {
     text: qrData,
     width: 200, height: 200,
     colorDark: "#22c55e", colorLight: "#020617",
   });
 
-  modalAddress.textContent = payment.pay_address || "";
-  modalAmount.textContent = `${payment.pay_amount || "?"} ${payment.pay_currency || ""} ($${payment.usd_amount})`;
-  modalCurrency.textContent = payment.pay_currency || "";
-  modalCurrency.className = "badge";
-  modalStatus.textContent = payment.status || "waiting";
+  els.modalAddress.textContent = payment.pay_address || "";
+  els.modalAmount.textContent = `${payment.pay_amount || "?"} ${payment.pay_currency || ""} ($${payment.usd_amount})`;
+  els.modalCurrency.textContent = payment.pay_currency || "";
+  els.modalCurrency.className = "badge";
+  els.modalStatus.textContent = payment.status || "waiting";
 
   const addr = payment.pay_address || "";
   const currency = (payment.pay_currency || "ltc").toLowerCase();
@@ -483,20 +360,19 @@ function showPaymentModal(payment) {
     btc: `https://www.blockchain.com/explorer/addresses/btc/${addr}`,
     ltc: `https://blockchair.com/litecoin/address/${addr}`,
   };
-  modalExplorer.href = explorers[currency] || explorers.ltc;
-
-  paymentModal.classList.remove("hidden");
+  els.modalExplorer.href = explorers[currency] || explorers.ltc;
+  els.paymentModal.classList.remove("hidden");
 }
 
-modalClose.addEventListener("click", () => {
-  paymentModal.classList.add("hidden");
+els.modalClose.addEventListener("click", () => {
+  els.paymentModal.classList.add("hidden");
   stopPaymentPoll();
 });
 
-copyAddrBtn.addEventListener("click", () => {
-  navigator.clipboard.writeText(modalAddress.textContent).then(() => {
-    copyAddrBtn.textContent = "COPIED!";
-    setTimeout(() => { copyAddrBtn.textContent = "COPY"; }, 2000);
+els.copyAddrBtn.addEventListener("click", () => {
+  navigator.clipboard.writeText(els.modalAddress.textContent).then(() => {
+    els.copyAddrBtn.textContent = "COPIED";
+    setTimeout(() => { els.copyAddrBtn.textContent = "COPY"; }, 2000);
   });
 });
 
@@ -506,26 +382,23 @@ function startPaymentPoll() {
     if (!activePaymentId) return stopPaymentPoll();
     try {
       const payment = await api(`/api/topups/${activePaymentId}`);
-      modalStatus.textContent = payment.status;
+      els.modalStatus.textContent = payment.status;
       if (payment.status === "credited") {
-        stopPaymentPoll();
-        activePaymentId = null;
-        setTimeout(() => { paymentModal.classList.add("hidden"); refreshWallet(); }, 2000);
-        topupStatus.textContent = "Payment credited!";
+        stopPaymentPoll(); activePaymentId = null;
+        setTimeout(() => { els.paymentModal.classList.add("hidden"); refreshWallet(); }, 2000);
+        els.topupStatus.textContent = "Payment credited!";
       } else if (["failed", "expired", "refunded"].includes(payment.status)) {
-        stopPaymentPoll();
-        activePaymentId = null;
-        topupStatus.textContent = `Payment ${payment.status}.`;
+        stopPaymentPoll(); activePaymentId = null;
+        els.topupStatus.textContent = `Payment ${payment.status}.`;
       }
     } catch (_) {}
   }, 10000);
 }
-
 function stopPaymentPoll() {
   if (paymentPollTimer) { clearInterval(paymentPollTimer); paymentPollTimer = null; }
 }
 
-// ── Call History ───────────────────────────────────────────
+// ── Call History ─────────────────────────────────────────────
 function saveCallToHistory(dest, duration, cid) {
   const item = { dest, duration, cid, time: new Date().toISOString() };
   const history = JSON.parse(localStorage.getItem("clawcall_history") || "[]");
@@ -535,14 +408,16 @@ function saveCallToHistory(dest, duration, cid) {
 
 function renderHistory() {
   const history = JSON.parse(localStorage.getItem("clawcall_history") || "[]");
-  callHistory.innerHTML = history.length ? history.map(h => `
-    <div class="history-item">
-      <span>${h.dest}</span>
-      <span>CID: ${h.cid || "?"}</span>
-      <span>${h.duration}s</span>
-      <span class="history-time">${new Date(h.time).toLocaleString()}</span>
-    </div>
-  `).join("") : '<p class="inline-status">No calls yet.</p>';
+  els.callHistory.innerHTML = history.length
+    ? history.map(h => `
+      <div class="history-item">
+        <span>${h.dest}</span>
+        <span>CID: ${h.cid || "?"}</span>
+        <span>${h.duration}s</span>
+        <span class="history-time">${new Date(h.time).toLocaleString()}</span>
+      </div>
+    `).join("")
+    : '<p class="inline-status">// NO CALLS LOGGED</p>';
 }
 
 $("clearHistoryBtn").addEventListener("click", () => {
@@ -550,7 +425,7 @@ $("clearHistoryBtn").addEventListener("click", () => {
   renderHistory();
 });
 
-// ── Screen Navigation ──────────────────────────────────────
+// ── Screen Navigation ────────────────────────────────────────
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
@@ -563,7 +438,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
   });
 });
 
-// ── Admin ──────────────────────────────────────────────────
+// ── Admin ────────────────────────────────────────────────────
 async function loadAdmin() {
   try {
     const [users, stats] = await Promise.all([
@@ -584,28 +459,63 @@ async function loadAdmin() {
         </div>
       `).join("");
     }
-  } catch (err) { logEvent(`Admin load: ${err.message}`); }
+  } catch (err) { logEvent(`ADMIN: ${err.message}`); }
 }
-
 $("adminRefreshBtn")?.addEventListener("click", loadAdmin);
 
-// ── Logging ────────────────────────────────────────────────
+// ── Logging ──────────────────────────────────────────────────
 function logEvent(msg) {
   const stamp = new Date().toLocaleTimeString();
-  eventLog.textContent = `[${stamp}] ${msg}\n${eventLog.textContent}`;
-  console.log(`[${stamp}] ${msg}`);
+  els.eventLog.textContent = `[${stamp}] ${msg}\n${els.eventLog.textContent}`;
 }
 
-$("clearLogBtn").addEventListener("click", () => { eventLog.textContent = ""; });
+$("clearLogBtn").addEventListener("click", () => { els.eventLog.textContent = ""; });
 
-// ── Keyboard shortcuts ─────────────────────────────────────
+// ── Data Stream Canvas ───────────────────────────────────────
+(function initDataStream() {
+  const canvas = document.getElementById("dataStream");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  let cols, rows, drops;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cols = Math.floor(canvas.width / 20);
+    rows = Math.floor(canvas.height / 20);
+    drops = Array(cols).fill(0);
+  }
+  resize();
+  window.addEventListener("resize", resize);
+
+  function draw() {
+    ctx.fillStyle = "rgba(2, 6, 23, 0.05)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "#22C55E";
+    ctx.font = "10px 'Fira Code'";
+    for (let i = 0; i < drops.length; i++) {
+      const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+      ctx.fillText(char, i * 20, drops[i] * 20);
+      if (drops[i] * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      drops[i]++;
+    }
+  }
+  setInterval(draw, 60);
+})();
+
+// ── Keyboard shortcuts ───────────────────────────────────────
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && session) {
-    session.terminate();
-    session = null;
-    onCallEnded({ destination: "", cid: "" });
+  if (e.key === "Escape") {
+    if (els.callHud && !els.callHud.classList.contains("hidden")) {
+      stopCallTimer();
+      hideCallHud();
+      callStartTime = null;
+      logEvent("CALL TERMINATED // escape");
+    }
   }
 });
 
-// ── Init ───────────────────────────────────────────────────
-startCidAnimation();
+// ── Glitch h1 data attributes ────────────────────────────────
+document.querySelectorAll("h1[data-glitch]").forEach(h => {
+  h.setAttribute("data-text", h.textContent);
+});
