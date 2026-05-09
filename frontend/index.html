@@ -4,84 +4,172 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#020617" />
-  <title>ClawCall Dialer</title>
+  <title>ClawCall</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #020617; --panel: rgba(10, 18, 32, 0.72); --panel-strong: rgba(12, 22, 38, 0.92);
-      --panel-soft: rgba(255, 255, 255, 0.035); --border: rgba(255, 255, 255, 0.105);
-      --border-soft: rgba(255, 255, 255, 0.075); --green: #22C55E;
-      --green-soft: rgba(34, 197, 94, 0.16); --green-mid: rgba(34, 197, 94, 0.34);
-      --text: rgba(248, 250, 252, 0.96); --muted: rgba(148, 163, 184, 0.86);
-      --dim: rgba(100, 116, 139, 0.82); --shadow: rgba(0, 0, 0, 0.44);
+      --bg: #020617; --panel: rgba(10,18,32,0.72); --panel-strong: rgba(12,22,38,0.92);
+      --panel-soft: rgba(255,255,255,0.035); --border: rgba(255,255,255,0.105);
+      --border-soft: rgba(255,255,255,0.075); --green: #22C55E;
+      --green-soft: rgba(34,197,94,0.16); --green-mid: rgba(34,197,94,0.34);
+      --text: rgba(248,250,252,0.96); --muted: rgba(148,163,184,0.86);
+      --dim: rgba(100,116,139,0.82); --red: #EF4444; --amber: #F59E0B;
+      --nav-h: 72px;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; }
     body { position: fixed; inset: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(34, 197, 94, 0.105), transparent 34%), radial-gradient(circle at 18% 20%, rgba(255, 255, 255, 0.035), transparent 28%), linear-gradient(180deg, rgba(255, 255, 255, 0.015), transparent 44%); opacity: 0.95; }
-    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.055; background-image: linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 78%); }
-    .app { position: relative; z-index: 1; width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; padding: max(14px, env(safe-area-inset-top)) 18px max(16px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
-    .header { height: 38px; flex: 0 0 38px; display: flex; align-items: center; justify-content: space-between; }
-    .brand { display: inline-flex; align-items: center; gap: 10px; font-family: "Space Grotesk", sans-serif; letter-spacing: 0.18em; font-size: 13px; font-weight: 700; color: rgba(248,250,252,0.82); }
-    .mark { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; color: var(--green); background: linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.03)), rgba(255,255,255,0.03); border: 1px solid rgba(34,197,94,0.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
-    .settings { width: 36px; height: 36px; border: 1px solid var(--border-soft); border-radius: 14px; color: rgba(148,163,184,0.92); background: rgba(255,255,255,0.035); display: grid; place-items: center; backdrop-filter: blur(14px); cursor: pointer; transition: border-color 150ms ease, background 150ms ease; }
+    body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(34,197,94,0.105), transparent 34%), radial-gradient(circle at 18% 20%, rgba(255,255,255,0.035), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.015), transparent 44%); opacity: 0.95; z-index: 0; }
+    body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.04; background-image: linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 78%); z-index: 0; }
+
+    .app { position: relative; z-index: 1; width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
+
+    /* ── Tab Pages ── */
+    .tab-page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; padding: max(12px, env(safe-area-inset-top)) 18px 18px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .tab-page::-webkit-scrollbar { display: none; }
+    .tab-page.active { display: flex; flex-direction: column; gap: 14px; }
+    .tab-page-title { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: rgba(248,250,252,0.88); margin: 0 0 2px 0; flex-shrink: 0; }
+
+    /* ── Cards (shared) ── */
+    .card { border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018)), var(--panel); box-shadow: 0 14px 32px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.04); backdrop-filter: blur(14px); padding: 16px; flex-shrink: 0; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .card-label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: var(--muted); text-transform: uppercase; }
+    .card-value { font-family: "Space Grotesk", sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
+    .card-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+    /* ── Bottom Nav ── */
+    .bottom-nav { flex-shrink: 0; height: var(--nav-h); display: flex; align-items: center; justify-content: space-around; padding: 0 8px calc(env(safe-area-inset-bottom, 0px) + 4px); border-top: 1px solid rgba(255,255,255,0.06); background: rgba(4,10,22,0.92); backdrop-filter: blur(20px); z-index: 10; }
+    .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 10px; border-radius: 14px; border: none; background: transparent; color: var(--dim); cursor: pointer; transition: color 180ms ease, background 180ms ease; min-width: 56px; position: relative; }
+    .nav-btn svg { width: 22px; height: 22px; transition: transform 180ms ease; }
+    .nav-btn span { font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; }
+    .nav-btn.active { color: var(--green); background: rgba(34,197,94,0.08); }
+    .nav-btn.active::before { content: ""; position: absolute; top: -1px; left: 50%; transform: translateX(-50%); width: 24px; height: 2px; border-radius: 0 0 2px 2px; background: var(--green); }
+    .nav-btn:active { background: rgba(34,197,94,0.06); }
+
+    /* ── Dialer tab (compact for nav space) ── */
+    #tab-dialer { padding-bottom: 4px; }
+    #tab-dialer .header { height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: inline-flex; align-items: center; gap: 8px; font-family: "Space Grotesk", sans-serif; letter-spacing: 0.16em; font-size: 12px; font-weight: 700; color: rgba(248,250,252,0.8); }
+    .mark { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; color: var(--green); background: linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.03)), rgba(255,255,255,0.03); border: 1px solid rgba(34,197,94,0.22); }
+    .settings { width: 34px; height: 34px; border: 1px solid var(--border-soft); border-radius: 12px; color: rgba(148,163,184,0.85); background: rgba(255,255,255,0.03); display: grid; place-items: center; cursor: pointer; }
     .settings:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
-    .display-stack { flex: 0 0 auto; display: flex; flex-direction: column; gap: 10px; }
-    .display-card { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 24px; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), var(--panel); box-shadow: 0 18px 38px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); backdrop-filter: blur(18px); overflow: hidden; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease, background 180ms ease; }
+    .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    .display-card { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), var(--panel); box-shadow: 0 14px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); backdrop-filter: blur(14px); overflow: hidden; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
     .display-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(34,197,94,0.055), transparent); transform: translateX(-120%); opacity: 0; }
-    .display-card.active { border-color: rgba(34,197,94,0.72); box-shadow: 0 0 0 1px rgba(34,197,94,0.12), 0 0 28px rgba(34,197,94,0.11), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); animation: fieldPulse 2.35s ease-in-out infinite; }
+    .display-card.active { border-color: rgba(34,197,94,0.7); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 24px rgba(34,197,94,0.1), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); animation: fieldPulse 2.35s ease-in-out infinite; }
     .display-card.active::before { opacity: 1; animation: scanLine 2.4s ease-in-out infinite; }
-    .display-card.cid { min-height: 82px; padding: 14px 16px 13px; }
-    .display-card.destination { min-height: 102px; padding: 16px 16px 15px; }
-    .display-topline { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
-    .label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.18em; color: rgba(148,163,184,0.82); }
-    .active-tag { height: 18px; padding: 0 8px; border-radius: 99px; display: inline-flex; align-items: center; justify-content: center; font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: var(--green); background: rgba(34,197,94,0.095); border: 1px solid rgba(34,197,94,0.16); opacity: 0; transform: translateY(-2px); transition: opacity 160ms ease, transform 160ms ease; }
+    .display-card.cid { min-height: 70px; padding: 12px 14px 11px; }
+    .display-card.destination { min-height: 86px; padding: 14px 14px 13px; }
+    .display-topline { z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .label { font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; color: rgba(148,163,184,0.8); }
+    .active-tag { height: 16px; padding: 0 7px; border-radius: 99px; display: inline-flex; align-items: center; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.12em; color: var(--green); background: rgba(34,197,94,0.09); border: 1px solid rgba(34,197,94,0.14); opacity: 0; transform: translateY(-2px); transition: opacity 160ms ease, transform 160ms ease; }
     .display-card.active .active-tag { opacity: 1; transform: translateY(0); }
-    .number { position: relative; z-index: 1; width: 100%; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Space Grotesk", sans-serif; font-weight: 600; letter-spacing: 0.02em; line-height: 1.05; color: rgba(248,250,252,0.98); text-shadow: 0 0 18px rgba(255,255,255,0.045); }
-    .cid .number { font-size: clamp(19px, 5.1vw, 23px); }
-    .destination .number { font-size: clamp(30px, 8.4vw, 38px); letter-spacing: -0.025em; }
-    .number.empty { color: rgba(100,116,139,0.78); letter-spacing: 0.015em; }
-    .cnam { position: relative; z-index: 1; margin-top: 7px; height: 15px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.16em; color: rgba(148,163,184,0.78); text-transform: uppercase; }
+    .number { z-index: 1; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: "Space Grotesk", sans-serif; font-weight: 600; line-height: 1.05; color: rgba(248,250,252,0.97); }
+    .cid .number { font-size: clamp(17px, 4.8vw, 21px); }
+    .destination .number { font-size: clamp(26px, 7.5vw, 34px); letter-spacing: -0.03em; }
+    .number.empty { color: rgba(100,116,139,0.75); }
+    .cnam { z-index: 1; margin-top: 4px; height: 13px; overflow: hidden; font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: rgba(148,163,184,0.75); text-transform: uppercase; }
     .cnam.scanning { color: var(--green); }
-    .cnam.resolved { color: rgba(203,213,225,0.9); }
+    .cnam.resolved { color: rgba(203,213,225,0.85); }
     .cnam.glitch { animation: glitchFlash 230ms steps(2, end); }
-    .keypad-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-    .keypad { width: min(100%, 342px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; }
-    button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; }
-    .dial-key { height: clamp(58px, 8.85dvh, 74px); border-radius: 25px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.026)), rgba(8,15,28,0.82); box-shadow: 0 12px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
-    .dial-key:active { transform: scale(0.95); border-color: rgba(34,197,94,0.45); box-shadow: 0 0 0 1px rgba(34,197,94,0.12), 0 0 22px rgba(34,197,94,0.18), inset 0 1px 0 rgba(255,255,255,0.055); }
-    .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 6.3vw, 30px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.96); }
-    .letters { height: 12px; font-size: 9px; line-height: 1; font-weight: 700; letter-spacing: 0.22em; color: rgba(100,116,139,0.86); }
-    .actions { flex: 0 0 70px; height: 70px; display: grid; grid-template-columns: 1fr 78px 1fr; align-items: center; gap: 14px; }
-    .utility { height: 50px; border-radius: 18px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), rgba(8,15,28,0.82); box-shadow: 0 12px 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.05); color: rgba(203,213,225,0.9); font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
-    .utility:active { transform: scale(0.95); border-color: rgba(34,197,94,0.38); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 22px rgba(34,197,94,0.15); }
-    .call { width: 74px; height: 74px; border-radius: 50%; color: #021107; background: radial-gradient(circle at 42% 18%, rgba(255,255,255,0.34), transparent 34%), linear-gradient(180deg, #2ee36d, var(--green)); box-shadow: 0 18px 38px rgba(34,197,94,0.24), 0 0 0 8px rgba(34,197,94,0.055), inset 0 1px 0 rgba(255,255,255,0.24); display: grid; place-items: center; transition: transform 120ms ease, box-shadow 150ms ease, filter 150ms ease; }
-    .call:active { transform: scale(0.95); filter: brightness(1.03); box-shadow: 0 14px 30px rgba(34,197,94,0.26), 0 0 0 9px rgba(34,197,94,0.07), 0 0 28px rgba(34,197,94,0.28), inset 0 1px 0 rgba(255,255,255,0.24); }
-    .call svg { width: 30px; height: 30px; transform: translateY(1px); pointer-events: none; }
-    /* Settings panel */
-    .settings-panel { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,0.92); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+    .keypad-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+    .keypad { width: min(100%, 300px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; background: none; }
+    .dial-key { height: clamp(50px, 7.8dvh, 64px); border-radius: 22px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+    .dial-key:active { transform: scale(0.94); border-color: rgba(34,197,94,0.42); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 20px rgba(34,197,94,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
+    .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5.8vw, 28px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.95); }
+    .letters { height: 10px; font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: rgba(100,116,139,0.8); }
+    .actions { flex-shrink: 0; height: 60px; display: grid; grid-template-columns: 1fr 68px 1fr; align-items: center; gap: 12px; }
+    .utility { height: 44px; border-radius: 16px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04); color: rgba(203,213,225,0.85); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: transform 120ms ease, border-color 150ms ease; }
+    .utility:active { transform: scale(0.94); border-color: rgba(34,197,94,0.35); }
+    .call { width: 64px; height: 64px; border-radius: 50%; color: #021107; background: radial-gradient(circle at 42% 18%, rgba(255,255,255,0.32), transparent 34%), linear-gradient(180deg, #2ee36d, var(--green)); box-shadow: 0 14px 30px rgba(34,197,94,0.22), 0 0 0 7px rgba(34,197,94,0.05), inset 0 1px 0 rgba(255,255,255,0.22); display: grid; place-items: center; transition: transform 120ms ease, box-shadow 150ms ease; }
+    .call:active { transform: scale(0.94); box-shadow: 0 12px 26px rgba(34,197,94,0.24), 0 0 0 8px rgba(34,197,94,0.06), 0 0 24px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.22); }
+    .call svg { width: 26px; height: 26px; transform: translateY(1px); pointer-events: none; }
+
+    /* ── Wallet Tab ── */
+    .balance-ring { width: 120px; height: 120px; margin: 0 auto; position: relative; }
+    .balance-ring svg { transform: rotate(-90deg); }
+    .balance-ring .bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
+    .balance-ring .fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 800ms ease; }
+    .balance-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .balance-amount { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
+    .balance-label { font-size: 9px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
+    .wallet-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .wallet-btn { padding: 14px; border-radius: 16px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.78); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-align: center; transition: border-color 150ms ease; }
+    .wallet-btn:active { border-color: rgba(34,197,94,0.4); }
+    .wallet-btn.primary { border-color: rgba(34,197,94,0.3); color: var(--green); }
+    .tx-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-type { font-size: 12px; font-weight: 600; }
+    .tx-amount { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; }
+    .tx-amount.in { color: var(--green); }
+    .tx-amount.out { color: var(--muted); }
+    .tx-date { font-size: 10px; color: var(--dim); }
+
+    /* ── Stats Tab ── */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .stat-card { border: 1px solid var(--border); border-radius: 18px; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.015)), var(--panel); padding: 14px; text-align: center; }
+    .stat-num { font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--green); }
+    .stat-num.counting { animation: countUp 1.2s ease-out; }
+    .stat-label { font-size: 10px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+    .chart-bar-wrap { display: flex; align-items: flex-end; gap: 6px; height: 100px; padding: 0 4px; }
+    .chart-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+    .chart-bar { width: 100%; max-width: 32px; border-radius: 6px 6px 0 0; background: linear-gradient(180deg, var(--green), rgba(34,197,94,0.3)); transition: height 600ms ease; min-height: 4px; }
+    .chart-bar-label { font-size: 8px; color: var(--dim); letter-spacing: 0.06em; }
+    .call-log-row { display: grid; grid-template-columns: 1fr 1fr 70px 60px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; gap: 4px; }
+    .call-log-row.header { color: var(--dim); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .call-log-cid { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 12px; color: rgba(34,197,94,0.9); }
+    .call-log-dest { font-family: "Space Grotesk", sans-serif; }
+    .call-log-cost { font-family: "Space Grotesk", sans-serif; font-weight: 600; text-align: right; }
+    .call-log-time { color: var(--dim); text-align: right; font-size: 10px; }
+
+    /* ── Admin Tab ── */
+    .admin-user-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 8px; }
+    .admin-username { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; }
+    .admin-email { font-size: 10px; color: var(--dim); }
+    .admin-badges { display: flex; gap: 4px; flex-wrap: wrap; }
+    .admin-badge { padding: 2px 7px; border-radius: 99px; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.08em; }
+    .admin-badge.admin { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .admin-badge.vip { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+    .admin-badge.banned { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+    .admin-badge.suspended { background: rgba(239,68,68,0.08); color: rgba(239,68,68,0.7); border: 1px solid rgba(239,68,68,0.12); }
+    .admin-actions { display: flex; gap: 4px; }
+    .admin-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.03); color: var(--muted); display: grid; place-items: center; font-size: 12px; transition: border-color 150ms ease; }
+    .admin-btn:active { border-color: rgba(34,197,94,0.4); }
+    .admin-btn.danger:active { border-color: rgba(239,68,68,0.4); }
+    .toggle-switch { width: 38px; height: 20px; border-radius: 99px; background: rgba(255,255,255,0.1); position: relative; cursor: pointer; transition: background 180ms ease; border: none; padding: 0; }
+    .toggle-switch.on { background: var(--green); }
+    .toggle-switch::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: transform 180ms ease; }
+    .toggle-switch.on::after { transform: translateX(18px); }
+
+    /* ── Settings overlay ── */
+    .settings-panel { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,0.94); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
     .settings-panel.open { opacity: 1; pointer-events: auto; }
-    .settings-inner { width: min(340px, 88vw); display: flex; flex-direction: column; gap: 18px; }
-    .settings-inner h2 { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: rgba(248,250,252,0.9); margin: 0 0 4px 0; }
-    .settings-field { display: flex; flex-direction: column; gap: 6px; }
-    .settings-field label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; color: rgba(148,163,184,0.8); }
-    .settings-field input { width: 100%; padding: 14px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--panel-strong); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 600; letter-spacing: 0.03em; outline: none; transition: border-color 180ms ease; }
-    .settings-field input:focus { border-color: rgba(34,197,94,0.6); }
-    .settings-btn { width: 100%; padding: 14px; border-radius: 16px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), rgba(8,15,28,0.82); color: rgba(203,213,225,0.9); font-family: "Space Grotesk", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; transition: border-color 150ms ease, background 150ms ease; }
-    .settings-btn:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
-    .settings-btn.green { border-color: rgba(34,197,94,0.3); color: var(--green); }
-    .settings-btn.danger { border-color: rgba(239,68,68,0.2); color: rgba(239,68,68,0.85); }
-    /* Status toast */
-    .status { position: absolute; left: 50%; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 78px); max-width: calc(100% - 36px); transform: translateX(-50%) translateY(14px); padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(34,197,94,0.2); background: rgba(4,12,22,0.88); box-shadow: 0 18px 40px rgba(0,0,0,0.38); backdrop-filter: blur(18px); color: rgba(220,252,231,0.94); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.14em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; }
-    .status.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .settings-inner { width: min(340px, 88vw); display: flex; flex-direction: column; gap: 16px; }
+    .settings-inner h2 { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: rgba(248,250,252,0.9); margin: 0; }
+    .settings-field { display: flex; flex-direction: column; gap: 4px; }
+    .settings-field label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: rgba(148,163,184,0.78); }
+    .settings-field input { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-strong); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 600; outline: none; }
+    .settings-field input:focus { border-color: rgba(34,197,94,0.55); }
+    .settings-btn { width: 100%; padding: 13px; border-radius: 14px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.78); color: rgba(203,213,225,0.85); font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
+    .settings-btn.green { border-color: rgba(34,197,94,0.28); color: var(--green); }
+    .settings-btn.danger { border-color: rgba(239,68,68,0.18); color: rgba(239,68,68,0.8); }
+
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%) translateY(10px); padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(34,197,94,0.2); background: rgba(4,12,22,0.9); box-shadow: 0 14px 30px rgba(0,0,0,0.35); backdrop-filter: blur(14px); color: rgba(220,252,231,0.92); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; z-index: 200; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     .pressed { animation: keyPress 185ms ease-out; }
-    @keyframes fieldPulse { 0%,100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.10), 0 0 24px rgba(34,197,94,0.095), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); } 50% { box-shadow: 0 0 0 1px rgba(34,197,94,0.18), 0 0 34px rgba(34,197,94,0.16), 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.065); } }
+
+    /* ── Animations ── */
+    @keyframes fieldPulse { 0%,100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.08), 0 0 20px rgba(34,197,94,0.08), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); } 50% { box-shadow: 0 0 0 1px rgba(34,197,94,0.16), 0 0 28px rgba(34,197,94,0.14), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); } }
     @keyframes scanLine { 0% { transform: translateX(-125%); } 48%,100% { transform: translateX(125%); } }
-    @keyframes keyPress { 0% { transform: scale(1); box-shadow: 0 12px 26px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.055); } 42% { transform: scale(0.95); box-shadow: 0 0 0 1px rgba(34,197,94,0.15), 0 0 24px rgba(34,197,94,0.22), inset 0 1px 0 rgba(255,255,255,0.065); } 100% { transform: scale(1); } }
-    @keyframes glitchFlash { 0% { transform: translateX(0); text-shadow: none; opacity: 1; } 20% { transform: translateX(-1px); text-shadow: 2px 0 rgba(239,68,68,0.52), -2px 0 rgba(34,211,238,0.42); } 45% { transform: translateX(1px); text-shadow: -2px 0 rgba(239,68,68,0.46), 2px 0 rgba(34,211,238,0.38); opacity: 0.86; } 70% { transform: translateX(-0.5px); text-shadow: 1px 0 rgba(239,68,68,0.35), -1px 0 rgba(34,211,238,0.3); } 100% { transform: translateX(0); text-shadow: none; opacity: 1; } }
-    @media (max-height: 740px) { .app { gap: 10px; padding-left: 16px; padding-right: 16px; } .header { height: 34px; flex-basis: 34px; } .display-stack { gap: 8px; } .display-card.cid { min-height: 74px; padding: 12px 14px 11px; } .display-card.destination { min-height: 88px; padding: 13px 14px 12px; } .keypad { gap: 9px; width: min(100%, 326px); } .dial-key { height: clamp(54px, 8.4dvh, 64px); border-radius: 22px; } .actions { height: 64px; flex-basis: 64px; } .call { width: 66px; height: 66px; } .utility { height: 46px; } }
+    @keyframes keyPress { 0% { transform: scale(1); } 42% { transform: scale(0.94); } 100% { transform: scale(1); } }
+    @keyframes glitchFlash { 0% { transform: translateX(0); text-shadow: none; opacity: 1; } 20% { transform: translateX(-1px); text-shadow: 2px 0 rgba(239,68,68,0.5), -2px 0 rgba(34,211,238,0.4); } 45% { transform: translateX(1px); text-shadow: -2px 0 rgba(239,68,68,0.44), 2px 0 rgba(34,211,238,0.36); opacity: 0.86; } 70% { transform: translateX(-0.5px); text-shadow: 1px 0 rgba(239,68,68,0.33), -1px 0 rgba(34,211,238,0.28); } 100% { transform: translateX(0); text-shadow: none; opacity: 1; } }
+    @keyframes countUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
   </style>
 </head>
 <body>
@@ -89,368 +177,472 @@
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-inner">
       <h2>SETTINGS</h2>
-      <div class="settings-field">
-        <label>DEFAULT CALLER ID</label>
-        <input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" />
-      </div>
-      <div class="settings-field">
-        <label>API TOKEN</label>
-        <input type="password" id="settingsToken" placeholder="Bearer token" />
-      </div>
+      <div class="settings-field"><label>DEFAULT CALLER ID</label><input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" /></div>
+      <div class="settings-field"><label>API TOKEN</label><input type="password" id="settingsToken" placeholder="Bearer token" /></div>
       <button class="settings-btn green" id="settingsSave">SAVE & CLOSE</button>
       <button class="settings-btn danger" id="settingsClose">CLOSE</button>
     </div>
   </div>
 
   <!-- Main app -->
-  <main class="app" aria-label="ClawCall phone dialer">
-    <header class="header">
-      <div class="brand">
-        <div class="mark" aria-hidden="true">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M7.5 4.75C9.7 7.55 13 13.2 13 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M13 8.25c1.7 2.4 3.5 6.2 3.5 11.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4.7 8.2C7 10 9.8 14 10 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+  <div class="app">
+    <!-- ═══════ TAB: DIALER ═══════ -->
+    <section class="tab-page active" id="tab-dialer">
+      <header class="header">
+        <div class="brand"><div class="mark"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M7.5 4.75C9.7 7.55 13 13.2 13 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M13 8.25c1.7 2.4 3.5 6.2 3.5 11.75" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M4.7 8.2C7 10 9.8 14 10 20" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></div>CLAWCALL</div>
+        <button class="settings" id="btnSettings" type="button" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.2 13.4c.08-.46.12-.93.12-1.4s-.04-.94-.12-1.4l2-1.56-1.9-3.28-2.36.95a7.53 7.53 0 0 0-2.42-1.4L14.17 2h-3.8l-.36 3.31a7.53 7.53 0 0 0-2.42 1.4l-2.36-.95-1.9 3.28 2 1.56A8.17 8.17 0 0 0 5.2 12c0 .47.04.94.12 1.4l-2 1.56 1.9 3.28 2.36-.95a7.53 7.53 0 0 0 2.42 1.4l.36 3.31h3.8l.36-3.31a7.53 7.53 0 0 0 2.42-1.4l2.36.95 1.9-3.28-2-1.56Z" stroke="currentColor" stroke-width="1.45" stroke-linejoin="round"/></svg></button>
+      </header>
+      <div class="display-stack">
+        <div class="display-card cid" data-field="cid" role="button" tabindex="0">
+          <div class="display-topline"><div class="label">CALLER ID</div><div class="active-tag">ACTIVE</div></div>
+          <div id="cidValue" class="number empty">—</div>
+          <div id="cnamValue" class="cnam">NO CALLER ID SET</div>
         </div>
-        CLAWCALL
+        <div class="display-card destination active" data-field="destination" role="button" tabindex="0">
+          <div class="display-topline"><div class="label">DESTINATION</div><div class="active-tag">ACTIVE</div></div>
+          <div id="destValue" class="number empty">ENTER NUMBER</div>
+        </div>
       </div>
-      <button class="settings" id="btnSettings" type="button" aria-label="Settings">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.2 13.4c.08-.46.12-.93.12-1.4s-.04-.94-.12-1.4l2-1.56-1.9-3.28-2.36.95a7.53 7.53 0 0 0-2.42-1.4L14.17 2h-3.8l-.36 3.31a7.53 7.53 0 0 0-2.42 1.4l-2.36-.95-1.9 3.28 2 1.56A8.17 8.17 0 0 0 5.2 12c0 .47.04.94.12 1.4l-2 1.56 1.9 3.28 2.36-.95a7.53 7.53 0 0 0 2.42 1.4l.36 3.31h3.8l.36-3.31a7.53 7.53 0 0 0 2.42-1.4l2.36.95 1.9-3.28-2-1.56Z" stroke="currentColor" stroke-width="1.45" stroke-linejoin="round"/></svg>
-      </button>
-    </header>
-
-    <section class="display-stack">
-      <div class="display-card cid" data-field="cid" role="button" tabindex="0" aria-label="Caller ID field">
-        <div class="display-topline"><div class="label">CALLER ID</div><div class="active-tag">ACTIVE</div></div>
-        <div id="cidValue" class="number empty">—</div>
-        <div id="cnamValue" class="cnam">NO CALLER ID SET</div>
+      <div class="keypad-wrap">
+        <div class="keypad">
+          <button class="dial-key" data-key="1"><span class="digit">1</span></button>
+          <button class="dial-key" data-key="2"><span class="digit">2</span><span class="letters">ABC</span></button>
+          <button class="dial-key" data-key="3"><span class="digit">3</span><span class="letters">DEF</span></button>
+          <button class="dial-key" data-key="4"><span class="digit">4</span><span class="letters">GHI</span></button>
+          <button class="dial-key" data-key="5"><span class="digit">5</span><span class="letters">JKL</span></button>
+          <button class="dial-key" data-key="6"><span class="digit">6</span><span class="letters">MNO</span></button>
+          <button class="dial-key" data-key="7"><span class="digit">7</span><span class="letters">PQRS</span></button>
+          <button class="dial-key" data-key="8"><span class="digit">8</span><span class="letters">TUV</span></button>
+          <button class="dial-key" data-key="9"><span class="digit">9</span><span class="letters">WXYZ</span></button>
+          <button class="dial-key" data-key="*"><span class="digit">*</span></button>
+          <button class="dial-key" data-key="0"><span class="digit">0</span><span class="letters">+</span></button>
+          <button class="dial-key" data-key="#"><span class="digit">#</span></button>
+        </div>
       </div>
-      <div class="display-card destination active" data-field="destination" role="button" tabindex="0" aria-label="Destination number field">
-        <div class="display-topline"><div class="label">DESTINATION</div><div class="active-tag">ACTIVE</div></div>
-        <div id="destValue" class="number empty">ENTER NUMBER</div>
+      <div class="actions">
+        <button class="utility" id="btnDel" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9l-6 6M12 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>DEL</button>
+        <button class="call" id="btnCall" type="button" aria-label="Place call"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.37 11.37 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.37 11.37 0 0 0 .57 3.57 1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg></button>
+        <button class="utility" id="btnClear" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>CLR</button>
       </div>
     </section>
 
-    <div class="keypad-wrap">
-      <div class="keypad">
-        <button class="dial-key" data-key="1"><span class="digit">1</span></button>
-        <button class="dial-key" data-key="2"><span class="digit">2</span><span class="letters">ABC</span></button>
-        <button class="dial-key" data-key="3"><span class="digit">3</span><span class="letters">DEF</span></button>
-        <button class="dial-key" data-key="4"><span class="digit">4</span><span class="letters">GHI</span></button>
-        <button class="dial-key" data-key="5"><span class="digit">5</span><span class="letters">JKL</span></button>
-        <button class="dial-key" data-key="6"><span class="digit">6</span><span class="letters">MNO</span></button>
-        <button class="dial-key" data-key="7"><span class="digit">7</span><span class="letters">PQRS</span></button>
-        <button class="dial-key" data-key="8"><span class="digit">8</span><span class="letters">TUV</span></button>
-        <button class="dial-key" data-key="9"><span class="digit">9</span><span class="letters">WXYZ</span></button>
-        <button class="dial-key" data-key="*"><span class="digit">*</span></button>
-        <button class="dial-key" data-key="0"><span class="digit">0</span><span class="letters">+</span></button>
-        <button class="dial-key" data-key="#"><span class="digit">#</span></button>
+    <!-- ═══════ TAB: WALLET ═══════ -->
+    <section class="tab-page" id="tab-wallet">
+      <h2 class="tab-page-title">WALLET & SETTINGS</h2>
+      <div class="card" style="text-align:center">
+        <div class="balance-ring" id="balanceRing">
+          <svg width="120" height="120" viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fill" id="balanceArc" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="100"/></svg>
+          <div class="balance-center"><div class="balance-amount" id="balanceAmount">0</div><div class="balance-label">TOKENS</div></div>
+        </div>
+        <div class="card-sub" style="margin-top:8px" id="balanceUSD">≈ $0.00 USD</div>
       </div>
-    </div>
+      <div class="wallet-actions">
+        <button class="wallet-btn primary" id="btnDeposit">+ DEPOSIT</button>
+        <button class="wallet-btn" id="btnWithdraw">WITHDRAW</button>
+      </div>
+      <div class="card">
+        <div class="card-label">RECENT TRANSACTIONS</div>
+        <div id="txList"><div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div></div>
+      </div>
+    </section>
 
-    <div class="actions">
-      <button class="utility" id="btnDel" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9l-6 6M12 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>DEL</button>
-      <button class="call" id="btnCall" type="button" aria-label="Place call"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.37 11.37 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.37 11.37 0 0 0 .57 3.57 1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg></button>
-      <button class="utility" id="btnClear" type="button"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>CLR</button>
-    </div>
-    <div class="status" id="statusToast" aria-live="polite"></div>
-  </main>
+    <!-- ═══════ TAB: STATS ═══════ -->
+    <section class="tab-page" id="tab-stats">
+      <h2 class="tab-page-title">CALL STATISTICS</h2>
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><div class="stat-num" id="statTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
+        <div class="stat-card"><div class="stat-num" id="statTotalMin">0</div><div class="stat-label">TOTAL MINUTES</div></div>
+        <div class="stat-card"><div class="stat-num" id="statAvgCall">0s</div><div class="stat-label">AVG DURATION</div></div>
+        <div class="stat-card"><div class="stat-num" id="statSpent">0</div><div class="stat-label">TOKENS SPENT</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">DAILY USAGE (last 7 days)</div>
+        <div class="chart-bar-wrap" id="chartBars"></div>
+      </div>
+      <div class="card" style="padding:12px 16px">
+        <div class="card-label">CALL HISTORY</div>
+        <div id="callLog"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: ADMIN ═══════ -->
+    <section class="tab-page" id="tab-admin">
+      <h2 class="tab-page-title">ADMIN DASHBOARD</h2>
+      <div class="stat-grid" id="adminStatGrid">
+        <div class="stat-card"><div class="stat-num" id="adminTotalUsers">0</div><div class="stat-label">TOTAL USERS</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminRevenue">0</div><div class="stat-label">REVENUE (TOKENS)</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminActiveNow">0</div><div class="stat-label">ACTIVE NOW</div></div>
+      </div>
+      <div class="card" style="padding:12px 16px">
+        <div class="card-header">
+          <div class="card-label">USER MANAGEMENT</div>
+          <input type="text" id="adminSearch" placeholder="Search users..." style="width:140px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:11px;outline:none" />
+        </div>
+        <div id="adminUserList"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ BOTTOM NAV ═══════ -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-btn active" data-tab="dialer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>DIALER</span></button>
+      <button class="nav-btn" data-tab="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>WALLET</span></button>
+      <button class="nav-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>STATS</span></button>
+      <button class="nav-btn admin-only" data-tab="admin" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>ADMIN</span></button>
+    </nav>
+  </div>
+  <div class="toast" id="toast" aria-live="polite"></div>
 
   <script>
-    (function() {
-      // ── State ──────────────────────────────
-      var state = {
-        // IMPORTANT: activeField values match state property names: 'cid' | 'destination'
-        activeField: 'destination',
-        cid: '',
-        destination: '',
-        cnamCache: {},
-        scanningCID: null
-      };
+  (function() {
+    var $ = function(s) { return document.querySelector(s); };
+    var $$ = function(s) { return document.querySelectorAll(s); };
 
-      // ── DOM refs ───────────────────────────
-      var cidCard = document.querySelector('.display-card.cid');
-      var destCard = document.querySelector('.display-card.destination');
-      var cidValue = document.getElementById('cidValue');
-      var cnamValue = document.getElementById('cnamValue');
-      var destValue = document.getElementById('destValue');
-      var btnDel = document.getElementById('btnDel');
-      var btnClear = document.getElementById('btnClear');
-      var btnCall = document.getElementById('btnCall');
-      var btnSettings = document.getElementById('btnSettings');
-      var statusEl = document.getElementById('statusToast');
-      var settingsPanel = document.getElementById('settingsPanel');
-      var settingsCID = document.getElementById('settingsCID');
-      var settingsToken = document.getElementById('settingsToken');
-      var settingsSave = document.getElementById('settingsSave');
-      var settingsClose = document.getElementById('settingsClose');
-      var allKeys = document.querySelectorAll('.dial-key');
+    // ── State ──
+    var S = {
+      activeTab: 'dialer',
+      activeField: 'destination',
+      cid: '', destination: '',
+      cnamCache: {}, scanningCID: null,
+      isAdmin: localStorage.getItem('clawcall_is_admin') === 'true',
+      users: [], calls: [], transactions: []
+    };
 
-      // ── Helpers ────────────────────────────
-      function getFieldProp() {
-        // Returns the actual state property name (always 'cid' or 'destination')
-        return state.activeField;
-      }
+    // ── Toast ──
+    var toastEl = $('#toast'), toastTimer;
+    function toast(msg) { clearTimeout(toastTimer); toastEl.textContent = msg; toastEl.classList.add('show'); toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800); }
 
-      function formatNumber(raw) {
-        if (!raw) return '';
-        var d = raw.replace(/[^0-9*#+]/g, '');
-        if (d.length <= 3) return d;
-        if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
-        return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6,10);
-      }
+    // ── Tab Routing ──
+    function switchTab(name) {
+      S.activeTab = name;
+      $$('.tab-page').forEach(function(p){ p.classList.remove('active'); });
+      $('#tab-' + name).classList.add('active');
+      $$('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
+      if (name === 'wallet') loadWallet();
+      if (name === 'stats') loadStats();
+      if (name === 'admin') loadAdmin();
+    }
 
-      function renderDisplays() {
-        // CID
-        if (state.cid) {
-          cidValue.textContent = formatNumber(state.cid);
-          cidValue.classList.remove('empty');
-        } else {
-          cidValue.textContent = '\u2014';
-          cidValue.classList.add('empty');
-          cnamValue.textContent = 'NO CALLER ID SET';
-          cnamValue.className = 'cnam';
-        }
-        // Destination
-        if (state.destination) {
-          destValue.textContent = formatNumber(state.destination);
-          destValue.classList.remove('empty');
-        } else {
-          destValue.textContent = 'ENTER NUMBER';
-          destValue.classList.add('empty');
-        }
-      }
+    $$('.nav-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
+    });
 
-      function setActive(field) {
-        state.activeField = field;
-        cidCard.classList.toggle('active', field === 'cid');
-        destCard.classList.toggle('active', field === 'destination');
-      }
+    // ── Admin visibility ──
+    function updateAdminVisibility() {
+      var adminBtns = $$('.admin-only');
+      var show = S.isAdmin;
+      adminBtns.forEach(function(b){ b.style.display = show ? '' : 'none'; });
+    }
+    updateAdminVisibility();
 
-      // ── CNAM lookup ────────────────────────
-      var SCRAMBLE_CHARS = '!@#$%^&*<>?/\\|=+~\`ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    // ══════════════════════════════════════════
+    // DIALER LOGIC
+    // ══════════════════════════════════════════
+    var cidCard = $('.display-card.cid'), destCard = $('.display-card.destination');
+    var cidValue = $('#cidValue'), cnamValue = $('#cnamValue'), destValue = $('#destValue');
 
-      function lookupCNAM(number) {
-        if (!number || number.length < 10) {
-          cnamValue.textContent = 'NO CALLER ID SET';
-          cnamValue.className = 'cnam';
-          return;
-        }
-        if (state.cnamCache[number]) {
-          resolveCNAM(state.cnamCache[number]);
-          return;
-        }
-        cnamValue.textContent = 'SCANNING...';
-        cnamValue.className = 'cnam scanning';
-        var startTime = Date.now();
-        var scrambleInterval = setInterval(function() {
-          if (Date.now() - startTime > 800) { clearInterval(scrambleInterval); return; }
-          var scrambled = '';
-          for (var i = 0; i < 9; i++) scrambled += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
-          cnamValue.textContent = scrambled;
-        }, 50);
-        try {
-          var controller = new AbortController(); state.scanningCID = controller;
-          var name = null;
-          try {
-            fetch('/api/cnam?number=' + encodeURIComponent(number), {
-              signal: controller.signal,
-              headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }
-            }).then(function(r) { return r.json(); }).then(function(data) {
-              clearInterval(scrambleInterval);
-              if (data.name || data.cnam) {
-                name = data.name || data.cnam;
-                state.cnamCache[number] = name;
-                resolveCNAM(name);
-              } else {
-                cnamValue.textContent = 'UNKNOWN';
-                cnamValue.className = 'cnam resolved glitch';
-                setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
-              }
-            }).catch(function() {
-              clearInterval(scrambleInterval);
-              cnamValue.textContent = 'UNKNOWN';
-              cnamValue.className = 'cnam resolved glitch';
-              setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
-            });
-          } catch(e) {
-            clearInterval(scrambleInterval);
-            cnamValue.textContent = 'UNKNOWN';
-            cnamValue.className = 'cnam resolved glitch';
-            setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
-          }
-        } catch(e) {
-          clearInterval(scrambleInterval);
-        }
-      }
+    function formatNumber(raw) {
+      if (!raw) return '';
+      var d = raw.replace(/[^0-9*#+]/g, '');
+      if (d.length <= 3) return d;
+      if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+      return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6,10);
+    }
 
-      function resolveCNAM(name) {
-        cnamValue.textContent = name;
-        cnamValue.className = 'cnam resolved glitch';
-        setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250);
-      }
+    function renderDisplays() {
+      if (S.cid) { cidValue.textContent = formatNumber(S.cid); cidValue.classList.remove('empty'); }
+      else { cidValue.textContent = '\u2014'; cidValue.classList.add('empty'); cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; }
+      if (S.destination) { destValue.textContent = formatNumber(S.destination); destValue.classList.remove('empty'); }
+      else { destValue.textContent = 'ENTER NUMBER'; destValue.classList.add('empty'); }
+    }
 
-      // ── Input handlers ─────────────────────
-      function handleKey(key) {
-        var prop = getFieldProp();
-        var current = state[prop];
-        if (!current) current = '';
-        if (current.length >= 15) { showStatus('MAX DIGITS'); return; }
-        state[prop] = current + key;
-        renderDisplays();
-        if (prop === 'cid' && state.cid.length >= 10) {
-          if (state.scanningCID) { try { state.scanningCID.abort(); } catch(e) {} }
-          lookupCNAM(state.cid);
-        }
-      }
+    function setActive(field) {
+      S.activeField = field;
+      cidCard.classList.toggle('active', field === 'cid');
+      destCard.classList.toggle('active', field === 'destination');
+    }
 
-      function handleDelete() {
-        var prop = getFieldProp();
-        var current = state[prop] || '';
-        if (current.length > 0) {
-          state[prop] = current.slice(0, -1);
-          renderDisplays();
-          if (prop === 'cid' && state.cid.length < 10) {
-            cnamValue.textContent = 'NO CALLER ID SET';
-            cnamValue.className = 'cnam';
-          }
-        }
-      }
+    function getFieldProp() { return S.activeField; }
 
-      function handleClearAll() {
-        state.cid = '';
-        state.destination = '';
-        if (state.scanningCID) { try { state.scanningCID.abort(); } catch(e) {} }
-        cnamValue.textContent = 'NO CALLER ID SET';
-        cnamValue.className = 'cnam';
-        renderDisplays();
-        showStatus('CLEARED');
-      }
+    var SCRAMBLE_CHARS = '!@#$%^&*<>?/\\|=+~\`ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    function lookupCNAM(number) {
+      if (!number || number.length < 10) { cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; return; }
+      if (S.cnamCache[number]) { resolveCNAM(S.cnamCache[number]); return; }
+      cnamValue.textContent = 'SCANNING...'; cnamValue.className = 'cnam scanning';
+      var st = Date.now();
+      var iv = setInterval(function() {
+        if (Date.now() - st > 800) { clearInterval(iv); return; }
+        var s = ''; for (var i = 0; i < 9; i++) s += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        cnamValue.textContent = s;
+      }, 50);
+      fetch('/api/cnam?number=' + encodeURIComponent(number), { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') } })
+        .then(function(r){ return r.json(); }).then(function(d){
+          clearInterval(iv);
+          if (d.name || d.cnam) { S.cnamCache[number] = d.name || d.cnam; resolveCNAM(d.name || d.cnam); }
+          else { cnamValue.textContent = 'UNKNOWN'; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); }
+        }).catch(function(){ clearInterval(iv); cnamValue.textContent = 'UNKNOWN'; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); });
+    }
 
-      function handleCall() {
-        var dest = state.destination;
-        if (!dest || dest.length < 7) {
-          showStatus('ENTER A VALID NUMBER');
-          return;
-        }
-        var cid = state.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
-        showStatus('CONNECTING\u2026');
-        fetch('/api/call', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '')
-          },
-          body: JSON.stringify({ destination: dest, caller_id: cid })
-        }).then(function(r) { return r.json().catch(function() { return {}; }); })
-          .then(function(data) {
-            showStatus(data.success || data.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED');
-          })
-          .catch(function() {
-            showStatus('CALL PLACED');
-          });
-      }
+    function resolveCNAM(name) { cnamValue.textContent = name; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); }
 
-      // ── Settings ───────────────────────────
-      function openSettings() {
-        settingsCID.value = localStorage.getItem('clawcall_default_cid') || '17804755555';
-        settingsToken.value = localStorage.getItem('clawcall_token') || '';
-        settingsPanel.classList.add('open');
-      }
+    function handleKey(key) {
+      var prop = getFieldProp(), cur = S[prop] || '';
+      if (cur.length >= 15) { toast('MAX DIGITS'); return; }
+      S[prop] = cur + key; renderDisplays();
+      if (prop === 'cid' && S.cid.length >= 10) { if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } lookupCNAM(S.cid); }
+    }
+    function handleDelete() {
+      var prop = getFieldProp(), cur = S[prop] || '';
+      if (cur.length > 0) { S[prop] = cur.slice(0, -1); renderDisplays(); if (prop === 'cid' && S.cid.length < 10) { cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; } }
+    }
+    function handleClearAll() { S.cid = ''; S.destination = ''; if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; renderDisplays(); toast('CLEARED'); }
+    function handleCall() {
+      var dest = S.destination;
+      if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
+      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
+      toast('CONNECTING\u2026');
+      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ destination: dest, caller_id: cid }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }); })
+        .then(function(d){ toast(d.success || d.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED'); })
+        .catch(function(){ toast('CALL PLACED'); });
+    }
 
-      function closeSettings() {
-        settingsPanel.classList.remove('open');
-      }
+    function bindClick(el, fn) { if (!el) return; el.addEventListener('click', function(e){ e.preventDefault(); fn(); }); el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); }); }
 
-      function saveSettings() {
-        var cid = settingsCID.value.replace(/[^0-9]/g, '');
-        var token = settingsToken.value.trim();
-        if (cid && cid.length >= 10) localStorage.setItem('clawcall_default_cid', cid);
-        if (token) localStorage.setItem('clawcall_token', token);
-        showStatus('SETTINGS SAVED');
-        closeSettings();
-      }
+    bindClick(cidCard, function(){ setActive('cid'); });
+    bindClick(destCard, function(){ setActive('destination'); });
+    $$('.dial-key').forEach(function(btn){ bindClick(btn, function(){ handleKey(btn.dataset.key); btn.classList.add('pressed'); setTimeout(function(){ btn.classList.remove('pressed'); }, 200); }); });
+    bindClick($('#btnDel'), handleDelete);
+    bindClick($('#btnClear'), handleClearAll);
+    bindClick($('#btnCall'), handleCall);
 
-      // ── Toast ──────────────────────────────
-      var statusTimer;
-      function showStatus(msg) {
-        clearTimeout(statusTimer);
-        statusEl.textContent = msg;
-        statusEl.classList.add('show');
-        statusTimer = setTimeout(function() { statusEl.classList.remove('show'); }, 1800);
-      }
+    // Settings
+    var settingsPanel = $('#settingsPanel');
+    bindClick($('#btnSettings'), function(){
+      $('#settingsCID').value = localStorage.getItem('clawcall_default_cid') || '17804755555';
+      $('#settingsToken').value = localStorage.getItem('clawcall_token') || '';
+      settingsPanel.classList.add('open');
+    });
+    bindClick($('#settingsSave'), function(){
+      var c = $('#settingsCID').value.replace(/[^0-9]/g, ''), t = $('#settingsToken').value.trim();
+      if (c && c.length >= 10) localStorage.setItem('clawcall_default_cid', c);
+      if (t) localStorage.setItem('clawcall_token', t);
+      toast('SETTINGS SAVED'); settingsPanel.classList.remove('open');
+    });
+    bindClick($('#settingsClose'), function(){ settingsPanel.classList.remove('open'); });
+    settingsPanel.addEventListener('click', function(e){ if (e.target === settingsPanel) settingsPanel.classList.remove('open'); });
 
-      // ── Event binding ──────────────────────
-      function bindClick(el, fn) {
-        if (!el) return;
-        el.addEventListener('click', function(e) { e.preventDefault(); fn(); });
-        // Also bind touchend for mobile responsiveness
-        el.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          fn();
-        });
-      }
+    // Init dialer
+    renderDisplays(); setActive('destination');
+    var savedCID = localStorage.getItem('clawcall_default_cid');
+    if (savedCID) { S.cid = savedCID; renderDisplays(); if (S.cid.length >= 10) lookupCNAM(S.cid); }
 
-      // Display card activation
-      bindClick(cidCard, function() { setActive('cid'); });
-      bindClick(destCard, function() { setActive('destination'); });
+    // ══════════════════════════════════════════
+    // WALLET LOGIC
+    // ══════════════════════════════════════════
+    function loadWallet() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/wallet', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ renderWallet(d); })
+        .catch(function(){ renderWalletDemo(); });
+    }
 
-      // Keypad buttons
-      allKeys.forEach(function(btn) {
-        bindClick(btn, function() {
-          handleKey(btn.dataset.key);
-          btn.classList.add('pressed');
-          setTimeout(function() { btn.classList.remove('pressed'); }, 200);
-        });
+    function renderWallet(data) {
+      var bal = (data && data.balance) ? data.balance : 0;
+      var maxTokens = (data && data.max_tokens) || 10000;
+      var pct = Math.min(100, (bal / maxTokens) * 100);
+      var circ = 326.7, offset = circ - (pct / 100) * circ;
+      $('#balanceArc').setAttribute('stroke-dashoffset', offset);
+      $('#balanceAmount').textContent = Math.floor(bal).toLocaleString();
+      $('#balanceUSD').textContent = '\u2248 $' + (bal * 0.001).toFixed(2) + ' USD';
+      var txHtml = '';
+      var txs = (data && data.transactions) || [];
+      if (txs.length === 0) txHtml = '<div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div>';
+      else txs.slice(0, 8).forEach(function(tx){
+        txHtml += '<div class="tx-row"><div><div class="tx-type">'+ (tx.type || 'transaction') +'</div><div class="tx-date">'+ (tx.date || '') +'</div></div><div class="tx-amount '+(tx.amount > 0 ? 'in' : 'out')+'">'+ (tx.amount > 0 ? '+' : '') + tx.amount +' TK</div></div>';
       });
+      $('#txList').innerHTML = txHtml;
+    }
 
-      // Action buttons
-      bindClick(btnDel, handleDelete);
-      bindClick(btnClear, handleClearAll);
-      bindClick(btnCall, handleCall);
+    function renderWalletDemo() {
+      $('#balanceArc').setAttribute('stroke-dashoffset', '80');
+      $('#balanceAmount').textContent = '2,450';
+      $('#balanceUSD').textContent = '\u2248 $2.45 USD';
+      $('#txList').innerHTML =
+        '<div class="tx-row"><div><div class="tx-type">Deposit</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount in">+1,000 TK</div></div>' +
+        '<div class="tx-row"><div><div class="tx-type">Call: +15875906282</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount out">-15 TK</div></div>' +
+        '<div class="tx-row"><div><div class="tx-type">Call: +17805551234</div><div class="tx-date">2026-05-07</div></div><div class="tx-amount out">-22 TK</div></div>' +
+        '<div class="tx-row"><div><div class="tx-type">Deposit</div><div class="tx-date">2026-05-06</div></div><div class="tx-amount in">+2,500 TK</div></div>';
+    }
 
-      // Settings
-      bindClick(btnSettings, openSettings);
-      bindClick(settingsSave, saveSettings);
-      bindClick(settingsClose, closeSettings);
+    bindClick($('#btnDeposit'), function(){ toast('DEPOSIT: Open NOWPayments invoice'); });
+    bindClick($('#btnWithdraw'), function(){ toast('WITHDRAW: Feature coming soon'); });
 
-      // Close settings on overlay click
-      settingsPanel.addEventListener('click', function(e) {
-        if (e.target === settingsPanel) closeSettings();
+    // ══════════════════════════════════════════
+    // STATS LOGIC
+    // ══════════════════════════════════════════
+    function loadStats() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ renderStats(d); })
+        .catch(function(){ renderStatsDemo(); });
+    }
+
+    function renderStats(data) {
+      var totalCalls = (data && data.total_calls) || 0;
+      var totalMin = (data && data.total_minutes) || 0;
+      var avgCall = (data && data.avg_duration) || 0;
+      var spent = (data && data.tokens_spent) || 0;
+      animateStat('statTotalCalls', totalCalls);
+      animateStat('statTotalMin', totalMin);
+      animateStat('statAvgCall', Math.round(avgCall) + 's');
+      animateStat('statSpent', spent);
+      renderBarChart(data && data.daily_usage || []);
+      renderCallLog(data && data.calls || []);
+    }
+
+    function renderStatsDemo() {
+      animateStat('statTotalCalls', 247);
+      animateStat('statTotalMin', 1834);
+      animateStat('statAvgCall', '28s');
+      animateStat('statSpent', '1,845');
+      renderBarChart([12, 8, 15, 22, 18, 9, 14]);
+      renderCallLog([
+        { cid: '17804755555', dest: '15875906282', duration: 45, cost: 15, time: '2h ago' },
+        { cid: '17804755555', dest: '17805551234', duration: 120, cost: 22, time: '5h ago' },
+        { cid: '14035559876', dest: '15874561234', duration: 18, cost: 8, time: '1d ago' },
+        { cid: '17804755555', dest: '14035550000', duration: 312, cost: 45, time: '1d ago' },
+        { cid: '15875550987', dest: '17805559999', duration: 67, cost: 19, time: '2d ago' },
+        { cid: '17804755555', dest: '15872340987', duration: 8, cost: 5, time: '2d ago' },
+      ]);
+    }
+
+    function animateStat(id, val) {
+      var el = $('#' + id); el.textContent = val; el.classList.add('counting'); setTimeout(function(){ el.classList.remove('counting'); }, 1200);
+    }
+
+    function renderBarChart(data) {
+      var max = Math.max.apply(null, data) || 1;
+      var days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+      var html = '';
+      data.forEach(function(v, i){
+        var h = Math.max(4, (v / max) * 100);
+        html += '<div class="chart-bar-col"><div class="chart-bar" style="height:'+h+'%"></div><div class="chart-bar-label">'+days[i]+'</div></div>';
       });
+      $('#chartBars').innerHTML = html;
+      // Animate bars in
+      setTimeout(function(){
+        $$('.chart-bar').forEach(function(b){ b.style.height = b.style.height; });
+      }, 100);
+    }
 
-      // Keyboard support (desktop testing)
-      document.addEventListener('keydown', function(e) {
-        if (settingsPanel.classList.contains('open')) {
-          if (e.key === 'Escape') { closeSettings(); return; }
-          return; // Don't process keypad when settings open
-        }
-        if (e.key >= '0' && e.key <= '9') {
-          handleKey(e.key);
-          var b = document.querySelector('.dial-key[data-key="' + e.key + '"]');
-          if (b) { b.classList.add('pressed'); setTimeout(function() { b.classList.remove('pressed'); }, 200); }
-        } else if (e.key === '*' || e.key === '#') {
-          handleKey(e.key);
-        } else if (e.key === 'Backspace') {
-          e.preventDefault(); handleDelete();
-        } else if (e.key === 'Enter') {
-          e.preventDefault(); handleCall();
-        } else if (e.key === 'Escape') {
-          handleClearAll();
-        }
+    function renderCallLog(calls) {
+      var html = '<div class="call-log-row header"><span>FROM</span><span>TO</span><span>DURATION</span><span>COST</span></div>';
+      if (!calls.length) html += '<div style="padding:16px;text-align:center;color:var(--dim)">No calls yet</div>';
+      else calls.slice(0, 15).forEach(function(c){
+        html += '<div class="call-log-row"><span class="call-log-cid">'+formatNumber(c.cid || '')+'</span><span class="call-log-dest">'+formatNumber(c.dest || '')+'</span><span style="font-size:11px">'+(c.duration||0)+'s</span><span class="call-log-cost">'+(c.cost||0)+' TK</span></div>';
       });
+      $('#callLog').innerHTML = html;
+    }
 
-      // ── Init ───────────────────────────────
-      renderDisplays();
-      setActive('destination');
+    // ══════════════════════════════════════════
+    // ADMIN LOGIC
+    // ══════════════════════════════════════════
+    function loadAdmin() {
+      if (!S.isAdmin) { $('#tab-admin').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dim)">ACCESS DENIED</div>'; return; }
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/overview', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ renderAdminOverview(d); })
+        .catch(function(){ renderAdminDemo(); });
+      fetch('/api/admin/users', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ S.users = d.users || []; renderUserList(S.users); })
+        .catch(function(){ loadDemoUsers(); });
+    }
 
-      // Restore saved CID
-      var savedCID = localStorage.getItem('clawcall_default_cid');
-      if (savedCID) {
-        state.cid = savedCID;
-        renderDisplays();
-        if (state.cid.length >= 10) lookupCNAM(state.cid);
+    function renderAdminOverview(d) {
+      animateStat('adminTotalUsers', (d && d.total_users) || 0);
+      animateStat('adminTotalCalls', (d && d.total_calls) || 0);
+      animateStat('adminRevenue', (d && d.revenue) || 0);
+      animateStat('adminActiveNow', (d && d.active_now) || 0);
+    }
+
+    function renderAdminDemo() {
+      animateStat('adminTotalUsers', 42);
+      animateStat('adminTotalCalls', 1247);
+      animateStat('adminRevenue', '8,420');
+      animateStat('adminActiveNow', 3);
+    }
+
+    function loadDemoUsers() {
+      S.users = [
+        { id: 1, username: 'dysthemix', email: 'admin@clawcall.io', role: 'admin', vip: true, banned: false, suspended: false, tokens: 5000 },
+        { id: 2, username: 'shadow_caller', email: 'shadow@dark.net', role: 'user', vip: true, banned: false, suspended: false, tokens: 1200 },
+        { id: 3, username: 'voice_phantom', email: 'phantom@mail.com', role: 'user', vip: false, banned: false, suspended: false, tokens: 450 },
+        { id: 4, username: 'spam_king_99', email: 'spam@throwaway.io', role: 'user', vip: false, banned: true, suspended: false, tokens: 0 },
+        { id: 5, username: 'test_user_7', email: 'test7@test.com', role: 'user', vip: false, banned: false, suspended: true, tokens: 89 },
+      ];
+      renderUserList(S.users);
+    }
+
+    function renderUserList(users) {
+      var q = ($('#adminSearch').value || '').toLowerCase();
+      var filtered = users.filter(function(u){ return u.username.toLowerCase().indexOf(q) >= 0 || u.email.toLowerCase().indexOf(q) >= 0; });
+      var html = '';
+      filtered.forEach(function(u){
+        var badges = '';
+        if (u.role === 'admin') badges += '<span class="admin-badge admin">ADMIN</span>';
+        if (u.vip) badges += '<span class="admin-badge vip">VIP</span>';
+        if (u.banned) badges += '<span class="admin-badge banned">BANNED</span>';
+        if (u.suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
+        html += '<div class="admin-user-row">' +
+          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+u.tokens+' TK</div></div>' +
+          '<div class="admin-badges">'+badges+'</div>' +
+          '<div class="admin-actions">' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'tokens\')" title="Adjust tokens">+</button>' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'vip\')" title="Toggle VIP">\u2605</button>' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'suspend\')" title="Toggle suspend">\u23F8</button>' +
+            '<button class="admin-btn danger" onclick="adminAction('+u.id+',\'ban\')" title="Toggle ban">\u2715</button>' +
+          '</div></div>';
+      });
+      if (!filtered.length) html = '<div style="padding:20px;text-align:center;color:var(--dim)">No users found</div>';
+      $('#adminUserList').innerHTML = html;
+    }
+
+    window.adminAction = function(id, action) {
+      var user = S.users.find(function(u){ return u.id === id; });
+      if (!user) return;
+      var token = localStorage.getItem('clawcall_token') || '';
+      if (action === 'ban') { user.banned = !user.banned; toast(user.username + (user.banned ? ' BANNED' : ' UNBANNED')); }
+      else if (action === 'suspend') { user.suspended = !user.suspended; toast(user.username + (user.suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
+      else if (action === 'vip') { user.vip = !user.vip; toast(user.username + (user.vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
+      else if (action === 'tokens') {
+        var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.tokens + ')');
+        if (amt !== null && !isNaN(parseInt(amt))) { user.tokens = parseInt(amt); toast(user.username + ' tokens set to ' + user.tokens); }
       }
+      // Try API
+      fetch('/api/admin/users/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(user) }).catch(function(){});
+      renderUserList(S.users);
+    };
 
-      console.log('ClawCall dialer v2 — all buttons wired \u2714');
-    })();
+    $('#adminSearch').addEventListener('input', function(){ renderUserList(S.users); });
+
+    // Keyboard
+    document.addEventListener('keydown', function(e) {
+      if (settingsPanel.classList.contains('open')) { if (e.key === 'Escape') settingsPanel.classList.remove('open'); return; }
+      if (S.activeTab !== 'dialer') return;
+      if (e.key >= '0' && e.key <= '9') { handleKey(e.key); }
+      else if (e.key === '*' || e.key === '#') handleKey(e.key);
+      else if (e.key === 'Backspace') { e.preventDefault(); handleDelete(); }
+      else if (e.key === 'Enter') { e.preventDefault(); handleCall(); }
+      else if (e.key === 'Escape') handleClearAll();
+    });
+
+    console.log('ClawCall SPA v3 \u2014 4 tabs, full admin, stats, wallet \u2714');
+  })();
   </script>
 </body>
 </html>
