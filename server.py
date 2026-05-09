@@ -529,28 +529,46 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             return err
 
         query = parse_qs(urlparse(self.path).query)
-        number = query.get("q", [""])[0].strip()
+        number = query.get("number", [""])[0].strip()
         if not number:
-            return self._send_error("Missing q parameter")
+            return self._send_error("Missing number parameter")
 
         digits = "".join(ch for ch in number if ch.isdigit())
         if not digits or len(digits) not in {10, 11}:
             return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
 
+        label = None
+
+        # Try freecnam.org first
         try:
             req = Request(
                 f"https://freecnam.org/dip?q={digits}",
                 headers={**BROWSER_HEADERS, "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8"},
             )
-            with urlopen(req, timeout=15) as resp:
+            with urlopen(req, timeout=10) as resp:
                 body = resp.read().decode(errors="replace")
-            # Quick parse of XML-like response
-            label = "UNKNOWN"
             if "<label>" in body:
                 label = body.split("<label>")[1].split("</label>")[0].strip()
-            self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
-        except Exception as e:
-            self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
+            if "ratelimit" in body.lower() or "error" in body.lower():
+                label = None  # fall through to next service
+        except Exception:
+            pass
+
+        # Fallback: opencnam.com
+        if not label:
+            try:
+                req = Request(
+                    f"https://api.opencnam.com/v3/phone/{digits}",
+                    headers=BROWSER_HEADERS,
+                )
+                with urlopen(req, timeout=10) as resp:
+                    text = resp.read().decode(errors="replace").strip()
+                if text and text.upper() != "UNKNOWN" and len(text) > 1:
+                    label = text
+            except Exception:
+                pass
+
+        self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
 
     # ── NOWPAYMENTS HANDLERS ────────────────────────────────────
 
