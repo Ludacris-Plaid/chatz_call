@@ -5,3 +5,4 @@ nginx/certs/
 asterisk/tls/
 *.pem
 *.db
+*.bak

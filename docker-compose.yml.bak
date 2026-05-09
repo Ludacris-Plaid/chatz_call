@@ -34,21 +34,14 @@ services:
       - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYmRyc2djaXF3dmFuc2tja292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNTY0MzIsImV4cCI6MjA5MjgzMjQzMn0.B2C-oc1Z9h-hnNE63kLUGMWNSTuc80NUhkGo30crEms
       - NOWPAYMENTS_API_KEY=9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7
       - SIPUP_USERNAME=10428
-      - SIPUP_PASSWORD=Mcjhv877KAK9
+      - SIPUP_PASSWORD=tjmoVhp4zUZp4x
       - ADMIN_USERNAME=dysthemix
-      - AMI_HOST=172.18.0.1
-      - AMI_PORT=5038
-      - AMI_USER=clawcall
-      - AMI_SECRET=clawcall_ami_secret_2026
       - PRICE_PER_MINUTE=0.50
       - VIP_WEEKLY_PRICE=250.00
       - COOKIE_SECRET=clawcall-dev-secret-change-in-production
     volumes:
       - ./server.py:/app/server.py
-      - ./caller_id.py:/app/caller_id.py
-      - ./local_auth.py:/app/local_auth.py
       - ./frontend:/app/frontend
-      - /var/lib/asterisk/realtime.db:/var/lib/asterisk/realtime.db
     networks:
       - voip-net
 

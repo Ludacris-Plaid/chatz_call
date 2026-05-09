@@ -205,8 +205,26 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             return None
         return verify_cookie(session_cookie)
 
+    def _get_auth_token(self):
+        """Extract Bearer token from Authorization header."""
+        auth = self.headers.get("Authorization", "")
+        if auth.startswith("Bearer "):
+            return auth[7:]
+        return None
+
     def _require_auth(self):
         """Get authenticated user. Returns (user_data, error_response)."""
+        # Try Bearer token first
+        token = self._get_auth_token()
+        if token:
+            session = validate_session(token)
+            if session:
+                user_id = session["user_id"]
+                username = session["username"]
+                profile = local_get_profile(user_id) or {}
+                return ({"user_id": user_id, "username": username, **profile}, None)
+
+        # Fall back to cookie
         session = self._get_session()
         if not session:
             return None, self._send_error("Authentication required", 401)
@@ -311,132 +329,58 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not username.isalnum():
             return self._send_error("Username must be alphanumeric")
 
-        email = f"{username}@clawcall.local"
-
-        try:
-            # Create user via Supabase Admin API
-            admin_key = SUPABASE_KEY
-            headers = {
-                **BROWSER_HEADERS,
-                "apikey": ANON_KEY,
-                "Authorization": f"Bearer {admin_key}",
-            }
-            create_body = {
-                "email": email,
-                "password": password,
-                "email_confirm": True,
-                "user_metadata": {"username": username, "display_name": username},
-            }
-            req = Request(
-                f"{SUPABASE_URL}/auth/v1/admin/users",
-                data=json.dumps(create_body).encode(),
-                headers=headers,
-                method="POST",
-            )
-            with urlopen(req, timeout=20) as resp:
-                auth_user = json.loads(resp.read().decode())
-
-            user_id = auth_user["id"]
-
-            # Check if first user → make admin
-            existing = supabase_request("GET", "/rest/v1/profiles?select=id&limit=1")
-            is_first = not existing or (isinstance(existing, list) and len(existing) == 0)
-            is_named_admin = username == ADMIN_USERNAME
-
-            # Update profile with role + SIP extension
-            sip_ext = get_next_sip_extension()
-            sip_pass = secrets.token_hex(8)
-            role = "admin" if (is_first or is_named_admin) else "user"
-            supabase_request("PATCH",
-                f"/rest/v1/profiles?id=eq.{user_id}",
-                {"role": role, "sip_extension": sip_ext, "sip_password": sip_pass},
-                headers_extra={"Prefer": "return=representation"})
-
-            # Create session
-            session_data = {"user_id": user_id, "username": username}
-            cookie_headers = set_cookie_headers(session_data)
-
-            profile = get_user_profile(user_id)
-            self._send_json({
-                "ok": True,
-                "user": {
-                    "id": user_id,
-                    "username": username,
-                    "token_balance": float(profile.get("token_balance", 0)),
-                    "is_admin": role == "admin",
-                    "is_vip": bool(profile.get("is_vip")),
-                    "sip_extension": sip_ext,
-                    "sip_password": sip_pass,
-                },
-            }, 201, cookie_headers)
-
-        except Exception as e:
-            err = str(e)
-            if "already been registered" in err or "duplicate" in err.lower():
+        result = register_user(username, password)
+        if not result.get("ok"):
+            if "already taken" in str(result.get("error", "")).lower():
                 return self._send_error("Username already taken", 409)
-            self._send_error(f"Registration failed: {err}")
+            return self._send_error(f"Registration failed: {result.get('error')}")
+
+        user_id = result["user_id"]
+        login_result = login_user(username, password)
+        if not login_result.get("ok"):
+            return self._send_error("Account created but login failed")
+
+        token = login_result["token"]
+        profile = local_get_profile(user_id) or {}
+        self._send_json({
+            "ok": True,
+            "user": {
+                "id": user_id,
+                "username": username,
+                "token_balance": float(profile.get("token_balance", 0)),
+                "is_admin": profile.get("role") == "admin" or username == ADMIN_USERNAME,
+                "is_vip": False,
+            },
+            "token": token,
+        }, 201)
 
     def _handle_login(self):
         body = self._read_body()
         username = str(body.get("username", "")).strip().lower()
         password = str(body.get("password", ""))
-        email = f"{username}@clawcall.local"
 
         if not username or not password:
             return self._send_error("Username and password required")
 
-        try:
-            # Authenticate via Supabase Auth token endpoint
-            auth_result = supabase_auth_request(
-                "/token?grant_type=password",
-                {"email": email, "password": password},
-            )
-            access_token = auth_result.get("access_token")
-            user_data = auth_result.get("user", {})
-            user_id = user_data.get("id")
+        result = login_user(username, password)
+        if not result.get("ok"):
+            return self._send_error("Invalid username or password", 401)
 
-            if not user_id:
-                return self._send_error("Invalid credentials", 401)
+        user_id = result["user_id"]
+        token = result["token"]
+        profile = local_get_profile(user_id) or {}
 
-            # Get profile
-            profile = get_user_profile(user_id)
-            if not profile:
-                return self._send_error("Account not found", 401)
-            if profile.get("is_banned"):
-                return self._send_error("Account banned", 403)
-
-            # Get SIP extension (generate if not set)
-            sip_ext = profile.get("sip_extension") or get_next_sip_extension()
-            sip_pass = profile.get("sip_password") or secrets.token_hex(8)
-            if not profile.get("sip_extension"):
-                update_profile(user_id, {"sip_extension": sip_ext, "sip_password": sip_pass})
-
-            session_data = {"user_id": user_id, "username": username}
-            cookie_headers = set_cookie_headers(session_data)
-
-            self._send_json({
-                "ok": True,
-                "user": {
-                    "id": user_id,
-                    "username": username,
-                    "token_balance": float(profile.get("token_balance", 0)),
-                    "is_admin": profile.get("role") == "admin",
-                    "is_vip": bool(profile.get("is_vip")),
-                    "vip_expires_at": profile.get("vip_expires_at"),
-                    "account_status": "banned" if profile.get("is_banned") else ("suspended" if profile.get("is_suspended") else "active"),
-                    "sip_extension": sip_ext,
-                    "sip_password": sip_pass,
-                },
-                "vip_active": bool(profile.get("is_vip")),
-                "rate_per_minute_usd": TOKEN_PRICE,
-                "vip_price_usd": VIP_PRICE,
-            }, 200, cookie_headers)
-
-        except ValueError as e:
-            err = str(e)
-            if "401" in err or "Invalid login" in err.lower() or "invalid" in err.lower():
-                return self._send_error("Invalid username or password", 401)
-            self._send_error(f"Login failed: {err}")
+        self._send_json({
+            "ok": True,
+            "user": {
+                "id": user_id,
+                "username": username,
+                "token_balance": float(profile.get("token_balance", 0)),
+                "is_admin": profile.get("role") == "admin" or username == ADMIN_USERNAME,
+                "is_vip": False,
+            },
+            "token": token,
+        }, 200)
 
     def _handle_logout(self):
         expire_cookie = ("Set-Cookie", "clawcall_session=; HttpOnly; Path=/; Max-Age=0")
