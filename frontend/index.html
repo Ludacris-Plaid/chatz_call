@@ -314,9 +314,12 @@
 
     // ── Tab Routing ──
     function switchTab(name) {
+      // Block non-admin from admin tab
+      if (name === 'admin' && !S.isAdmin) { toast('ADMIN ACCESS REQUIRED'); return; }
       S.activeTab = name;
       $$('.tab-page').forEach(function(p){ p.classList.remove('active'); });
-      $('#tab-' + name).classList.add('active');
+      var tabEl = $('#tab-' + name);
+      tabEl.classList.add('active');
       $$('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
       if (name === 'wallet') loadWallet();
       if (name === 'stats') loadStats();
@@ -407,7 +410,9 @@
         .catch(function(){ toast('CALL PLACED'); });
     }
 
-    function bindClick(el, fn) { if (!el) return; el.addEventListener('click', function(e){ e.preventDefault(); fn(); }); el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); }); }
+    // Single click handler — modern mobile with user-scalable=no has no 300ms delay.
+    // Using both click+touchend causes DOUBLE-FIRE on mobile (both events trigger).
+    function bindClick(el, fn) { if (!el) return; el.addEventListener('click', function(e){ e.preventDefault(); fn(); }); }
 
     bindClick(cidCard, function(){ setActive('cid'); });
     bindClick(destCard, function(){ setActive('destination'); });
@@ -437,10 +442,18 @@
     var savedCID = localStorage.getItem('clawcall_default_cid');
     if (savedCID) { S.cid = savedCID; renderDisplays(); if (S.cid.length >= 10) lookupCNAM(S.cid); }
 
+    // ── Loading helper ──
+    function showLoading(containerId, rows) {
+      var html = '';
+      for (var i = 0; i < (rows || 3); i++) html += '<div class="skeleton" style="height:40px;margin-bottom:8px;width:'+(90 - i*10)+'%"></div>';
+      document.getElementById(containerId).innerHTML = html;
+    }
+
     // ══════════════════════════════════════════
     // WALLET LOGIC
     // ══════════════════════════════════════════
     function loadWallet() {
+      showLoading('txList', 4);
       var token = localStorage.getItem('clawcall_token') || '';
       fetch('/api/wallet', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function(r){ return r.json(); })
@@ -483,6 +496,7 @@
     // STATS LOGIC
     // ══════════════════════════════════════════
     function loadStats() {
+      showLoading('callLog', 5);
       var token = localStorage.getItem('clawcall_token') || '';
       fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function(r){ return r.json(); })
@@ -529,13 +543,15 @@
       var html = '';
       data.forEach(function(v, i){
         var h = Math.max(4, (v / max) * 100);
-        html += '<div class="chart-bar-col"><div class="chart-bar" style="height:'+h+'%"></div><div class="chart-bar-label">'+days[i]+'</div></div>';
+        html += '<div class="chart-bar-col"><div class="chart-bar" style="height:0" data-h="'+h+'"></div><div class="chart-bar-label">'+days[i]+'</div></div>';
       });
       $('#chartBars').innerHTML = html;
-      // Animate bars in
-      setTimeout(function(){
-        $$('.chart-bar').forEach(function(b){ b.style.height = b.style.height; });
-      }, 100);
+      // Animate bars: render at 0, then set target height to trigger CSS transition
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          $$('.chart-bar').forEach(function(b){ b.style.height = b.dataset.h + '%'; });
+        });
+      });
     }
 
     function renderCallLog(calls) {
@@ -552,6 +568,7 @@
     // ══════════════════════════════════════════
     function loadAdmin() {
       if (!S.isAdmin) { $('#tab-admin').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dim)">ACCESS DENIED</div>'; return; }
+      showLoading('adminUserList', 5);
       var token = localStorage.getItem('clawcall_token') || '';
       fetch('/api/admin/overview', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function(r){ return r.json(); })
@@ -616,7 +633,10 @@
       var user = S.users.find(function(u){ return u.id === id; });
       if (!user) return;
       var token = localStorage.getItem('clawcall_token') || '';
-      if (action === 'ban') { user.banned = !user.banned; toast(user.username + (user.banned ? ' BANNED' : ' UNBANNED')); }
+      if (action === 'ban') {
+        if (!user.banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
+        user.banned = !user.banned; toast(user.username + (user.banned ? ' BANNED' : ' UNBANNED'));
+      }
       else if (action === 'suspend') { user.suspended = !user.suspended; toast(user.username + (user.suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
       else if (action === 'vip') { user.vip = !user.vip; toast(user.username + (user.vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
       else if (action === 'tokens') {
