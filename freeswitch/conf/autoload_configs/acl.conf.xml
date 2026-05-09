@@ -1,0 +1,40 @@
+<configuration name="acl.conf" description="Network Access Control Lists">
+  <network-lists>
+    <!-- Allow all domains to register (WebRTC clients from any origin) -->
+    <list name="domains" default="allow">
+      <node type="allow" domain="$${domain}"/>
+    </list>
+
+    <!-- RFC 1918 private networks -->
+    <list name="rfc1918" default="allow">
+      <node type="allow" cidr="10.0.0.0/8"/>
+      <node type="allow" cidr="172.16.0.0/12"/>
+      <node type="allow" cidr="192.168.0.0/16"/>
+      <node type="allow" cidr="169.254.0.0/16"/>
+    </list>
+
+    <!-- Localhost -->
+    <list name="localnet" default="allow">
+      <node type="allow" cidr="127.0.0.0/8"/>
+      <node type="allow" cidr="::1/128"/>
+    </list>
+
+    <!-- Loopback -->
+    <list name="loopback" default="allow">
+      <node type="allow" cidr="127.0.0.0/8"/>
+      <node type="allow" cidr="::1/128"/>
+    </list>
+
+    <!-- NAT: allow all private ranges -->
+    <list name="nat" default="allow">
+      <node type="allow" cidr="10.0.0.0/8"/>
+      <node type="allow" cidr="172.16.0.0/12"/>
+      <node type="allow" cidr="192.168.0.0/16"/>
+    </list>
+
+    <!-- WAN: deny by default, but allow our domain -->
+    <list name="wan" default="deny">
+      <node type="allow" domain="$${domain}"/>
+    </list>
+  </network-lists>
+</configuration>

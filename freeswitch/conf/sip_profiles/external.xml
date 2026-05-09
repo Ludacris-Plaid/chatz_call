@@ -1,0 +1,50 @@
+<include>
+  <!--
+    External SIP Profile – SIP Trunk to sipup.org
+    Listens on port 5080 (UDP/TCP) for SIP signaling to the PSTN provider.
+  -->
+  <profile name="external">
+    <settings>
+      <param name="sip-port" value="5080"/>
+      <param name="sip-ip" value="$${local_ip_v4}"/>
+      <param name="ext-sip-ip" value="$${public_ip}"/>
+      <param name="rtp-ip" value="$${public_ip}"/>
+      <param name="ext-rtp-ip" value="$${public_ip}"/>
+
+      <param name="context" value="public"/>
+      <param name="apply-nat-acl" value="rfc1918"/>
+      <param name="aggressive-nat-detection" value="true"/>
+      <param name="enable-soa" value="true"/>
+
+      <param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
+      <param name="outbound-codec-prefs" value="$${global_codec_prefs}"/>
+
+      <param name="dtmf-type" value="rfc2833"/>
+      <param name="rtp-timer-name" value="soft"/>
+
+      <!-- Registration with sipup.org gateway -->
+      <param name="register-transport" value="udp"/>
+      <param name="register-proxy" value="sip:$${sipup_server}:$${sipup_port}"/>
+
+      <!-- NAT keepalive -->
+      <param name="nat-options-ping" value="true"/>
+      <param name="nat-options-ping-interval" value="30"/>
+    </settings>
+
+    <!-- Gateway to SIP.UP -->
+    <gateways>
+      <gateway name="sipup">
+        <param name="username" value="$${sipup_username}"/>
+        <param name="password" value="$${sipup_password}"/>
+        <param name="proxy" value="sip:$${sipup_server}:$${sipup_port}"/>
+        <param name="register" value="true"/>
+        <param name="caller-id-in-from" value="true"/>
+        <param name="extension" value="$${sipup_username}"/>
+        <param name="contact-params" value="domain=$${domain}"/>
+        <param name="register-transport" value="udp"/>
+        <param name="retry-seconds" value="30"/>
+        <param name="ping" value="25"/>
+      </gateway>
+    </gateways>
+  </profile>
+</include>

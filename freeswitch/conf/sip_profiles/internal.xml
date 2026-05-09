@@ -1,0 +1,61 @@
+<include>
+  <!--
+    Internal SIP Profile – WebRTC / WSS
+    Listens on TLS port 7443 for secure WebSocket connections from SIP.js browsers.
+  -->
+  <profile name="internal">
+    <settings>
+      <!-- SIP port and transport -->
+      <param name="sip-port" value="7443"/>
+      <param name="tls" value="true"/>
+      <param name="wss-binding" value=":7443"/>
+      <param name="ws-binding" value=":7443"/>
+
+      <!-- TLS certificates -->
+      <param name="tls-cert-file" value="/etc/freeswitch/tls/wss.pem"/>
+      <param name="tls-key-file" value="/etc/freeswitch/tls/wss.pem"/>
+      <param name="tls-ca-file" value="/etc/freeswitch/tls/ca.crt"/>
+
+      <!-- Accept connections from any domain (WebRTC clients register dynamically) -->
+      <param name="context" value="public"/>
+      <param name="accept-blind-auth" value="true"/>
+      <param name="accept-blind-reg" value="true"/>
+
+      <!-- SIP options handling -->
+      <param name="enable-soa" value="true"/>
+      <param name="apply-nat-acl" value="rfc1918"/>
+      <param name="aggressive-nat-detection" value="true"/>
+
+      <!-- RTP configuration -->
+      <param name="rtp-ip" value="$${public_ip}"/>
+      <param name="ext-rtp-ip" value="$${public_ip}"/>
+      <param name="sip-ip" value="$${local_ip_v4}"/>
+      <param name="ext-sip-ip" value="$${public_ip}"/>
+
+      <!-- Media and codecs -->
+      <param name="inbound-codec-prefs" value="$${global_codec_prefs}"/>
+      <param name="outbound-codec-prefs" value="$${global_codec_prefs}"/>
+      <param name="rtp-timer-name" value="soft"/>
+      <param name="media-option" value="resume-media-on-hold"/>
+
+      <!-- DTMF mode -->
+      <param name="dtmf-type" value="rfc2833"/>
+
+      <!-- NAT traversal -->
+      <param name="nat-options-ping" value="true"/>
+      <param name="enable-timer" value="false"/>
+
+      <!-- WebRTC specific -->
+      <param name="auth-calls" value="false"/>
+      <param name="inbound-reg-force-matching-params" value="false"/>
+      <param name="disable-transcoding" value="false"/>
+      <param name="disable-rtp-auto-adjust" value="false"/>
+
+      <!-- Registrar -->
+      <param name="max-registrations" value="1000"/>
+      <param name="max-registrations-per-user" value="5"/>
+      <param name="min-registration-expires" value="60"/>
+      <param name="max-registration-expires" value="3600"/>
+    </settings>
+  </profile>
+</include>

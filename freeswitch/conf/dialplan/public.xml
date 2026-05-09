@@ -1,0 +1,48 @@
+<include>
+  <!--
+    Public Dialplan
+    Outbound: calls destined for PSTN route through the sipup gateway.
+    Inbound: calls from the SIP trunk ring registered extensions.
+  -->
+  <extension name="outbound_to_pstn">
+    <condition field="destination_number" expression="^(\+?1?\d{10,15})$">
+      <action application="set" data="effective_caller_id_number=$${sipup_username}"/>
+      <action application="set" data="effective_caller_id_name=ClawCall"/>
+      <action application="bridge" data="sofia/gateway/sipup/$1"/>
+      <anti-action application="log" data="ERR No route for call to ${destination_number}"/>
+    </condition>
+  </extension>
+
+  <!-- Emergency services (911 in US/Canada) -->
+  <extension name="emergency">
+    <condition field="destination_number" expression="^911$">
+      <action application="bridge" data="sofia/gateway/sipup/911"/>
+    </condition>
+  </extension>
+
+  <!-- Inbound: ring registered users for a few seconds -->
+  <extension name="inbound_ring_all">
+    <condition field="destination_number" expression="^(\d{3,10})$">
+      <action application="set" data="ringback=$${us-ring}"/>
+      <action application="sleep" data="1000"/>
+      <action application="bridge" data="user/$1@$${domain}"/>
+    </condition>
+  </extension>
+
+  <!-- Echo test extension for debugging -->
+  <extension name="echo_test">
+    <condition field="destination_number" expression="^9196$">
+      <action application="answer"/>
+      <action application="echo"/>
+    </condition>
+  </extension>
+
+  <!-- Info / IVR menu placeholder -->
+  <extension name="info_test">
+    <condition field="destination_number" expression="^9197$">
+      <action application="answer"/>
+      <action application="playback" data="$${hold-music}"/>
+      <action application="hangup"/>
+    </condition>
+  </extension>
+</include>

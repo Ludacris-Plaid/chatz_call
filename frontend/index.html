@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>ClawCall — Encrypted VoIP</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500&family=Fira+Code&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-orb orb-a"></div>
+<div class="bg-orb orb-b"></div>
+
+<!-- AUTH GATE -->
+<section id="authGate" class="auth-gate">
+  <div class="auth-card">
+    <p class="eyebrow">ENCRYPTED VOIP</p>
+    <h2 id="authTitle">Sign in to ClawCall</h2>
+    <p id="authHelp" class="inline-status">Username and password required.</p>
+    <form id="authForm" class="stack-form auth-form" autocomplete="off">
+      <label class="field-label">Username
+        <input id="authUsername" class="terminal-input" type="text" autocomplete="username" required />
+      </label>
+      <label class="field-label">Password
+        <input id="authPassword" class="terminal-input" type="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" id="authSubmitBtn" class="primary-btn">SIGN IN</button>
+      <button type="button" id="authModeBtn" class="ghost-btn">CREATE ACCOUNT</button>
+    </form>
+  </div>
+</section>
+
+<!-- MAIN APP -->
+<main class="app-shell hidden">
+  <header class="app-topbar">
+    <div>
+      <p class="eyebrow">CLAWCALL // WEB CLIENT</p>
+      <h1>VOIP uplink</h1>
+    </div>
+    <div class="topbar-cluster">
+      <div class="balance-chip">
+        <span id="headerTokenBalance" class="balance-chip-value">0</span>
+        <span class="balance-chip-copy">TOKENS</span>
+      </div>
+      <button type="button" id="signOutBtn" class="ghost-btn mini">SIGN OUT</button>
+    </div>
+  </header>
+
+  <nav class="nav-bar">
+    <button class="nav-btn active" data-target="dialerScreen">DIALER</button>
+    <button class="nav-btn" data-target="walletScreen">WALLET</button>
+    <button class="nav-btn" data-target="historyScreen">HISTORY</button>
+    <button class="nav-btn hidden" id="adminNavBtn" data-target="adminScreen">ADMIN</button>
+  </nav>
+
+  <!-- DIALER SCREEN -->
+  <section class="app-screen active" id="dialerScreen" data-screen="dialer">
+    <!-- Call HUD -->
+    <article id="callHud" class="call-hud hidden">
+      <div class="signal-ring"><div class="signal-core"><span id="callHudState">DIALING</span></div></div>
+      <p id="callHudDestination" class="hud-destination"></p>
+      <div class="hud-metrics">
+        <div class="hud-stat"><span>TIME</span><strong id="callHudTimer">00:00</strong></div>
+        <div class="hud-stat"><span>COST</span><strong id="callHudCost">$0.00</strong></div>
+      </div>
+      <div class="hud-cid"><span>CID</span><strong id="callHudCid"><span id="callHudCidPrimary" class="active"></span></strong></div>
+      <div class="hud-controls">
+        <button type="button" id="hudMuteBtn" class="ghost-btn">MUTE</button>
+        <button type="button" id="hudHangupBtn" class="danger-btn wide">TERMINATE</button>
+      </div>
+      <p id="callHudSummary" class="inline-status"></p>
+    </article>
+
+    <div id="dialerIdleStack">
+      <!-- Dialer Card -->
+      <article class="hero-card lift-panel">
+        <div class="hero-header">
+          <div class="dialer-hero-copy">
+            <div class="caller-id-label-row">
+              <p class="field-label hero-display-label-inline">Outbound caller ID</p>
+              <div class="dialer-status-inline">
+                <span id="dialerStatusLight" class="dialer-status-light offline"></span>
+                <span id="dialerStatusLabel" class="dialer-status-copy">OFFLINE</span>
+              </div>
+            </div>
+            <button type="button" id="callerIdHero" class="terminal-input destination-input caller-id-hero-display caller-id-hero-button">
+              <span id="callerIdHeroPrimary" class="caller-id-hero-line active">62185</span>
+              <span id="callerIdHeroSecondary" class="caller-id-hero-line">UNKNOWN</span>
+            </button>
+          </div>
+        </div>
+        <label class="field-label">Destination number
+          <input id="destination" class="terminal-input destination-input" type="text" placeholder="1-555-555-5555" />
+        </label>
+        <p id="callState" class="hero-state hidden">IDLE</p>
+        <label class="field-label hidden-config">
+          <input id="callerIdLabelInput" class="terminal-input" type="text" placeholder="e.g. ACME SUPPORT" />
+        </label>
+        <div class="keypad" id="keypad">
+          <button type="button" data-key="1">1</button>
+          <button type="button" data-key="2">2<span>ABC</span></button>
+          <button type="button" data-key="3">3<span>DEF</span></button>
+          <button type="button" data-key="4">4<span>GHI</span></button>
+          <button type="button" data-key="5">5<span>JKL</span></button>
+          <button type="button" data-key="6">6<span>MNO</span></button>
+          <button type="button" data-key="7">7<span>PQRS</span></button>
+          <button type="button" data-key="8">8<span>TUV</span></button>
+          <button type="button" data-key="9">9<span>WXYZ</span></button>
+          <button type="button" data-key="*">*</button>
+          <button type="button" data-key="0">0<span>+</span></button>
+          <button type="button" data-key="#">#</button>
+        </div>
+        <div class="action-grid compact-dialer-actions">
+          <button type="button" id="callBtn" class="call-btn wide" disabled>INIT CALL</button>
+          <button type="button" id="clearBtn" class="ghost-btn">CLEAR</button>
+        </div>
+        <p id="callerIdStatus" class="inline-status"></p>
+      </article>
+
+      <article id="terminalPanel" class="glass-card lift-panel terminal-panel locked">
+        <div class="section-head"><h2>Terminal Log</h2><button id="clearLogBtn" class="ghost-btn mini">CLEAR</button></div>
+        <pre id="eventLog" class="event-log"></pre>
+      </article>
+
+      <section id="incomingBanner" class="incoming-banner hidden">
+        <div><p class="eyebrow">Incoming call</p><p id="incomingFrom" class="incoming-from"></p></div>
+        <div class="incoming-actions">
+          <button id="answerBtn" class="call-btn">ANSWER</button>
+          <button id="rejectBtn" class="danger-btn">REJECT</button>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- WALLET SCREEN -->
+  <section class="app-screen" id="walletScreen" data-screen="wallet">
+    <article class="wallet-card lift-panel">
+      <div class="wallet-row">
+        <div><p class="eyebrow">VIP Unlimited</p><p id="vipStatus" class="wallet-value vip-value">INACTIVE</p></div>
+        <div class="rate-pill"><span>7 DAY PASS</span><strong id="vipPrice">$250</strong></div>
+      </div>
+      <button id="vipBuyBtn" class="primary-btn vip-buy-btn">BUY VIP UNLIMITED</button>
+      <p id="vipExpiry" class="inline-status">Unlimited calling unlocks for 7 days.</p>
+    </article>
+    <article class="wallet-card lift-panel">
+      <div class="wallet-row">
+        <div><p class="eyebrow">Token Vault</p><p id="tokenBalance" class="wallet-value">0</p></div>
+        <div class="rate-pill"><span>RATE</span><strong id="minuteRate">$0.50/min</strong></div>
+      </div>
+      <form id="topupForm" class="topup-form">
+        <label class="field-label">Buy tokens <input id="tokenAmount" class="terminal-input" type="number" min="1" value="20" /></label>
+        <label class="field-label">Pay with
+          <select id="payCurrency" class="terminal-input">
+            <option value="ltc">LTC</option>
+            <option value="btc">BTC</option>
+          </select>
+        </label>
+        <button type="submit" id="topupBtn" class="primary-btn">GENERATE CRYPTO INVOICE</button>
+      </form>
+      <p id="topupStatus" class="inline-status">1 token = 1 minute. Balance settles after payment confirms.</p>
+    </article>
+  </section>
+
+  <!-- HISTORY SCREEN -->
+  <section class="app-screen" id="historyScreen" data-screen="history">
+    <article class="glass-card lift-panel">
+      <div class="section-head"><h2>Call History</h2><button id="clearHistoryBtn" class="ghost-btn mini">PURGE</button></div>
+      <div id="callHistory" class="history-list"></div>
+    </article>
+  </section>
+
+  <!-- ADMIN SCREEN -->
+  <section class="app-screen" id="adminScreen" data-screen="admin">
+    <article class="hero-card lift-panel">
+      <div class="hero-header"><p class="eyebrow">Admin Control Plane</p><p class="hero-state">CLAWCALL COMMAND</p></div>
+      <div class="admin-stats">
+        <div class="metric-card"><p class="eyebrow">Users</p><h2 id="adminUsersValue">0</h2></div>
+        <div class="metric-card"><p class="eyebrow">Revenue</p><h2 id="adminRevenueValue">$0</h2></div>
+        <div class="metric-card"><p class="eyebrow">VIP</p><h2 id="adminVipValue">0</h2></div>
+      </div>
+      <button id="adminRefreshBtn" class="primary-btn">REFRESH</button>
+      <div id="adminUsersList" class="admin-list"></div>
+    </article>
+  </section>
+</main>
+
+<!-- PAYMENT MODAL -->
+<div id="paymentModal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2 id="modalTitle">Crypto Payment</h2>
+      <button id="modalCloseBtn" class="ghost-btn mini">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="qrContainer" class="qr-container"></div>
+      <div class="payment-details">
+        <div class="detail-row"><span>Address</span><code id="modalAddress"></code><button id="copyAddrBtn" class="ghost-btn mini">COPY</button></div>
+        <div class="detail-row"><span>Amount</span><strong id="modalAmount"></strong></div>
+        <div class="detail-row"><span>Currency</span><span id="modalCurrency" class="badge"></span></div>
+        <div class="detail-row"><span>Status</span><span id="modalStatus" class="badge">waiting</span></div>
+      </div>
+      <a id="modalExplorerLink" class="primary-btn" target="_blank" rel="noreferrer">VIEW ON BLOCKCHAIN</a>
+      <p id="modalInvoiceUrl" class="inline-status"></p>
+    </div>
+  </div>
+</div>
+
+<audio id="remoteAudio" autoplay playsinline></audio>
+
+<script src="https://cdn.jsdelivr.net/npm/sip.js@0.21.2/dist/sip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<include>
+  <!--
+    Global Variables for ClawCall
+    These are read by all FreeSWITCH modules.
+  -->
+
+  <!-- Domain -->
+  <X-PRE-PROCESS cmd="set" data="domain=$${domain_default}"/>
+
+  <!-- External IP (set via environment variable PUBLIC_IP) -->
+  <X-PRE-PROCESS cmd="set" data="public_ip=$${domain}"/>
+
+  <!-- Local IP (auto-detected) -->
+  <X-PRE-PROCESS cmd="set" data="local_ip_v4=auto"/>
+
+  <!-- Codec preferences (opus first for WebRTC, then PCMU/PCMA for PSTN) -->
+  <X-PRE-PROCESS cmd="set" data="global_codec_prefs=OPUS,PCMU,PCMA,G722"/>
+  <X-PRE-PROCESS cmd="set" data="outbound_codec_prefs=PCMU,PCMA,OPUS,G722"/>
+
+  <!-- RTP port range for media streaming -->
+  <X-PRE-PROCESS cmd="set" data="rtp_start_port=16384"/>
+  <X-PRE-PROCESS cmd="set" data="rtp_end_port=32768"/>
+
+  <!-- ESL (Event Socket Library) password for backend control -->
+  <X-PRE-PROCESS cmd="set" data="password=ClueCon"/>
+
+  <!-- SIP.UP trunk credentials (from environment) -->
+  <X-PRE-PROCESS cmd="set" data="sipup_server=$${sipup_server}"/>
+  <X-PRE-PROCESS cmd="set" data="sipup_port=$${sipup_port}"/>
+  <X-PRE-PROCESS cmd="set" data="sipup_username=$${sipup_username}"/>
+  <X-PRE-PROCESS cmd="set" data="sipup_password=$${sipup_password}"/>
+
+  <!-- Hold music (default FreeSWITCH) -->
+  <X-PRE-PROCESS cmd="set" data="hold_music=$${hold-music}"/>
+
+  <!-- Ring tones -->
+  <X-PRE-PROCESS cmd="set" data="ringback=$${us-ring}"/>
+
+  <!-- SIP default transport -->
+  <X-PRE-PROCESS cmd="set" data="default_provider=sipup"/>
+</include>
