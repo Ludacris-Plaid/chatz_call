@@ -15,17 +15,6 @@ from caller_id import set_caller_id, get_caller_id, originate_call
 from local_auth import register_user, login_user, validate_session, get_user_profile as local_get_profile, logout as local_logout
 import subprocess, sqlite3
 
-# ── Load .env (stdlib, no pip deps) ───────────────────────────────
-_env_path = Path(__file__).parent / ".env"
-if _env_path.exists():
-    for _line in _env_path.read_text().splitlines():
-        _line = _line.strip()
-        if _line and not _line.startswith("#") and "=" in _line:
-            _k, _v = _line.split("=", 1)
-            _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
-            if _k and _k not in os.environ:
-                os.environ[_k] = _v
-
 # ── Config ────────────────────────────────────────────────────────
 DOMAIN          = os.environ.get("DOMAIN", "hushcircuits.online")
 PUBLIC_IP       = os.environ.get("PUBLIC_IP", "18.223.24.42")
@@ -34,12 +23,12 @@ SUPABASE_URL    = os.environ.get("SUPABASE_URL", "https://ejbdrsgciqwvanskckov.s
 SUPABASE_KEY    = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 ANON_KEY        = os.environ.get("SUPABASE_ANON_KEY", "")
 NOWPAYMENTS_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7")
-TWILIO_SID      = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TOKEN_PRICE     = float(os.environ.get("PRICE_PER_MINUTE", "0.50"))
 VIP_PRICE       = float(os.environ.get("VIP_WEEKLY_PRICE", "250.00"))
 SIPUP_USER      = os.environ.get("SIPUP_USERNAME", "10428")
 SIPUP_PASS      = os.environ.get("SIPUP_PASSWORD", "Mcjhv877KAK9")
+TWILIO_SID      = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "")
 COOKIE_SECRET   = os.environ.get("COOKIE_SECRET", secrets.token_hex(32))
 ADMIN_USERNAME  = os.environ.get("ADMIN_USERNAME", "dysthemix").strip().lower()
 
@@ -269,7 +258,6 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/me": self._handle_me,
             "/api/sip/credentials": self._handle_sip_credentials,
             "/api/sip/config": self._handle_sip_config,
-            "/api/health": self._handle_health,
             "/api/cnam": self._handle_cnam,
             "/api/topups/": self._handle_poll_topup,
             "/api/admin/users": self._handle_admin_users,
@@ -536,44 +524,64 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         })
 
     # ── CNAM LOOKUP ─────────────────────────────────────────────
-
-    def _handle_health(self):
-        """Health check endpoint — returns server status."""
-        import subprocess as _sp
-        try:
-            fs = _sp.run(['pgrep','-c','asterisk'],capture_output=True).returncode==0
-        except:
-            fs = False
-        try:
-            mem = _sp.run(['free','-m'],capture_output=True,text=True).stdout
-            mem = [l for l in mem.split('\n') if 'Mem:' in l]
-            mem = mem[0].split()[2]+'/'+mem[0].split()[1]+' MB' if mem else 'N/A'
-        except:
-            mem = 'N/A'
-        self._send_json({"ok":True,"server":"voip","ip":"34.225.190.118","instance":"t3.small","region":"us-east-1","os":"Ubuntu 22.04","freeswitch":fs,"backend":True,"dialer":True,"memory":mem})
+    # Cache in SQLite to avoid freecnam.org rate limits.
+    # Rate limit: 1 API call per 2 seconds max.
 
     def _handle_cnam(self):
-        """CNAM lookup: freecnam.org (primary, free US+CA) → Twilio (fallback, US only)."""
         query = parse_qs(urlparse(self.path).query)
-        number = query.get("number", [""])[0].strip()
+        number = query.get("q", [""])[0].strip()
         if not number:
-            return self._send_error("Missing number parameter")
+            return self._send_error("Missing q parameter")
 
         digits = "".join(ch for ch in number if ch.isdigit())
         if not digits or len(digits) not in {10, 11}:
             return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
 
-        if len(digits) == 10:
-            q = f"1{digits}"
-        else:
-            q = digits
-
-        label = None
-
-        # ── Primary: freecnam.org (free, US + Canada) ──
+        # Check cache first
         try:
-            req = Request(f"https://freecnam.org/dip?q={q}", headers={"User-Agent": "hushcircuits-pro/1.0"})
-            with urlopen(req, timeout=5) as resp:
+            conn = sqlite3.connect("/var/lib/asterisk/realtime.db")
+            cur = conn.cursor()
+            cur.execute("SELECT label, raw_response FROM cnam_cache WHERE number = ?", (digits,))
+            row = cur.fetchone()
+            if row:
+                # Update hit count
+                cur.execute("UPDATE cnam_cache SET hit_count = hit_count + 1 WHERE number = ?", (digits,))
+                conn.commit()
+                conn.close()
+                return self._send_json({"ok": True, "number": digits, "label": row[0], "cached": True})
+            conn.close()
+        except Exception:
+            pass  # Cache miss or DB error — fall through to API
+
+        # Rate limit: enforce 2 seconds between API calls
+        try:
+            conn = sqlite3.connect("/var/lib/asterisk/realtime.db")
+            cur = conn.cursor()
+            cur.execute("SELECT last_call FROM api_rate_limit WHERE endpoint = 'freecnam'")
+            row = cur.fetchone()
+            now = time.time()
+            if row and (now - row[0]) < 2.0:
+                conn.close()
+                return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN", "rate_limited": True})
+            # Update rate limit timestamp
+            cur.execute(
+                "INSERT INTO api_rate_limit (endpoint, last_call) VALUES ('freecnam', ?) "
+                "ON CONFLICT(endpoint) DO UPDATE SET last_call = ?",
+                (now, now),
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass  # If rate limit DB fails, proceed anyway
+
+        # ── Primary: freecnam.org (free, US+CA) ──
+        label = None
+        try:
+            req = Request(
+                f"https://freecnam.org/dip?q={digits}",
+                headers={**BROWSER_HEADERS},
+            )
+            with urlopen(req, timeout=8) as resp:
                 raw = resp.read().decode("utf-8", errors="replace").strip()
             if raw and raw != "UNKNOWN" and not raw.startswith("ERR"):
                 label = raw
@@ -584,11 +592,10 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not label and TWILIO_SID and TWILIO_TOKEN:
             try:
                 e164 = f"+1{digits}" if len(digits) == 10 else f"+{digits}"
-                import base64 as _b64
-                creds = _b64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
+                creds = base64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
                 req = Request(
                     f"https://lookups.twilio.com/v2/PhoneNumbers/{e164}?Fields=caller_name",
-                    headers={"Authorization": f"Basic {creds}", "Accept": "application/json"},
+                    headers={**BROWSER_HEADERS, "Authorization": f"Basic {creds}"},
                 )
                 with urlopen(req, timeout=8) as resp:
                     data = json.loads(resp.read().decode())
@@ -598,7 +605,26 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
-        self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
+        if not label:
+            label = "UNKNOWN"
+
+        # Cache the result
+        try:
+            conn = sqlite3.connect("/var/lib/asterisk/realtime.db")
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT OR REPLACE INTO cnam_cache (number, label, raw_response) VALUES (?, ?, ?)",
+                (digits, label, label),
+            )
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+        self._send_json({"ok": True, "number": digits, "label": label, "cached": False})
+
+    # ── NOWPAYMENTS HANDLERS ────────────────────────────────────
+
     def _handle_create_topup(self):
         profile, err = self._require_auth()
         if err:
