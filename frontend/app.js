@@ -20,6 +20,9 @@ let currentBalance = 0;
 let isVip = false;
 let isAdmin = false;
 let keypadBuffer = "";
+let activeField = null; // null | "cid" | "dest"
+let cidLocked = false;  // true when CNAM lookup has completed
+let cidValue = "17804755555";
 
 // ── DOM refs ────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
@@ -30,16 +33,24 @@ const els = {
   authSubmitBtn: $("authSubmitBtn"), authModeBtn: $("authModeBtn"),
   appShell: document.querySelector(".app-shell"),
   signOutBtn: $("signOutBtn"), headerBalance: $("headerTokenBalance"),
-  destination: $("destination"), callBtn: $("callBtn"), clearBtn: $("clearBtn"),
-  callState: $("callState"), dialerDot: $("dialerDot"),
-  dialerLabel: $("dialerLabel"), callHud: $("callHud"),
-  dialerStack: $("dialerIdleStack"), callHudState: $("callHudState"),
+  // Phone-style displays
+  cidDisplay: $("cidDisplay"), cidNumber: $("cidNumber"),
+  cidInfo: $("cidInfo"), cidCursor: $("cidCursor"),
+  cidLockBtn: $("cidLockBtn"),
+  destDisplay: $("destDisplay"), destNumber: $("destNumber"),
+  destCursor: $("destCursor"),
+  // Keypad + actions
+  callBtn: $("callBtn"), backspaceBtn: $("backspaceBtn"),
+  clearAllBtn: $("clearAllBtn"),
+  // HUD + misc
+  dialerStack: $("dialerIdleStack"), callState: $("callState"),
+  dialerDot: $("dialerDot"), callHud: $("callHud"),
+  callHudState: $("callHudState"),
   callHudDest: $("callHudDestination"), callHudTimer: $("callHudTimer"),
   callHudCost: $("callHudCost"), hudMuteBtn: $("hudMuteBtn"),
   hudHangupBtn: $("hudHangupBtn"), hudCidPrimary: $("callHudCidPrimary"),
   eventLog: $("eventLog"), terminalPanel: $("terminalPanel"),
-  cidHeroPrimary: $("callerIdHeroPrimary"), cidHeroSecondary: $("callerIdHeroSecondary"),
-  cidLabelInput: $("callerIdLabelInput"), cidStatus: $("callerIdStatus"),
+  callerIdStatus: $("callerIdStatus"),
   tokenBalance: $("tokenBalance"), minuteRate: $("minuteRate"),
   vipStatus: $("vipStatus"), vipPrice: $("vipPrice"), vipExpiry: $("vipExpiry"),
   topupBtn: $("topupBtn"), tokenAmount: $("tokenAmount"),
@@ -53,6 +64,12 @@ const els = {
 };
 
 // ── API Client ──────────────────────────────────────────────
+// Normalize number for API calls: always add leading 1 for 10-digit numbers
+function apiDigits(display) {
+  const d = display.replace(/\D/g, "");
+  return d.length === 10 ? "1" + d : d;
+}
+
 async function api(path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...opts.headers };
   if (authToken) headers["Authorization"] = `Bearer ${authToken}`;
@@ -159,7 +176,6 @@ function updateUI() {
   els.tokenBalance.textContent = isAdmin ? "∞" : currentBalance.toFixed(1);
   els.adminNavBtn.classList.toggle("hidden", !isAdmin);
   els.dialerDot.classList.add("registered"); // Always "online" since no SIP registration
-  els.dialerLabel.textContent = "UPLINK ACTIVE";
   els.callBtn.disabled = false;
 
   if (isAdmin) {
@@ -185,16 +201,15 @@ async function refreshWallet() {
 
 // ── Outbound Calls (POST /api/call) ─────────────────────────
 els.callBtn.addEventListener("click", () => placeCall());
-els.destination.addEventListener("keydown", (e) => { if (e.key === "Enter") placeCall(); });
 
 async function placeCall() {
-  const dest = els.destination.value.replace(/\D/g, "");
+  const dest = els.destNumber.textContent.replace(/\D/g, "");
   if (!dest || dest.length < 10) {
     logEvent("CALL: Invalid destination");
     return;
   }
 
-  const callerId = els.cidHeroPrimary.textContent.trim() || "17804755555";
+  const callerId = cidValue;
 
   els.callBtn.disabled = true;
   els.callBtn.textContent = "CONNECTING...";
@@ -203,7 +218,7 @@ async function placeCall() {
   try {
     const result = await api("/api/call", {
       method: "POST",
-      body: JSON.stringify({ target: dest, caller_id: callerId }),
+      body: JSON.stringify({ target: apiDigits(dest), caller_id: apiDigits(callerId) }),
     });
 
     if (result.ok) {
@@ -225,7 +240,7 @@ function showCallHud(dest) {
   els.callHud.classList.remove("hidden");
   els.dialerStack.classList.add("hidden");
   els.callHudDest.textContent = dest;
-  els.hudCidPrimary.textContent = els.cidHeroPrimary.textContent;
+  els.hudCidPrimary.textContent = cidValue;
   els.callHudState.textContent = "CONNECTED";
 }
 
@@ -265,38 +280,215 @@ els.hudMuteBtn.addEventListener("click", () => {
   els.hudMuteBtn.textContent = isMuted ? "[ UNMUTE ]" : "[ MUTE ]";
 });
 
+// ── Phone Display Interaction ────────────────────────────────
+// Click CID display → clears, activates cursor, keypad routes here
+els.cidDisplay.addEventListener("click", () => {
+  if (activeField === "cid") {
+    // Clicking again deactivates
+    deactivateField("cid");
+    return;
+  }
+  activateField("cid");
+});
+
+// Click destination display → same pattern
+els.destDisplay.addEventListener("click", () => {
+  if (activeField === "dest") {
+    deactivateField("dest");
+    return;
+  }
+  activateField("dest");
+});
+
+function activateField(field) {
+  // Deactivate current first
+  if (activeField) deactivateField(activeField);
+  activeField = field;
+  cidLocked = false;
+
+  if (field === "cid") {
+    els.cidNumber.textContent = "";
+    els.cidCursor.classList.remove("hidden");
+    els.cidDisplay.classList.add("active");
+    els.cidLockBtn.classList.remove("hidden");
+    els.cidInfo.textContent = "ENTER NUMBER";
+  } else {
+    els.destNumber.textContent = "";
+    els.destCursor.classList.remove("hidden");
+    els.destDisplay.classList.add("active");
+  }
+
+  els.callBtn.disabled = false;
+  logEvent(`INPUT: ${field === "cid" ? "caller ID" : "destination"} active`);
+}
+
+function deactivateField(field) {
+  if (field === "cid") {
+    els.cidCursor.classList.add("hidden");
+    els.cidDisplay.classList.remove("active");
+    els.cidLockBtn.classList.add("hidden");
+    // Restore previous value or keep what was typed
+    if (!els.cidNumber.textContent.trim()) {
+      els.cidNumber.textContent = cidValue;
+    }
+    els.cidInfo.textContent = cidLocked ? els.cidInfo.textContent : "UNKNOWN";
+  } else {
+    els.destCursor.classList.add("hidden");
+    els.destDisplay.classList.remove("active");
+    if (!els.destNumber.textContent.trim()) {
+      els.destNumber.textContent = "\u00A0";
+    }
+  }
+  activeField = null;
+}
+
 // ── Keypad ───────────────────────────────────────────────────
 document.querySelectorAll("#keypad button").forEach(btn => {
   btn.addEventListener("click", () => {
+    if (!activeField) {
+      // No field active — default to destination
+      activateField("dest");
+    }
+
     const key = btn.dataset.key;
-    els.destination.value += key;
+    const target = activeField === "cid" ? els.cidNumber : els.destNumber;
+
+    // Replace placeholder/nbsp on first digit
+    if (target.textContent === "\u00A0" || target.textContent === "ENTER NUMBER") {
+      target.textContent = "";
+    }
+
+    target.textContent += key;
     keypadBuffer += key;
+
     if (keypadBuffer.endsWith(CMD_UNLOCK) && els.terminalPanel.classList.contains("locked")) {
       els.terminalPanel.classList.remove("locked");
       keypadBuffer = "";
       logEvent("TERMINAL UNLOCKED // secret: " + CMD_UNLOCK);
     }
-    els.destination.focus();
+
+    // Show lock button when CID has digits
+    if (activeField === "cid" && target.textContent.length >= 10) {
+      els.cidLockBtn.classList.remove("hidden");
+    }
   });
 });
 
-els.clearBtn.addEventListener("click", () => { els.destination.value = ""; keypadBuffer = ""; });
-
-// ── Caller ID ────────────────────────────────────────────────
-document.getElementById("callerIdHero").addEventListener("click", async () => {
-  const num = els.cidHeroPrimary.textContent;
-  try {
-    const data = await api("/api/caller-id", {
-      method: "POST",
-      body: JSON.stringify({ caller_id: num }),
-    });
-    els.cidHeroSecondary.textContent = "UPDATED";
-    els.cidStatus.textContent = "ACTIVE";
-    logEvent(`CID: ${data.caller_id}`);
-  } catch (_) {
-    els.cidStatus.textContent = "ERR";
+// ── Backspace ────────────────────────────────────────────────
+els.backspaceBtn.addEventListener("click", () => {
+  if (!activeField) return;
+  const target = activeField === "cid" ? els.cidNumber : els.destNumber;
+  const text = target.textContent;
+  if (text && text !== "\u00A0") {
+    target.textContent = text.slice(0, -1);
+    if (!target.textContent) {
+      target.textContent = activeField === "cid" ? "" : "\u00A0";
+    }
   }
 });
+
+// ── Clear All ────────────────────────────────────────────────
+els.clearAllBtn.addEventListener("click", () => {
+  els.cidNumber.textContent = cidValue;
+  els.cidInfo.textContent = "UNKNOWN";
+  els.destNumber.textContent = "\u00A0";
+  els.cidLockBtn.classList.add("hidden");
+  cidLocked = false;
+  activeField = null;
+  els.cidDisplay.classList.remove("active");
+  els.destDisplay.classList.remove("active");
+  els.cidCursor.classList.add("hidden");
+  els.destCursor.classList.add("hidden");
+  els.callerIdStatus.textContent = "";
+  keypadBuffer = "";
+  logEvent("ALL CLEARED");
+});
+
+// ── CID Lock / CNAM Lookup ───────────────────────────────────
+els.cidLockBtn.addEventListener("click", async () => {
+  const digits = els.cidNumber.textContent.replace(/\D/g, "");
+  if (!digits || digits.length < 10) {
+    logEvent("CID: need 10+ digits to lookup");
+    return;
+  }
+
+  els.cidLockBtn.disabled = true;
+  els.cidLockBtn.textContent = "[ SCANNING... ]";
+  els.cidInfo.textContent = "SCANNING...";
+  els.callerIdStatus.textContent = "LOOKUP";
+
+  try {
+    const data = await api(`/api/cnam?q=${apiDigits(digits)}`);
+    const label = data.label || "UNKNOWN";
+
+    // Save CID + persist to server
+    cidValue = digits;
+    cidLocked = true;
+    els.cidNumber.textContent = digits;
+
+    // Glitch transition on the info line
+    glitchText(els.cidInfo, label, 800);
+
+    els.callerIdStatus.textContent = data.cached ? "CACHED" : "VERIFIED";
+    els.cidLockBtn.textContent = "[ LOCKED ]";
+    els.cidLockBtn.classList.add("locked");
+    els.cidCursor.classList.add("hidden");
+    els.cidDisplay.classList.remove("active");
+    activeField = null;
+
+    // Persist CID to server
+    api("/api/set-caller-id", {
+      method: "POST",
+      body: JSON.stringify({ caller_id: apiDigits(digits) }),
+    }).then(d => logEvent(`CID: ${d.caller_id} // saved`))
+      .catch(e => logEvent(`CID: local (${e.message})`));
+
+    logEvent(`CNAM: ${digits} → ${label}${data.cached ? " [cache]" : ""}`);
+  } catch (err) {
+    els.cidInfo.textContent = "UNKNOWN";
+    els.callerIdStatus.textContent = "ERR";
+    els.cidLockBtn.textContent = "[ LOOKUP CID ]";
+    logEvent(`CNAM FAILED: ${err.message}`);
+  }
+  els.cidLockBtn.disabled = false;
+});
+
+// ── Glitch Text Transition Engine ─────────────────────────────
+function glitchText(element, finalText, duration = 800) {
+  const chars = "!@#$%^&*()_+-=[]{}|;:,.<>?/ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  const steps = 12;
+  const stepMs = duration / steps;
+
+  element.setAttribute("data-text", finalText);
+  element.classList.add("cnam-glitching");
+
+  let step = 0;
+  const interval = setInterval(() => {
+    step++;
+    if (step >= steps) {
+      clearInterval(interval);
+      element.textContent = finalText;
+      element.classList.remove("cnam-glitching");
+      element.classList.add("cnam-resolved");
+      element.setAttribute("data-text", finalText);
+      setTimeout(() => element.classList.remove("cnam-resolved"), 500);
+      return;
+    }
+
+    const progress = step / steps;
+    let scrambled = "";
+    for (let i = 0; i < finalText.length; i++) {
+      scrambled += Math.random() < progress ? finalText[i] : chars[Math.floor(Math.random() * chars.length)];
+    }
+    if (step < steps - 2 && Math.random() > 0.7) {
+      scrambled += chars[Math.floor(Math.random() * chars.length)];
+    }
+    element.textContent = scrambled;
+    element.setAttribute("data-text", scrambled);
+  }, stepMs);
+
+  return { cancel: () => { clearInterval(interval); element.textContent = finalText; element.classList.remove("cnam-glitching"); } };
+}
 
 // ── NOWPayments — Crypto Top-up ──────────────────────────────
 els.topupBtn.addEventListener("click", async (e) => {
