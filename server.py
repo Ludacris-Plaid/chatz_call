@@ -542,7 +542,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         self._send_json({"ok":True,"server":"voip","ip":"34.225.190.118","instance":"t3.small","region":"us-east-1","os":"Ubuntu 22.04","freeswitch":fs,"backend":True,"dialer":True,"memory":mem})
 
     def _handle_cnam(self):
-        """CNAM lookup via freecnam.org — free US + Canada caller ID."""
+        """CNAM lookup: freecnam.org (primary, free US+CA) → Twilio (fallback, US only)."""
         query = parse_qs(urlparse(self.path).query)
         number = query.get("number", [""])[0].strip()
         if not number:
@@ -552,21 +552,40 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not digits or len(digits) not in {10, 11}:
             return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
 
-        # Normalize to 1XXXXXXXXXX for freecnam.org
         if len(digits) == 10:
             q = f"1{digits}"
         else:
             q = digits
 
         label = None
+
+        # ── Primary: freecnam.org (free, US + Canada) ──
         try:
             req = Request(f"https://freecnam.org/dip?q={q}", headers={"User-Agent": "hushcircuits-pro/1.0"})
-            with urlopen(req, timeout=8) as resp:
+            with urlopen(req, timeout=5) as resp:
                 raw = resp.read().decode("utf-8", errors="replace").strip()
             if raw and raw != "UNKNOWN" and not raw.startswith("ERR"):
                 label = raw
         except Exception:
             pass
+
+        # ── Fallback: Twilio Lookup v2 (paid, US only) ──
+        if not label and TWILIO_SID and TWILIO_TOKEN:
+            try:
+                e164 = f"+1{digits}" if len(digits) == 10 else f"+{digits}"
+                import base64 as _b64
+                creds = _b64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
+                req = Request(
+                    f"https://lookups.twilio.com/v2/PhoneNumbers/{e164}?Fields=caller_name",
+                    headers={"Authorization": f"Basic {creds}", "Accept": "application/json"},
+                )
+                with urlopen(req, timeout=8) as resp:
+                    data = json.loads(resp.read().decode())
+                cn = data.get("caller_name") or {}
+                if cn.get("caller_name") and not cn.get("error_code"):
+                    label = cn["caller_name"]
+            except Exception:
+                pass
 
         self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
     def _handle_create_topup(self):
