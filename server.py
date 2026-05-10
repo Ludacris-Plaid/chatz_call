@@ -542,7 +542,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         self._send_json({"ok":True,"server":"voip","ip":"34.225.190.118","instance":"t3.small","region":"us-east-1","os":"Ubuntu 22.04","freeswitch":fs,"backend":True,"dialer":True,"memory":mem})
 
     def _handle_cnam(self):
-        """Twilio Lookup v2 — caller name lookup ($0.02/lookup)."""
+        """CNAM lookup via freecnam.org — free US + Canada caller ID."""
         query = parse_qs(urlparse(self.path).query)
         number = query.get("number", [""])[0].strip()
         if not number:
@@ -552,36 +552,23 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not digits or len(digits) not in {10, 11}:
             return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
 
-        # Normalize to E.164: 7804755555 → +17804755555
+        # Normalize to 1XXXXXXXXXX for freecnam.org
         if len(digits) == 10:
-            e164 = f"+1{digits}"
+            q = f"1{digits}"
         else:
-            e164 = f"+{digits}"
+            q = digits
 
         label = None
-
         try:
-            import base64 as _b64
-            creds = _b64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
-            req = Request(
-                f"https://lookups.twilio.com/v2/PhoneNumbers/{e164}?Fields=caller_name",
-                headers={
-                    "Authorization": f"Basic {creds}",
-                    "Accept": "application/json",
-                },
-            )
-            with urlopen(req, timeout=10) as resp:
-                data = json.loads(resp.read().decode())
-            cn = data.get("caller_name") or {}
-            if cn.get("caller_name") and not cn.get("error_code"):
-                label = cn["caller_name"]
+            req = Request(f"https://freecnam.org/dip?q={q}", headers={"User-Agent": "hushcircuits-pro/1.0"})
+            with urlopen(req, timeout=8) as resp:
+                raw = resp.read().decode("utf-8", errors="replace").strip()
+            if raw and raw != "UNKNOWN" and not raw.startswith("ERR"):
+                label = raw
         except Exception:
             pass
 
         self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
-
-    # ── NOWPAYMENTS HANDLERS ────────────────────────────────────
-
     def _handle_create_topup(self):
         profile, err = self._require_auth()
         if err:
