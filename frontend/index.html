@@ -433,7 +433,7 @@
         var s = ''; for (var i = 0; i < 9; i++) s += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
         cnamValue.textContent = s;
       }, 50);
-      fetch('/api/cnam?number=' + encodeURIComponent(number), { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') } })
+      fetch('/api/cnam?q=1' + encodeURIComponent(number), { headers: { 'Accept': 'application/json' } })
         .then(function(r){ return r.json(); }).then(function(d){
           clearInterval(iv);
           if (d.label) { S.cnamCache[number] = d.label; resolveCNAM(d.label); }
@@ -459,7 +459,7 @@
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
       var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
       toast('CONNECTING\u2026');
-      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ destination: dest, caller_id: cid }) })
+      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ destination: '1' + dest, caller_id: '1' + cid }) })
         .then(function(r){ return r.json().catch(function(){ return {}; }); })
         .then(function(d){ toast(d.success || d.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED'); })
         .catch(function(){ toast('CALL PLACED'); });
