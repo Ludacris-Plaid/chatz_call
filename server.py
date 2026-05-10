@@ -15,6 +15,17 @@ from caller_id import set_caller_id, get_caller_id, originate_call
 from local_auth import register_user, login_user, validate_session, get_user_profile as local_get_profile, logout as local_logout
 import subprocess, sqlite3
 
+# ── Load .env (stdlib, no pip deps) ───────────────────────────────
+_env_path = Path(__file__).parent / ".env"
+if _env_path.exists():
+    for _line in _env_path.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            _k, _v = _k.strip(), _v.strip().strip('"').strip("'")
+            if _k and _k not in os.environ:
+                os.environ[_k] = _v
+
 # ── Config ────────────────────────────────────────────────────────
 DOMAIN          = os.environ.get("DOMAIN", "hushcircuits.online")
 PUBLIC_IP       = os.environ.get("PUBLIC_IP", "18.223.24.42")
