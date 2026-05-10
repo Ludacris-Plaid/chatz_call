@@ -23,6 +23,8 @@ SUPABASE_URL    = os.environ.get("SUPABASE_URL", "https://ejbdrsgciqwvanskckov.s
 SUPABASE_KEY    = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 ANON_KEY        = os.environ.get("SUPABASE_ANON_KEY", "")
 NOWPAYMENTS_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7")
+TWILIO_SID      = os.environ.get("TWILIO_ACCOUNT_SID", "")
+TWILIO_TOKEN    = os.environ.get("TWILIO_AUTH_TOKEN", "")
 TOKEN_PRICE     = float(os.environ.get("PRICE_PER_MINUTE", "0.50"))
 VIP_PRICE       = float(os.environ.get("VIP_WEEKLY_PRICE", "250.00"))
 SIPUP_USER      = os.environ.get("SIPUP_USERNAME", "10428")
@@ -256,6 +258,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/me": self._handle_me,
             "/api/sip/credentials": self._handle_sip_credentials,
             "/api/sip/config": self._handle_sip_config,
+            "/api/health": self._handle_health,
             "/api/cnam": self._handle_cnam,
             "/api/topups/": self._handle_poll_topup,
             "/api/admin/users": self._handle_admin_users,
@@ -523,11 +526,23 @@ class ClawCallHandler(BaseHTTPRequestHandler):
 
     # ── CNAM LOOKUP ─────────────────────────────────────────────
 
-    def _handle_cnam(self):
-        profile, err = self._require_auth()
-        if err:
-            return err
+    def _handle_health(self):
+        """Health check endpoint — returns server status."""
+        import subprocess as _sp
+        try:
+            fs = _sp.run(['pgrep','-c','asterisk'],capture_output=True).returncode==0
+        except:
+            fs = False
+        try:
+            mem = _sp.run(['free','-m'],capture_output=True,text=True).stdout
+            mem = [l for l in mem.split('\n') if 'Mem:' in l]
+            mem = mem[0].split()[2]+'/'+mem[0].split()[1]+' MB' if mem else 'N/A'
+        except:
+            mem = 'N/A'
+        self._send_json({"ok":True,"server":"voip","ip":"34.225.190.118","instance":"t3.small","region":"us-east-1","os":"Ubuntu 22.04","freeswitch":fs,"backend":True,"dialer":True,"memory":mem})
 
+    def _handle_cnam(self):
+        """Twilio Lookup v2 — caller name lookup ($0.02/lookup)."""
         query = parse_qs(urlparse(self.path).query)
         number = query.get("number", [""])[0].strip()
         if not number:
@@ -537,36 +552,31 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not digits or len(digits) not in {10, 11}:
             return self._send_json({"ok": True, "number": digits, "label": "UNKNOWN"})
 
+        # Normalize to E.164: 7804755555 → +17804755555
+        if len(digits) == 10:
+            e164 = f"+1{digits}"
+        else:
+            e164 = f"+{digits}"
+
         label = None
 
-        # Try freecnam.org first
         try:
+            import base64 as _b64
+            creds = _b64.b64encode(f"{TWILIO_SID}:{TWILIO_TOKEN}".encode()).decode()
             req = Request(
-                f"https://freecnam.org/dip?q={digits}",
-                headers={**BROWSER_HEADERS, "Accept": "application/xml,text/xml;q=0.9,*/*;q=0.8"},
+                f"https://lookups.twilio.com/v2/PhoneNumbers/{e164}?Fields=caller_name",
+                headers={
+                    "Authorization": f"Basic {creds}",
+                    "Accept": "application/json",
+                },
             )
             with urlopen(req, timeout=10) as resp:
-                body = resp.read().decode(errors="replace")
-            if "<label>" in body:
-                label = body.split("<label>")[1].split("</label>")[0].strip()
-            if "ratelimit" in body.lower() or "error" in body.lower():
-                label = None  # fall through to next service
+                data = json.loads(resp.read().decode())
+            cn = data.get("caller_name") or {}
+            if cn.get("caller_name") and not cn.get("error_code"):
+                label = cn["caller_name"]
         except Exception:
             pass
-
-        # Fallback: opencnam.com
-        if not label:
-            try:
-                req = Request(
-                    f"https://api.opencnam.com/v3/phone/{digits}",
-                    headers=BROWSER_HEADERS,
-                )
-                with urlopen(req, timeout=10) as resp:
-                    text = resp.read().decode(errors="replace").strip()
-                if text and text.upper() != "UNKNOWN" and len(text) > 1:
-                    label = text
-            except Exception:
-                pass
 
         self._send_json({"ok": True, "number": digits, "label": label or "UNKNOWN"})
 
