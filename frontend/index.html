@@ -51,8 +51,18 @@
     /* ── Dialer tab (compact for nav space) ── */
     #tab-dialer { padding-bottom: 4px; }
     #tab-dialer .header { height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
-    .brand { display: inline-flex; align-items: center; gap: 8px; font-family: "Space Grotesk", sans-serif; letter-spacing: 0.16em; font-size: 12px; font-weight: 700; color: rgba(248,250,252,0.8); }
-    .mark { width: 24px; height: 24px; border-radius: 8px; display: grid; place-items: center; color: var(--green); background: linear-gradient(180deg, rgba(34,197,94,0.12), rgba(34,197,94,0.03)), rgba(255,255,255,0.03); border: 1px solid rgba(34,197,94,0.22); }
+    .brand { display: inline-flex; align-items: center; gap: 5px; }
+    .hush-word, .circuits-word { font-family: "Orbitron", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #fff; }
+    .circuits-word { color: #22D3EE; text-shadow: 0 0 8px rgba(34,211,238,0.5); }
+    .bolt-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .bolt-glow-ring { position: absolute; inset: -4px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.3), transparent 70%); animation: boltGlow 1.5s ease-in-out infinite; }
+    .bolt-svg { width: 18px; height: 22px; position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); animation: boltSurge 1.5s ease-in-out infinite; }
+    .bolt-arc { animation: arcFlash 2s ease-in-out infinite; }
+    .brand-pro { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 4px; padding: 1px 5px; margin-left: 4px; vertical-align: middle; font-family: "Space Grotesk", sans-serif; }
+    @keyframes boltGlow { 0%,100% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 0.9; transform: scale(1.2); } }
+    @keyframes boltSurge { 0%,100% { filter: drop-shadow(0 0 4px rgba(34,197,94,0.4)); } 50% { filter: drop-shadow(0 0 12px rgba(34,211,238,0.8)); } }
+    @keyframes arcFlash { 0%,100% { opacity: 0; } 30% { opacity: 1; } 70% { opacity: 0.5; } }
+    
     .settings { width: 34px; height: 34px; border: 1px solid var(--border-soft); border-radius: 12px; color: rgba(148,163,184,0.85); background: rgba(255,255,255,0.03); display: grid; place-items: center; cursor: pointer; }
     .settings:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
     .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
@@ -120,13 +130,13 @@
     .chart-bar-label { font-size: 8px; color: var(--dim); letter-spacing: 0.06em; }
     .call-log-row { display: grid; grid-template-columns: 1fr 1fr 70px 60px; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 11px; gap: 4px; }
     .call-log-row.header { color: var(--dim); font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .brand-hush { font-weight: 600; letter-spacing: 0.08em; }
-    .brand-bolt { display: inline-flex; align-items: center; color: var(--green); animation: boltPulse 1.8s ease-in-out infinite; margin: 0 2px; }
-    .brand-bolt svg { filter: drop-shadow(0 0 4px rgba(34,197,94,0.6)); }
-    .brand-circuits { font-weight: 400; letter-spacing: 0.06em; color: rgba(203,213,225,0.9); position: relative; }
-    .brand-circuits.scrambling { color: var(--green); }
-    .brand-pro { font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 4px; padding: 1px 5px; margin-left: 6px; vertical-align: middle; }
-    @keyframes boltPulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }
+    
+    
+    
+    .brand-circuits { font-weight: 400; letter-spacing: 0.06em; color: #fff; position: relative; }
+    
+    
+    
     .call-log-cid { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 12px; color: rgba(34,197,94,0.9); }
     .call-log-dest { font-family: "Space Grotesk", sans-serif; }
     .call-log-cost { font-family: "Space Grotesk", sans-serif; font-weight: 600; text-align: right; }
@@ -196,7 +206,46 @@
     <!-- ═══════ TAB: DIALER ═══════ -->
     <section class="tab-page active" id="tab-dialer">
       <header class="header">
-        <div class="brand" id="brandLogo"><span class="brand-hush">hush</span><span class="brand-bolt"><svg width="14" height="16" viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h6l-2 8 9-12h-6l2-8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span class="brand-circuits" id="brandCircuits">circuits</span><span class="brand-pro">pro</span></div>
+        <div class="brand" id="brandLogo">
+  <span class="hush-word" id="hushWord">HUSH</span>
+  <div class="bolt-wrap">
+    <div class="bolt-glow-ring"></div>
+    <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+      <defs>
+        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22C55E"/>
+          <stop offset="40%" stop-color="#00E5A0"/>
+          <stop offset="70%" stop-color="#00E5E5"/>
+          <stop offset="100%" stop-color="#22D3EE"/>
+        </linearGradient>
+        <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ADE80"/>
+          <stop offset="100%" stop-color="#67E8F9"/>
+        </linearGradient>
+        <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#86EFAC"/>
+          <stop offset="100%" stop-color="#99F6E4"/>
+        </linearGradient>
+        <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
+      <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+      <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+      <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
+    </svg>
+  </div>
+  <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
+  <span class="brand-pro">pro</span>
+</div>
         <button class="settings" id="btnSettings" type="button" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.2 13.4c.08-.46.12-.93.12-1.4s-.04-.94-.12-1.4l2-1.56-1.9-3.28-2.36.95a7.53 7.53 0 0 0-2.42-1.4L14.17 2h-3.8l-.36 3.31a7.53 7.53 0 0 0-2.42 1.4l-2.36-.95-1.9 3.28 2 1.56A8.17 8.17 0 0 0 5.2 12c0 .47.04.94.12 1.4l-2 1.56 1.9 3.28 2.36-.95a7.53 7.53 0 0 0 2.42 1.4l.36 3.31h3.8l.36-3.31a7.53 7.53 0 0 0 2.42-1.4l2.36.95 1.9-3.28-2-1.56Z" stroke="currentColor" stroke-width="1.45" stroke-linejoin="round"/></svg></button>
       </header>
       <div class="display-stack">
@@ -669,26 +718,32 @@
 
     console.log('hushcircuits pro \u2014 v4 beta');
 (function(){
-  var el = document.getElementById('brandCircuits');
-  if (!el) return;
-  var original = 'circuits';
-  var scramblePool = '!<>-_+*#$%^&@~?={}[]|';
-  function scramble(){
-    var text = '';
-    for (var i = 0; i < original.length; i++) {
-      if (Math.random() < 0.35) {
-        text += scramblePool[Math.floor(Math.random() * scramblePool.length)];
-      } else { text += original[i]; }
-    }
-    el.textContent = text;
-    el.classList.add('scrambling');
-    setTimeout(function(){ el.textContent = original; el.classList.remove('scrambling'); }, 150);
+  var hushEl = document.getElementById('hushWord');
+  var circuitsEl = document.getElementById('circuitsWord');
+  if (!hushEl || !circuitsEl) return;
+  
+  var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  
+  function glitchWord(el, word) {
+    var iterations = 0;
+    var iv = setInterval(function(){
+      el.textContent = word.split('').map(function(c, i){
+        return i < iterations ? word[i] : chars[Math.floor(Math.random() * chars.length)];
+      }).join('');
+      iterations += 0.5;
+      if (iterations >= word.length) { clearInterval(iv); el.textContent = word; }
+    }, 40);
   }
-  function schedule(){
-    var delay = 4000 + Math.random() * 5000;
-    setTimeout(function(){ scramble(); schedule(); }, delay);
-  }
-  schedule();
+  
+  // Run on load
+  glitchWord(hushEl, 'HUSH');
+  setTimeout(function(){ glitchWord(circuitsEl, 'CIRCUITS'); }, 200);
+  
+  // Repeat every 8 seconds
+  setInterval(function(){
+    glitchWord(hushEl, 'HUSH');
+    setTimeout(function(){ glitchWord(circuitsEl, 'CIRCUITS'); }, 200);
+  }, 8000);
 })();
   })();
   </script>
