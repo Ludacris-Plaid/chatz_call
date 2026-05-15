@@ -578,6 +578,7 @@
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
             $('#statusTokens').textContent = (u.token_balance || 0) + ' tokens';
+            S.userBalance = parseFloat(u.token_balance || 0);  // Keep HUD in sync
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
               badge.textContent = 'ADMIN'; badge.className = 'status-badge admin'; badge.style.display = '';
@@ -671,8 +672,10 @@
       cid: '', destination: '',
       cnamCache: {}, scanningCID: null,
       isAdmin: localStorage.getItem('clawcall_is_admin') === 'true',
+      userBalance: 0, ratePerMin: 0.50,
       users: [], calls: [], transactions: []
     };
+    window.S = S;  // Expose for call-hud.js
 
     // ── Toast ──
     var toastEl = $('#toast'), toastTimer;
