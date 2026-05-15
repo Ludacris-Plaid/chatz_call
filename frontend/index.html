@@ -27,12 +27,11 @@
     body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(34,197,94,0.105), transparent 34%), radial-gradient(circle at 18% 20%, rgba(255,255,255,0.035), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.015), transparent 44%); opacity: 0.95; z-index: 0; }
     body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.04; background-image: linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 78%); z-index: 0; }
 
-    .app { position: relative; z-index: 1; width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
+    .app { position: relative; z-index: 1; width: 100%; max-width: 520px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
 
     /* ── Tab Pages ── */
-    .tab-page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; padding: max(12px, env(safe-area-inset-top)) 18px 18px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .tab-page::-webkit-scrollbar { display: none; }
-    .tab-page.active { display: flex; flex-direction: column; gap: 14px; }
+    .tab-page { display: none; flex: 1; overflow: hidden; padding: max(8px, env(safe-area-inset-top)) 18px 10px; }
+    .tab-page.active { display: flex; flex-direction: column; gap: 10px; }
     .tab-page-title { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: rgba(248,250,252,0.88); margin: 0 0 2px 0; flex-shrink: 0; }
 
     /* ── Cards (shared) ── */
@@ -73,9 +72,10 @@
     .status-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap; }
     .status-badge.admin { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
     .status-badge.vip { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
-    .status-meta { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .status-tokens { color: var(--muted); font-size: 10px; font-weight: 500; white-space: nowrap; }
-    .bolt-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+    .status-balance { margin-left: auto; color: #22C55E; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .status-balance.infinite { font-size: 16px; }
+    .bolt-wrap { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
     .bolt-glow-ring { position: absolute; inset: -4px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.3), transparent 70%); animation: boltGlow 1.5s ease-in-out infinite; }
     .bolt-svg { width: 18px; height: 22px; position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); animation: boltSurge 1.5s ease-in-out infinite; }
     .bolt-arc { animation: arcFlash 2s ease-in-out infinite; }
@@ -86,7 +86,7 @@
     
     .settings { width: 34px; height: 34px; border: 1px solid var(--border-soft); border-radius: 12px; color: rgba(148,163,184,0.85); background: rgba(255,255,255,0.03); display: grid; place-items: center; cursor: pointer; }
     .settings:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
-    .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
     .display-card { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), var(--panel); box-shadow: 0 14px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); backdrop-filter: blur(14px); overflow: hidden; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
     .display-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(34,197,94,0.055), transparent); transform: translateX(-120%); opacity: 0; }
     .display-card.active { border-color: rgba(34,197,94,0.7); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 24px rgba(34,197,94,0.1), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); animation: fieldPulse 2.35s ease-in-out infinite; }
@@ -105,8 +105,8 @@
     .cnam.scanning { color: var(--green); }
     .cnam.resolved { color: rgba(203,213,225,0.85); }
     .cnam.glitch { animation: glitchFlash 230ms steps(2, end); }
-    .keypad-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
-    .keypad { width: min(100%, 300px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .keypad-wrap { flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+    .keypad { width: min(100%, 340px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; background: none; }
     .dial-key { height: clamp(54px, 9dvh, 64px); border-radius: 20px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
     .dial-key:active { transform: scale(0.94); border-color: rgba(34,197,94,0.42); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 20px rgba(34,197,94,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
@@ -124,7 +124,7 @@
     .balance-ring svg { transform: rotate(-90deg); }
     .balance-ring .bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
     .balance-ring .fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 800ms ease; }
-    .balance-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .balance-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
     .balance-amount { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
     .balance-label { font-size: 9px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
     .wallet-actions { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -164,7 +164,7 @@
     .call-log-time { color: var(--dim); text-align: right; font-size: 10px; }
 
     /* ── Admin Tab ── */
-    .admin-user-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 8px; }
+    .admin-user-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 10px; }
     .admin-username { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; }
     .admin-email { font-size: 10px; color: var(--dim); }
     .admin-badges { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -577,11 +577,11 @@
           if (d.ok) {
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
-            $('#statusTokens').textContent = (u.token_balance || 0) + ' tokens';
-            S.userBalance = parseFloat(u.token_balance || 0);  // Keep HUD in sync
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; $("#statusBalance").textContent = isAdmin ? "∞" : "$" + bal.toFixed(2); if (isAdmin) $("#statusBalance").classList.add("infinite");
+
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
-              badge.textContent = 'ADMIN'; badge.className = 'status-badge admin'; badge.style.display = '';
+              badge.textContent = 'ADMIN'; $('#statusBalance').textContent = '∞'; $('#statusBalance').classList.add('infinite'); badge.className = 'status-badge admin'; badge.style.display = '';
             } else if (u.is_vip) {
               badge.textContent = 'VIP'; badge.className = 'status-badge vip'; badge.style.display = '';
             } else {
@@ -843,7 +843,7 @@
           if (d.ok) {
             console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
             if (d.user && d.user.token_balance !== undefined) {
-              S.userBalance = parseFloat(d.user.token_balance);
+              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusBalance').textContent = '$' + S.userBalance.toFixed(2);
             }
           }
         }).catch(function(e){ console.error('[Call] Report failed:', e); });
