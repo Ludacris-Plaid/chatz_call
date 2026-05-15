@@ -174,11 +174,697 @@
     .admin-badge.banned { background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
     .admin-badge.suspended { background: rgba(239,68,68,0.08); color: rgba(239,68,68,0.7); border: 1px solid rgba(239,68,68,0.12); }
     .admin-actions { display: flex; gap: 4px; }
-    .admin-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.03); color: var(--muted); display: grid; place-items: center
+    .admin-btn { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.03); color: var(--muted); display: grid; place-items: center; font-size: 12px; transition: border-color 150ms ease; }
+    .admin-btn:active { border-color: rgba(34,197,94,0.4); }
+    .admin-btn.danger:active { border-color: rgba(239,68,68,0.4); }
+    .toggle-switch { width: 38px; height: 20px; border-radius: 99px; background: rgba(255,255,255,0.1); position: relative; cursor: pointer; transition: background 180ms ease; border: none; padding: 0; }
+    .toggle-switch.on { background: var(--green); }
+    .toggle-switch::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: transform 180ms ease; }
+    .toggle-switch.on::after { transform: translateX(18px); }
 
-... [OUTPUT TRUNCATED - 47166 chars omitted out of 97166 total] ...
+    /* ── Settings overlay ── */
+    .settings-panel { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,0.94); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
+    .settings-panel.open { opacity: 1; pointer-events: auto; }
+    .settings-inner { width: min(340px, 88vw); display: flex; flex-direction: column; gap: 16px; }
+    .settings-inner h2 { font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: rgba(248,250,252,0.9); margin: 0; }
+    .settings-field { display: flex; flex-direction: column; gap: 4px; }
+    .settings-field label { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: rgba(148,163,184,0.78); }
+    .settings-field input { width: 100%; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--panel-strong); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 15px; font-weight: 600; outline: none; }
+    .settings-field input:focus { border-color: rgba(34,197,94,0.55); }
+    .settings-btn { width: 100%; padding: 13px; border-radius: 14px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.78); color: rgba(203,213,225,0.85); font-family: "Space Grotesk", sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; }
+    .settings-btn.green { border-color: rgba(34,197,94,0.28); color: var(--green); }
+    .settings-btn.danger { border-color: rgba(239,68,68,0.18); color: rgba(239,68,68,0.8); }
 
-AILED'); return; }
+    /* ── Toast ── */
+    .toast { position: fixed; bottom: calc(var(--nav-h) + 20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%) translateY(10px); padding: 9px 14px; border-radius: 999px; border: 1px solid rgba(34,197,94,0.2); background: rgba(4,12,22,0.9); box-shadow: 0 14px 30px rgba(0,0,0,0.35); backdrop-filter: blur(14px); color: rgba(220,252,231,0.92); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 180ms ease, transform 180ms ease; z-index: 200; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .pressed { animation: keyPress 185ms ease-out; }
+
+    /* ── Animations ── */
+    @keyframes fieldPulse { 0%,100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.08), 0 0 20px rgba(34,197,94,0.08), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); } 50% { box-shadow: 0 0 0 1px rgba(34,197,94,0.16), 0 0 28px rgba(34,197,94,0.14), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); } }
+    @keyframes scanLine { 0% { transform: translateX(-125%); } 48%,100% { transform: translateX(125%); } }
+    @keyframes keyPress { 0% { transform: scale(1); } 42% { transform: scale(0.94); } 100% { transform: scale(1); } }
+    @keyframes glitchFlash { 0% { transform: translateX(0); text-shadow: none; opacity: 1; } 20% { transform: translateX(-1px); text-shadow: 2px 0 rgba(239,68,68,0.5), -2px 0 rgba(34,211,238,0.4); } 45% { transform: translateX(1px); text-shadow: -2px 0 rgba(239,68,68,0.44), 2px 0 rgba(34,211,238,0.36); opacity: 0.86; } 70% { transform: translateX(-0.5px); text-shadow: 1px 0 rgba(239,68,68,0.33), -1px 0 rgba(34,211,238,0.28); } 100% { transform: translateX(0); text-shadow: none; opacity: 1; } }
+    @keyframes countUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+
+    /* ── Payment Modal ── */
+    .payment-overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .payment-overlay.open { display: flex; }
+    .payment-modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px; width: calc(100vw - 32px); max-width: 380px; max-height: 90dvh; overflow-y: auto; position: relative; animation: modalIn 0.3s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .payment-close { position: absolute; top: 12px; right: 16px; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; }
+    .payment-close:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .payment-title { font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .payment-subtitle { font-size: 11px; color: var(--dim); margin-bottom: 16px; }
+    .payment-amount-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .payment-amt-btn { flex: 1; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms ease; }
+    .payment-amt-btn.selected { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+    .payment-currency-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .payment-curr-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 150ms ease; text-transform: uppercase; letter-spacing: 0.05em; }
+    .payment-curr-btn.selected { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.08); }
+    .payment-qr-wrap { text-align: center; margin: 16px 0; padding: 16px; background: white; border-radius: 16px; }
+    .payment-qr-wrap canvas, .payment-qr-wrap img { display: block; margin: 0 auto; max-width: 180px; }
+    .payment-address { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 10px; color: var(--muted); word-break: break-all; margin-bottom: 8px; position: relative; cursor: pointer; }
+    .payment-address:active { border-color: var(--green); }
+    .payment-copy-hint { font-size: 9px; color: var(--dim); text-align: center; margin-bottom: 8px; }
+    .payment-amount-crypto { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 700; color: var(--green); margin: 8px 0; }
+    .payment-amount-crypto span { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .payment-link { display: block; text-align: center; font-size: 10px; color: var(--green); text-decoration: underline; margin: 12px 0; cursor: pointer; }
+    .payment-status { text-align: center; font-size: 11px; color: var(--amber); padding: 8px; }
+    .payment-status.done { color: var(--green); }
+    .payment-create-btn { display: block; width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--green); background: rgba(34,197,94,0.15); color: var(--green); font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: all 150ms ease; }
+    .payment-create-btn:active { background: rgba(34,197,94,0.3); }
+    .payment-create-btn:disabled { opacity: 0.4; cursor: default; }
+    .no-tokens-banner { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; text-align: center; }
+    .no-tokens-banner .msg { font-size: 12px; color: var(--red); font-weight: 600; }
+    .no-tokens-banner .action { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Auth Screens ── */
+    .auth-screen { display: none; position: fixed; inset: 0; z-index: 100; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .auth-screen.active { display: flex; }
+    .auth-card { width: 100%; max-width: 360px; border: 1px solid var(--border); border-radius: 24px; background: var(--panel); backdrop-filter: blur(20px); padding: 32px 28px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+    .auth-logo .brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; color: var(--green); }
+    .auth-logo .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; margin-top: 4px; }
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+    .auth-field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 180ms; }
+    .auth-field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.08); }
+    .auth-btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all 180ms; margin-top: 8px; }
+    .auth-btn.primary { background: var(--green); color: #020617; }
+    .auth-btn.primary:active { background: #16a34a; transform: scale(0.98); }
+    .auth-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
+    .auth-error { text-align: center; color: var(--red); font-size: 12px; margin-top: 10px; min-height: 18px; }
+    .auth-switch { text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted); }
+    .auth-switch a { color: var(--green); cursor: pointer; text-decoration: underline; }
+    .auth-switch a:hover { color: #4ade80; }
+    .app-hidden { display: none !important; }
+
+
+    /* ── Call HUD ─────────────────────────────────────── */
+    .call-hud {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(2, 6, 23, 0.97);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .call-hud.active { opacity: 1; pointer-events: auto; }
+    .call-hud-spinner { width: 120px; height: 120px; position: relative; margin-bottom: 2rem; }
+    .call-hud-spinner .ring { position: absolute; inset: 0; border: 4px solid rgba(34,197,94,0.15); border-radius: 50%; }
+    .call-hud-spinner .ring.pulse { border-color: #22C55E; animation: hud-pulse 2s ease-out infinite; }
+    .call-hud-spinner .ring.spin { border-color: transparent; border-top-color: #22C55E; animation: hud-spin 1.5s linear infinite; }
+    .call-hud-spinner .ring.spin2 { border-color: transparent; border-right-color: rgba(34,197,94,0.5); animation: hud-spin 2.2s linear infinite reverse; inset: 12px; }
+    .call-hud-spinner .icon { position: absolute; inset: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(34,197,94,0.08); }
+    .call-hud-spinner .icon svg { width: 32px; height: 32px; stroke: #22C55E; }
+    @keyframes hud-pulse { 0% { transform: scale(0.95); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
+    @keyframes hud-spin { to { transform: rotate(360deg); } }
+    .call-hud-timer { font-family: 'DM Sans','Inter',sans-serif; font-size: 3rem; font-weight: 700; color: #22C55E; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+    .call-hud-status { font-size: 0.85rem; font-weight: 600; color: #22C55E; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 2rem; animation: hud-status-flicker 4s ease-in-out infinite; }
+    @keyframes hud-status-flicker { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .call-hud-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; width: 100%; max-width: 420px; margin-bottom: 2rem; }
+    .call-hud-stat { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.12); border-radius: 12px; padding: 1rem; text-align: center; }
+    .call-hud-stat-label { font-size: 0.65rem; color: rgba(34,197,94,0.5); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.35rem; }
+    .call-hud-stat-value { font-size: 1.1rem; font-weight: 700; color: #22C55E; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .call-hud-numbers { display: flex; gap: 2rem; align-items: center; margin-bottom: 2rem; font-size: 0.8rem; color: rgba(34,197,94,0.6); }
+    .call-hud-numbers span { font-weight: 600; color: #22C55E; }
+    .call-hud-hangup { width: 64px; height: 64px; border-radius: 50%; background: #ef4444; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 0 30px rgba(239,68,68,0.3); }
+    .call-hud-hangup:hover { transform: scale(1.08); box-shadow: 0 0 45px rgba(239,68,68,0.5); }
+    .call-hud-hangup:active { transform: scale(0.95); }
+    .call-hud-hangup svg { width: 28px; height: 28px; fill: white; }
+    @media (max-width: 480px) { .call-hud-timer { font-size: 2.2rem; } .call-hud-stats { max-width: 340px; gap: 0.5rem; } .call-hud-stat { padding: 0.75rem 0.5rem; } .call-hud-stat-value { font-size: 0.9rem; } .call-hud-spinner { width: 90px; height: 90px; } }
+
+  </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="sip.min.js"></script>
+</head>
+<body>
+
+
+  <!-- ═══════ AUTH: LOGIN ═══════ -->
+  <div class="auth-screen active" id="authLogin">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="brand-text">HUSH</div>
+        <div class="brand-sub">CIRCUITS PRO</div>
+      </div>
+      <div class="auth-field"><label>USERNAME</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" /></div>
+      <div class="auth-field"><label>PASSWORD</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" /></div>
+      <button class="auth-btn primary" id="loginBtn">SIGN IN</button>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-switch">Need an account? <a id="showRegister">Create one</a></div>
+    </div>
+  </div>
+
+  <!-- ═══════ AUTH: REGISTER ═══════ -->
+  <div class="auth-screen" id="authRegister">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="brand-text">HUSH</div>
+        <div class="brand-sub">CREATE ACCOUNT</div>
+      </div>
+      <div class="auth-field"><label>USERNAME</label><input type="text" id="registerUser" placeholder="Choose username" autocomplete="username" /></div>
+      <div class="auth-field"><label>PASSWORD</label><input type="password" id="registerPass" placeholder="Choose password" autocomplete="new-password" /></div>
+      <button class="auth-btn primary" id="registerBtn">CREATE ACCOUNT</button>
+      <div class="auth-error" id="registerError"></div>
+      <div class="auth-switch">Already have one? <a id="showLogin">Sign in</a></div>
+    </div>
+  </div>
+
+  <!-- Main app -->
+  <div class="app">
+    <!-- ═══════ TAB: DIALER ═══════ -->
+    <section class="tab-page active" id="tab-dialer">
+      <header class="header">
+        <div class="brand" id="brandLogo">
+  <span class="hush-word" id="hushWord">HUSH</span>
+  <div class="bolt-wrap">
+    <div class="bolt-glow-ring"></div>
+    <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+      <defs>
+        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22C55E"/>
+          <stop offset="40%" stop-color="#00E5A0"/>
+          <stop offset="70%" stop-color="#00E5E5"/>
+          <stop offset="100%" stop-color="#22D3EE"/>
+        </linearGradient>
+        <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ADE80"/>
+          <stop offset="100%" stop-color="#67E8F9"/>
+        </linearGradient>
+        <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#86EFAC"/>
+          <stop offset="100%" stop-color="#99F6E4"/>
+        </linearGradient>
+        <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
+      <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+      <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+      <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
+    </svg>
+  </div>
+  <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
+  <span class="brand-pro">pro</span>
+</div>
+      </header>
+      <div class="status-bar" id="statusBar">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-label" id="statusLabel">CHECKING</span>
+        <span class="status-user" id="statusUser">---</span>
+        <span class="status-badge" id="statusBadge" style="display:none"></span>
+        <div class="status-meta">
+          <span class="status-tokens" id="statusTokens">---</span>
+        </div>
+      </div>
+      <div class="display-stack">
+        <div class="display-card cid" data-field="cid" role="button" tabindex="0">
+          <div class="display-topline"><div class="label">CALLER ID</div><div class="active-tag">ACTIVE</div></div>
+          <div id="cidValue" class="number empty">—</div>
+          <div id="cnamValue" class="cnam">NO CALLER ID SET</div>
+        </div>
+        <div class="display-card destination active" data-field="destination" role="button" tabindex="0">
+          <div class="display-topline"><div class="label">DESTINATION</div><div class="active-tag">ACTIVE</div></div>
+          <div id="destValue" class="number empty">ENTER NUMBER</div>
+        </div>
+      </div>
+      <div class="keypad-wrap">
+        <div class="keypad">
+          <button class="dial-key" data-key="1"><span class="digit">1</span></button>
+          <button class="dial-key" data-key="2"><span class="digit">2</span><span class="letters">ABC</span></button>
+          <button class="dial-key" data-key="3"><span class="digit">3</span><span class="letters">DEF</span></button>
+          <button class="dial-key" data-key="4"><span class="digit">4</span><span class="letters">GHI</span></button>
+          <button class="dial-key" data-key="5"><span class="digit">5</span><span class="letters">JKL</span></button>
+          <button class="dial-key" data-key="6"><span class="digit">6</span><span class="letters">MNO</span></button>
+          <button class="dial-key" data-key="7"><span class="digit">7</span><span class="letters">PQRS</span></button>
+          <button class="dial-key" data-key="8"><span class="digit">8</span><span class="letters">TUV</span></button>
+          <button class="dial-key" data-key="9"><span class="digit">9</span><span class="letters">WXYZ</span></button>
+          <button class="dial-key" data-key="*"><span class="digit">*</span></button>
+          <button class="dial-key" data-key="0"><span class="digit">0</span><span class="letters">+</span></button>
+          <button class="dial-key" data-key="#"><span class="digit">#</span></button>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="utility" id="btnDel" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 9l-6 6M12 9l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>DEL</button>
+        <button class="call" id="btnCall" type="button" aria-label="Place call"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24 11.37 11.37 0 0 0 3.57.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1 11.37 11.37 0 0 0 .57 3.57 1 1 0 0 1-.25 1.02l-2.2 2.2Z"/></svg></button>
+        <button class="utility" id="btnClear" type="button"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>CLR</button>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: WALLET ═══════ -->
+    <section class="tab-page" id="tab-wallet">
+      <h2 class="tab-page-title">WALLET & SETTINGS</h2>
+      <div class="card" style="text-align:center">
+        <div class="balance-ring" id="balanceRing">
+          <svg width="120" height="120" viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fill" id="balanceArc" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="100"/></svg>
+          <div class="balance-center"><div class="balance-amount" id="balanceAmount">0</div><div class="balance-label">TOKENS</div></div>
+        </div>
+        <div class="card-sub" style="margin-top:8px" id="balanceUSD">≈ $0.00 USD</div>
+      </div>
+      <div class="wallet-actions">
+        <div style="display:flex;gap:6px;grid-column:1/-1;margin-bottom:4px">
+          <input type="text" id="voucherCode" placeholder="HUSH-XX-XXXXXX" autocomplete="off" autocapitalize="characters" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-transform:uppercase;letter-spacing:0.05em" />
+          <button id="btnRedeemVoucher" style="padding:10px 14px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">REDEEM</button>
+        </div>
+        <button class="wallet-btn primary" id="btnDeposit" style="grid-column:1/-1">+ DEPOSIT TOKENS</button>
+      </div>
+      <div class="card">
+        <div class="card-label">RECENT TRANSACTIONS</div>
+        <div id="txList"><div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div></div>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: STATS ═══════ -->
+    <section class="tab-page" id="tab-stats">
+      <h2 class="tab-page-title">CALL STATISTICS</h2>
+      <div class="stat-grid" id="statGrid">
+        <div class="stat-card"><div class="stat-num" id="statTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
+        <div class="stat-card"><div class="stat-num" id="statTotalMin">0</div><div class="stat-label">TOTAL MINUTES</div></div>
+        <div class="stat-card"><div class="stat-num" id="statAvgCall">0s</div><div class="stat-label">AVG DURATION</div></div>
+        <div class="stat-card"><div class="stat-num" id="statSpent">0</div><div class="stat-label">TOKENS SPENT</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">DAILY USAGE (last 7 days)</div>
+        <div class="chart-bar-wrap" id="chartBars"></div>
+      </div>
+      <div class="card" style="padding:12px 16px">
+        <div class="card-label">CALL HISTORY</div>
+        <div id="callLog"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: ADMIN ═══════ -->
+    <section class="tab-page" id="tab-admin">
+      <h2 class="tab-page-title">ADMIN DASHBOARD</h2>
+      <div class="stat-grid" id="adminStatGrid">
+        <div class="stat-card"><div class="stat-num" id="adminTotalUsers">0</div><div class="stat-label">TOTAL USERS</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminRevenue">0</div><div class="stat-label">REVENUE (TOKENS)</div></div>
+        <div class="stat-card"><div class="stat-num" id="adminActiveNow">0</div><div class="stat-label">ACTIVE NOW</div></div>
+      </div>
+      <div class="card" style="padding:12px 16px">
+        <div class="card-header">
+          <div class="card-label">USER MANAGEMENT</div>
+          <input type="text" id="adminSearch" placeholder="Search users..." style="width:140px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:11px;outline:none" />
+        </div>
+        <div id="adminUserList"></div>
+      </div>
+      <div class="card" style="padding:12px 16px;margin-top:10px">
+        <div class="card-header">
+          <div class="card-label">VOUCHER CREATION</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <select id="voucherAmount" style="padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none">
+            <option value="10">HUSH-10 (10 tokens)</option>
+            <option value="25" selected>HUSH-25 (25 tokens)</option>
+            <option value="50">HUSH-50 (50 tokens)</option>
+          </select>
+          <input type="number" id="voucherCount" value="1" min="1" max="50" style="width:60px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-align:center" />
+          <button id="btnCreateVouchers" style="padding:8px 16px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">CREATE</button>
+        </div>
+        <div id="voucherResult" style="margin-top:8px;font-size:10px;font-family:mono;max-height:120px;overflow-y:auto;color:var(--muted)"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: SETTINGS ═══════ -->
+    <section class="tab-page" id="tab-settings">
+      <h2 class="tab-page-title">SETTINGS</h2>
+      <div class="card">
+        <div class="card-header"><div class="card-label">ACCOUNT</div></div>
+        <div class="settings-field"><label>DEFAULT CALLER ID</label><input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" /></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="settings-btn green" id="settingsSave" style="flex:1">SAVE CALLER ID</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-label">SESSION</div></div>
+        <div id="settingsUserInfo" style="font-size:11px;color:var(--muted);margin-bottom:12px"></div>
+        <button class="settings-btn danger" id="settingsLogout">SIGN OUT</button>
+      </div>
+    </section>
+
+    <!-- ═══════ BOTTOM NAV ═══════ -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="nav-btn active" data-tab="dialer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>DIALER</span></button>
+      <button class="nav-btn" data-tab="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>TOKENS</span></button>
+      <button class="nav-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>STATS</span></button>
+      <button class="nav-btn admin-only" data-tab="admin" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>ADMIN</span></button>
+      <button class="nav-btn" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>SETTINGS</span></button>
+    </nav>
+  </div>
+  <div class="toast" id="toast" aria-live="polite"></div>
+
+  <script>
+  (function() {
+    var $ = function(s) { return document.querySelector(s); };
+    var $$ = function(s) { return document.querySelectorAll(s); };
+
+    // ── Auth ──
+    function getToken() { return localStorage.getItem('clawcall_token') || ''; }
+    function isLoggedIn() { return !!getToken(); }
+
+    function showAuth(mode) {
+      $('#authLogin').classList.toggle('active', mode === 'login');
+      $('#authRegister').classList.toggle('active', mode === 'register');
+      $('.app').classList.add('app-hidden');
+    }
+
+    function showApp() {
+      $('#authLogin').classList.remove('active');
+      $('#authRegister').classList.remove('active');
+      $('.app').classList.remove('app-hidden');
+      updateAdminVisibility();
+      loadStatusBar();  // Load user + SIP status
+    }
+
+    function verifyAndShow() {
+      // Verify stored token is still valid with backend
+      var token = getToken();
+      if (!token) { showAuth('login'); return; }
+      fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            S.isAdmin = (d.user && d.user.is_admin === true) || d.role === 'admin';
+            localStorage.setItem('clawcall_is_admin', S.isAdmin ? 'true' : 'false');
+            showApp();
+          } else {
+            doLogout();
+          }
+        })
+        .catch(function(){ showApp(); }); // Network error — show app anyway, API will surface errors
+    }
+
+    // ── Status Bar ──
+    function loadStatusBar() {
+      var token = getToken();
+      if (!token) return;
+      // Fetch user info + SIP status
+      fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            var u = d.user || d;
+            $('#statusUser').textContent = u.username || '---';
+            $('#statusTokens').textContent = (u.token_balance || 0) + ' tokens';
+            S.userBalance = parseFloat(u.token_balance || 0);  // Keep HUD in sync
+            var badge = $('#statusBadge');
+            if (u.is_admin || u.role === 'admin') {
+              badge.textContent = 'ADMIN'; badge.className = 'status-badge admin'; badge.style.display = '';
+            } else if (u.is_vip) {
+              badge.textContent = 'VIP'; badge.className = 'status-badge vip'; badge.style.display = '';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        }).catch(function(){});
+      // Fetch SIP status
+      fetch('/api/sip/status')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var dot = $('#statusDot');
+          var label = $('#statusLabel');
+          dot.className = 'status-dot ' + (d.status || 'offline');
+          label.className = 'status-label ' + (d.status || 'offline');
+          label.textContent = d.status === 'online' ? 'SIP ONLINE' : d.status === 'offline' ? 'SIP OFFLINE' : 'SIP CHECKING';
+        }).catch(function(){
+          $('#statusDot').className = 'status-dot offline';
+          $('#statusLabel').className = 'status-label offline';
+          $('#statusLabel').textContent = 'SIP OFFLINE';
+        });
+    }
+
+    // Poll status every 30s
+    setInterval(loadStatusBar, 30000);
+
+    function doLogin() {
+      var u = $('#loginUser').value.trim();
+      var p = $('#loginPass').value;
+      if (!u || !p) { $('#loginError').textContent = 'Fill in both fields'; return; }
+      $('#loginError').textContent = '';
+      fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok && d.token) {
+            localStorage.setItem('clawcall_token', d.token);
+            localStorage.setItem('clawcall_username', d.user ? d.user.username : u);
+            localStorage.setItem('clawcall_is_admin', (d.user && d.user.is_admin) ? 'true' : 'false');
+            S.isAdmin = d.user && d.user.is_admin;
+            showApp();
+            toast('Signed in as ' + (d.user ? d.user.username : u));
+          } else {
+            $('#loginError').textContent = d.error || 'Login failed';
+          }
+        }).catch(function(){ $('#loginError').textContent = 'Network error'; });
+    }
+
+    function doRegister() {
+      var u = $('#registerUser').value.trim();
+      var p = $('#registerPass').value;
+      if (!u || !p) { $('#registerError').textContent = 'Fill in both fields'; return; }
+      if (p.length < 4) { $('#registerError').textContent = 'Password too short (min 4)'; return; }
+      $('#registerError').textContent = '';
+      fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            toast('Account created! Sign in.');
+            showAuth('login');
+            $('#loginUser').value = u;
+          } else {
+            $('#registerError').textContent = d.error || 'Registration failed';
+          }
+        }).catch(function(){ $('#registerError').textContent = 'Network error'; });
+    }
+
+    function doLogout() {
+      localStorage.removeItem('clawcall_token');
+      localStorage.removeItem('clawcall_username');
+      localStorage.removeItem('clawcall_is_admin');
+      S.isAdmin = false;
+      showAuth('login');
+      toast('Signed out');
+    }
+
+    // Bind auth UI
+    $('#loginBtn').addEventListener('click', doLogin);
+    $('#registerBtn').addEventListener('click', doRegister);
+    $('#showRegister').addEventListener('click', function(e){ e.preventDefault(); showAuth('register'); });
+    $('#showLogin').addEventListener('click', function(e){ e.preventDefault(); showAuth('login'); });
+    $('#loginPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    $('#registerPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doRegister(); });
+
+    // ── State ──
+    var S = {
+      activeTab: 'dialer',
+      activeField: 'destination',
+      cid: '', destination: '',
+      cnamCache: {}, scanningCID: null,
+      isAdmin: localStorage.getItem('clawcall_is_admin') === 'true',
+      userBalance: 0, ratePerMin: 0.50,
+      users: [], calls: [], transactions: []
+    };
+    window.S = S;  // Expose for call-hud.js
+
+    // ── Toast ──
+    var toastEl = $('#toast'), toastTimer;
+    function toast(msg) { clearTimeout(toastTimer); toastEl.textContent = msg; toastEl.classList.add('show'); toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 1800); }
+
+    // ── Tab Routing ──
+    function switchTab(name) {
+      // Block non-admin from admin tab
+      if (name === 'admin' && !S.isAdmin) { toast('ADMIN ACCESS REQUIRED'); return; }
+      S.activeTab = name;
+      $$('.tab-page').forEach(function(p){ p.classList.remove('active'); });
+      var tabEl = $('#tab-' + name);
+      tabEl.classList.add('active');
+      $$('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
+      if (name === 'wallet') loadWallet();
+      if (name === 'stats') loadStats();
+      if (name === 'admin') loadAdmin();
+    }
+
+    // ── Voucher Creation (Admin) ──
+    bindClick($('#btnCreateVouchers'), function(){
+      var amount = parseInt($('#voucherAmount').value);
+      var count = parseInt($('#voucherCount').value);
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/create-vouchers', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({amount:amount,count:count})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (d.ok) {
+          $('#voucherResult').innerHTML = d.codes.map(function(c){return '<div style="padding:2px 0;color:var(--green)">'+c+'</div>'}).join('');
+          toast(d.count + ' vouchers created');
+        } else {
+          toast(d.error || 'Failed');
+        }
+      }).catch(function(){ toast('Failed to create vouchers'); });
+    });
+
+    // ── Voucher Redemption (Wallet) ──
+    bindClick($('#btnRedeemVoucher'), function(){
+      var code = $('#voucherCode').value.trim().toUpperCase();
+      if (!code) { toast('Enter a voucher code'); return; }
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/vouchers/redeem', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({code:code})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (d.ok) {
+          toast('Redeemed! +' + d.amount + ' tokens');
+          $('#voucherCode').value = '';
+          loadWallet();
+        } else {
+          toast(d.error || 'Invalid voucher');
+        }
+      }).catch(function(){ toast('Redemption failed'); });
+    });
+
+    $$('.nav-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
+    });
+
+    // ── Admin visibility ──
+    function updateAdminVisibility() {
+      var adminBtns = $$('.admin-only');
+      var show = S.isAdmin;
+      adminBtns.forEach(function(b){ b.style.display = show ? '' : 'none'; });
+    }
+
+    // Auth guard — must run AFTER S and updateAdminVisibility are defined
+    if (isLoggedIn()) {
+      verifyAndShow();  // Verify token with backend before showing app
+    } else {
+      showAuth('login');
+    }
+
+    // ══════════════════════════════════════════
+    // DIALER LOGIC
+    // ══════════════════════════════════════════
+    var cidCard = $('.display-card.cid'), destCard = $('.display-card.destination');
+    var cidValue = $('#cidValue'), cnamValue = $('#cnamValue'), destValue = $('#destValue');
+
+    function formatNumber(raw) {
+      if (!raw) return '';
+      var d = raw.replace(/[^0-9*#+]/g, '');
+      // Strip leading 1 for 11-digit NANP numbers
+      if (d.length === 11 && d[0] === '1') d = d.slice(1);
+      if (d.length <= 3) return d;
+      if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+      return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6,10);
+    }
+
+    function renderDisplays() {
+      if (S.cid) { cidValue.textContent = formatNumber(S.cid); cidValue.classList.remove('empty'); }
+      else { cidValue.textContent = '\u2014'; cidValue.classList.add('empty'); cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; }
+      if (S.destination) { destValue.textContent = formatNumber(S.destination); destValue.classList.remove('empty'); }
+      else { destValue.textContent = 'ENTER NUMBER'; destValue.classList.add('empty'); }
+    }
+
+    function setActive(field) {
+      S.activeField = field;
+      cidCard.classList.toggle('active', field === 'cid');
+      destCard.classList.toggle('active', field === 'destination');
+    }
+
+    function getFieldProp() { return S.activeField; }
+
+    var SCRAMBLE_CHARS = '!@#$%^&*<>?/\\|=+~\`ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    function lookupCNAM(number) {
+      if (!number || number.length < 10) { cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; return; }
+      if (S.cnamCache[number]) { resolveCNAM(S.cnamCache[number]); return; }
+      cnamValue.textContent = 'SCANNING...'; cnamValue.className = 'cnam scanning';
+      var st = Date.now();
+      var iv = setInterval(function() {
+        if (Date.now() - st > 800) { clearInterval(iv); return; }
+        var s = ''; for (var i = 0; i < 9; i++) s += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
+        cnamValue.textContent = s;
+      }, 50);
+      fetch('/api/cnam?q=1' + encodeURIComponent(number), { headers: { 'Accept': 'application/json' } })
+        .then(function(r){ return r.json(); }).then(function(d){
+          clearInterval(iv);
+          if (d.label) { S.cnamCache[number] = d.label; resolveCNAM(d.label); }
+          else { cnamValue.textContent = 'UNKNOWN CALLER ID'; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); }
+        }).catch(function(){ clearInterval(iv); cnamValue.textContent = 'UNKNOWN CALLER ID'; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); });
+    }
+
+    function resolveCNAM(name) { cnamValue.textContent = name; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); }
+
+    function handleKey(key) {
+      var prop = getFieldProp(), cur = S[prop] || '';
+      if (cur.length >= 15) { toast('MAX DIGITS'); return; }
+      S[prop] = cur + key; renderDisplays();
+      if (prop === 'cid' && S.cid.length >= 10) { if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } lookupCNAM(S.cid); }
+    }
+    function handleDelete() {
+      var prop = getFieldProp(), cur = S[prop] || '';
+      if (cur.length > 0) { S[prop] = cur.slice(0, -1); renderDisplays(); if (prop === 'cid' && S.cid.length < 10) { cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; } }
+    }
+    function handleClearAll() { S.cid = ''; S.destination = ''; if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; renderDisplays(); toast('CLEARED'); }
+
+    // Normalize number for API: strip non-digits, add leading 1 for 10-digit numbers
+    function apiDigits(num) {
+      var d = (num || '').replace(/\D/g, '');
+      return d.length === 10 ? '1' + d : d;
+    }
+
+    // Normalize number for API: strip non-digits, add leading 1 for 10-digit numbers
+    function apiDigits(num) {
+      var d = (num || '').replace(/\D/g, '');
+      return d.length === 10 ? '1' + d : d;
+    }
+    function reportCall(target, cid, duration, status, token) {
+      if (!token) return;
+      fetch('/api/calls/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          destination: target,
+          caller_id: cid,
+          duration_seconds: duration,
+          status: status
+        })
+      }).then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
+            if (d.user && d.user.token_balance !== undefined) {
+              S.userBalance = parseFloat(d.user.token_balance);
+            }
+          }
+        }).catch(function(e){ console.error('[Call] Report failed:', e); });
+    }
+
+    function handleCall() {
+      var dest = S.destination;
+      if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
+      var token = localStorage.getItem('clawcall_token') || '';
+      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
+
+      toast('CONNECTING...');
+      
+      fetch('/api/calls/authorize', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(auth){
+          if (!auth.authorized) { toast('NO TOKENS'); return; }
+          return fetch('/api/sip/credentials', { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r){ return r.json(); })
+            .then(function(creds){
+              if (!creds.ok) { toast('SIP AUTH FAILED'); return; }
               
               var target = (''+dest).replace(/\D/g,'');
               if (target.length===10) target = '1'+target;
@@ -743,82 +1429,6 @@ AILED'); return; }
     setTimeout(function(){ glitchWord(circuitsEl, 'CIRCUITS'); }, 200);
   }, 8000);
 })();
-  // ── Call HUD Functions (inlined) ──
-  var _hudTimerInt = null;
-  var _hudStartTime = null;
-
-  function _formatHudNum(n) {
-    if (!n) return '--';
-    var d = (''+n).replace(/\D/g,'');
-    if (d.length===11 && d[0]==='1') d = d.slice(1);
-    if (d.length===10) return '('+d.slice(0,3)+') '+d.slice(3,6)+'-'+d.slice(6);
-    return d;
-  }
-
-  window.showCallHud = function(target, cid) {
-    var el = document.getElementById('callHud');
-    if (!el) return;
-    document.getElementById('hudTarget').textContent = _formatHudNum(target);
-    document.getElementById('hudCID').textContent = _formatHudNum(cid);
-    document.getElementById('hudStatus').textContent = 'CONNECTING';
-    document.getElementById('hudTimer').textContent = '00:00';
-    document.getElementById('hudCost').textContent = '$0.00';
-    var bal = S.userBalance || 0;
-    var rate = S.ratePerMin || 0.50;
-    document.getElementById('hudBalance').textContent = '$' + Number(bal).toFixed(2);
-    document.getElementById('hudRate').textContent = '$' + Number(rate).toFixed(2) + '/min';
-    var hangupBtn = document.getElementById('hudHangup');
-    if (hangupBtn) hangupBtn.style.display = '';
-    el.classList.add('active');
-  };
-
-  window.hideCallHud = function() {
-    var h = document.getElementById('callHud');
-    if (h) h.classList.remove('active');
-    if (_hudTimerInt) { clearInterval(_hudTimerInt); _hudTimerInt = null; }
-    var hangupBtn = document.getElementById('hudHangup');
-    if (hangupBtn) hangupBtn.style.display = '';
-    window.activeSIPSession = null;
-  };
-
-  window.setHudStatus = function(status) {
-    var el = document.getElementById('hudStatus');
-    if (el) el.textContent = status;
-  };
-
-  window.startHudTimer = function() {
-    _hudStartTime = Date.now();
-    document.getElementById('hudStatus').textContent = 'ACTIVE';
-    var rate = S.ratePerMin || 0.50;
-    var initBal = S.userBalance || 0;
-    _hudTimerInt = setInterval(function() {
-      var elapsed = Math.floor((Date.now() - _hudStartTime) / 1000);
-      var m = Math.floor(elapsed / 60);
-      var s = elapsed % 60;
-      var cost = (elapsed / 60) * rate;
-      var displayCost = Math.max(rate, cost);
-      document.getElementById('hudTimer').textContent = String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-      document.getElementById('hudCost').textContent = '$' + displayCost.toFixed(2);
-      var remaining = Math.max(0, initBal - displayCost);
-      document.getElementById('hudBalance').textContent = '$' + remaining.toFixed(2);
-    }, 500);
-  };
-
-  window.hangupCall = function() {
-    if (window.activeSIPSession) {
-      try { window.activeSIPSession.bye(); } catch(e) {}
-    }
-    if (_hudTimerInt) { clearInterval(_hudTimerInt); _hudTimerInt = null; }
-    var el = document.getElementById('hudStatus');
-    if (el) el.textContent = 'CALL ENDED';
-    var hangupBtn = document.getElementById('hudHangup');
-    if (hangupBtn) hangupBtn.style.display = 'none';
-    if (typeof toast === 'function') toast('CALL ENDED');
-    setTimeout(function() {
-      window.hideCallHud();
-    }, 3000);
-  };
-
   })();
   </script>
 
@@ -849,25 +1459,8 @@ AILED'); return; }
     </div>
   </div>
 
-<div class="call-hud" id="callHud">
-    <div class="call-hud-spinner">
-    <div class="ring"></div><div class="ring pulse"></div><div class="ring spin"></div><div class="ring spin2"></div>
-    <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
-    </div>
-    <div class="call-hud-timer" id="hudTimer">00:00</div>
-    <div class="call-hud-status" id="hudStatus">CONNECTING</div>
-    <div class="call-hud-stats">
-    <div class="call-hud-stat"><div class="call-hud-stat-label">Cost</div><div class="call-hud-stat-value" id="hudCost">$0.00</div></div>
-    <div class="call-hud-stat"><div class="call-hud-stat-label">Rate</div><div class="call-hud-stat-value" id="hudRate">$0.50/min</div></div>
-    <div class="call-hud-stat"><div class="call-hud-stat-label">Balance</div><div class="call-hud-stat-value" id="hudBalance">--</div></div>
-    </div>
-    <div class="call-hud-numbers"><div>CID: <span id="hudCID">--</span></div><div>TO: <span id="hudTarget">--</span></div></div>
-    <button class="call-hud-hangup" id="hudHangup">
-    <svg viewBox="0 0 24 24"><path d="M10.68 13.32a15.3 15.3 0 0 0 2.64 2.64l4.55-4.55a1.5 1.5 0 0 1 1.7-.3l4.1 1.7a1.5 1.5 0 0 1 .9 1.45v5.15a1.5 1.5 0 0 1-1.5 1.5C13.27 21.91 2.09 10.73 2.09 1.5A1.5 1.5 0 0 1 3.59 0h5.15a1.5 1.5 0 0 1 1.45.9l1.7 4.1a1.5 1.5 0 0 1-.3 1.7L8.68 9.68a15.3 15.3 0 0 0 2 2"/></svg>
-    </button>
-    </div>
-<script>(function(){var hb=document.getElementById("hudHangup");if(hb)hb.addEventListener("click",function(){if(typeof window.hangupCall==="function")window.hangupCall();});})();</script>
-
+<div class="call-hud" id="callHud"><div class="call-hud-spinner"><div class="ring"></div><div class="ring pulse"></div><div class="ring spin"></div><div class="ring spin2"></div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div></div><div class="call-hud-timer" id="hudTimer">00:00</div><div class="call-hud-status" id="hudStatus">CONNECTING</div><div class="call-hud-stats"><div class="call-hud-stat"><div class="call-hud-stat-label">Cost</div><div class="call-hud-stat-value" id="hudCost">$0.00</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Rate</div><div class="call-hud-stat-value" id="hudRate">$0.50/min</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Balance</div><div class="call-hud-stat-value" id="hudBalance">--</div></div></div><div class="call-hud-numbers"><div>CID: <span id="hudCID">--</span></div><div>TO: <span id="hudTarget">--</span></div></div><button class="call-hud-hangup" id="hudHangup"><svg viewBox="0 0 24 24"><path d="M10.68 13.32a15.3 15.3 0 0 0 2.64 2.64l4.55-4.55a1.5 1.5 0 0 1 1.7-.3l4.1 1.7a1.5 1.5 0 0 1 .9 1.45v5.15a1.5 1.5 0 0 1-1.5 1.5C13.27 21.91 2.09 10.73 2.09 1.5A1.5 1.5 0 0 1 3.59 0h5.15a1.5 1.5 0 0 1 1.45.9l1.7 4.1a1.5 1.5 0 0 1-.3 1.7L8.68 9.68a15.3 15.3 0 0 0 2 2"/></svg></button></div>
+<script src="call-hud.js"></script>
 <audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
 </body>
 </html>

@@ -33,7 +33,7 @@
   }
 
   ready(function() {
-    document.body.insertAdjacentHTML('beforeend', hudHTML);
+    // NO-OP: HUD in index.html — document.body.insertAdjacentHTML('beforeend', hudHTML);
     console.log('[HUD] HTML injected');
     
     var hb = document.getElementById('hudHangup');
