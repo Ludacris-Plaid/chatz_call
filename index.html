@@ -506,7 +506,7 @@
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
       var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
       toast('CONNECTING\u2026');
-      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ destination: dest, caller_id: cid }) })
+      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ target: dest, caller_id: cid }) })
         .then(function(r){ return r.json().catch(function(){ return {}; }); })
         .then(function(d){ toast(d.success || d.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED'); })
         .catch(function(){ toast('CALL PLACED'); });
