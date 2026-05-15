@@ -224,48 +224,48 @@
     <section class="tab-page active" id="tab-dialer">
       <header class="header">
         <div class="brand" id="brandLogo">
-  <span class="hush-word" id="hushWord">HUSH</span>
-  <div class="bolt-wrap">
-    <div class="bolt-glow-ring"></div>
-    <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
-      <defs>
-        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#22C55E"/>
-          <stop offset="40%" stop-color="#00E5A0"/>
-          <stop offset="70%" stop-color="#00E5E5"/>
-          <stop offset="100%" stop-color="#22D3EE"/>
-        </linearGradient>
-        <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#4ADE80"/>
-          <stop offset="100%" stop-color="#67E8F9"/>
-        </linearGradient>
-        <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#86EFAC"/>
-          <stop offset="100%" stop-color="#99F6E4"/>
-        </linearGradient>
-        <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
-          <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
-          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
-        </linearGradient>
-        <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
-          <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
-          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
-      <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
-      <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
-      <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
-    </svg>
-  </div>
-  <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
-  <span class="brand-pro">pro</span>
-</div>
+          <span class="hush-word" id="hushWord">HUSH</span>
+          <div class="bolt-wrap">
+            <div class="bolt-glow-ring"></div>
+            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+              <defs>
+                <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22C55E"/>
+                  <stop offset="40%" stop-color="#00E5A0"/>
+                  <stop offset="70%" stop-color="#00E5E5"/>
+                  <stop offset="100%" stop-color="#22D3EE"/>
+                </linearGradient>
+                <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4ADE80"/>
+                  <stop offset="100%" stop-color="#67E8F9"/>
+                </linearGradient>
+                <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#99F6E4"/>
+                </linearGradient>
+                <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
+          <span class="brand-pro">pro</span>
+        </div>
         <div class="header-balance">
           <span class="header-balance-label">TOKENS</span>
-          <span class="header-balance-value" id="headerBalance">—</span>
+          <span class="header-balance-value" id="headerBalance"></span>
         </div>
       </header>
       <div class="status-bar">
@@ -374,6 +374,7 @@
       <button class="nav-btn active" data-tab="dialer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>DIALER</span></button>
       <button class="nav-btn" data-tab="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>TOKENS</span></button>
       <button class="nav-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>STATS</span></button>
+      <button class="nav-btn" id="navSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>SETTINGS</span></button>
       <button class="nav-btn admin-only" data-tab="admin" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>ADMIN</span></button>
     </nav>
   </div>
@@ -416,7 +417,7 @@
     }
 
     $$('.nav-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
+      btn.addEventListener('click', function(){ if (btn.dataset.tab) switchTab(btn.dataset.tab); });
     });
 
     // ── Admin visibility ──
@@ -524,6 +525,11 @@
 
     // Settings
     var settingsPanel = $('#settingsPanel');
+    bindClick($('#navSettings'), function(){
+      $('#settingsCID').value = localStorage.getItem('clawcall_default_cid') || '17804755555';
+      $('#settingsToken').value = localStorage.getItem('clawcall_token') || '';
+      settingsPanel.classList.add('open');
+    });
     bindClick($('#btnSettings'), function(){
       $('#settingsCID').value = localStorage.getItem('clawcall_default_cid') || '17804755555';
       $('#settingsToken').value = localStorage.getItem('clawcall_token') || '';
