@@ -27,20 +27,15 @@
     '</div>'+
     // audio element is in main index.html
 
-  function ready(fn) {
-    if (document.readyState !== 'loading') fn();
-    else document.addEventListener('DOMContentLoaded', fn);
-  }
-
-  ready(function() {
-    // NO-OP: HUD in index.html — document.body.insertAdjacentHTML('beforeend', hudHTML);
-    console.log('[HUD] HTML injected');
-    
+  // HUD div now in index.html — no injection needed
+  // Bind hangup button handler
+  (function bindHangup() {
     var hb = document.getElementById('hudHangup');
     if (hb) hb.addEventListener('click', function() {
       if (typeof window.hangupCall === 'function') window.hangupCall();
     });
-  });
+    else console.error('[HUD] hangup button not found in DOM');
+  })();
 
   function formatNum(n) {
     if (!n) return '--';
