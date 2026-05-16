@@ -96,15 +96,27 @@
   };
 
   window.hangupCall = function() {
-    console.log('[HUD] hangup — sending BYE');
+    console.log('[HUD] hangup');
     if (window.activeSIPSession) {
       try { window.activeSIPSession.bye(); } catch(e) { console.error('[HUD] BYE error:', e); }
     }
+    // Calculate duration and report before clearing timer
+    var duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
     if (timerInt) { clearInterval(timerInt); timerInt = null; }
     var el = document.getElementById('hudStatus');
     if (el) el.textContent = 'CALL ENDED';
     var hangupBtn = document.getElementById('hudHangup');
     if (hangupBtn) hangupBtn.style.display = 'none';
+    // Report call to backend for billing
+    var destRaw = document.getElementById('hudTarget');
+    var cidRaw = document.getElementById('hudCID');
+    var dest = destRaw ? destRaw.textContent : '';
+    var cid = cidRaw ? cidRaw.textContent : '';
+    var token = (typeof localStorage !== 'undefined') ? (localStorage.getItem('clawcall_token') || '') : '';
+    console.log('[HUD] Reporting call: ' + dest + ' duration=' + duration + 's');
+    if (typeof window.reportCall === 'function' && dest && duration > 0) {
+      window.reportCall(dest, cid, duration, 'COMPLETED', token);
+    }
     if (typeof toast === 'function') toast('CALL ENDED');
     setTimeout(function() {
       window.hideCallHud();

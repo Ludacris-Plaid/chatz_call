@@ -168,7 +168,14 @@ def update_profile(user_id, updates):
     for k, v in updates.items():
         if k in ("id", "created_at"):
             continue
-        supa_updates[k] = v
+        if k == "is_vip":
+            supa_updates["role"] = "vip" if v else "user"
+        elif k == "vip_expires_at":
+            supa_updates["vip_expires_at"] = v
+        elif k == "token_balance":
+            supa_updates["tokens"] = v
+        else:
+            supa_updates[k] = v
     supa_updates["updated_at"] = "now()"
     return _patch("clawcall_users", supa_updates, {"id": str(int(user_id))})
 

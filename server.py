@@ -301,6 +301,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/sip/status": self._handle_sip_status,
             "/api/cnam": self._handle_cnam,
             "/api/topups/": self._handle_poll_topup,
+            "/api/payments/webhook": self._handle_nowpayments_webhook,
             "/api/admin/users": self._handle_admin_users,
             "/api/admin/stats": self._handle_admin_stats,
             "/api/admin/vouchers": self._handle_admin_vouchers,
@@ -324,6 +325,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/auth/login": self._handle_login,
             "/api/auth/logout": self._handle_logout,
             "/api/calls/report": self._handle_report_call,
+            "/api/payments/webhook": self._handle_nowpayments_webhook,
             "/api/call/hangup": self._handle_hangup_call,
             "/api/topups/vip": self._handle_create_vip,
             "/api/topups": self._handle_create_topup,
@@ -767,6 +769,59 @@ class ClawCallHandler(BaseHTTPRequestHandler):
 
     # ── NOWPAYMENTS HANDLERS ────────────────────────────────────
 
+    def _handle_nowpayments_webhook(self):
+        """NOWPayments IPN callback — credits tokens/VIP on confirmed payment."""
+        body = self._read_body()
+        payment_id = str(body.get("payment_id", ""))
+        payment_status = str(body.get("payment_status", "")).lower()
+        
+        if not payment_id:
+            return self._send_error("Missing payment_id", 400)
+        
+        log.info(f"Webhook received: payment={payment_id} status={payment_status}")
+        
+        try:
+            payment = get_payment(payment_id)
+            if not payment:
+                log.warning(f"Webhook for unknown payment: {payment_id}")
+                return self._send_json({"ok": True, "note": "payment not found"})
+            
+            current = payment.get("payment_status", "")
+            if current in ("finished", "confirmed", "credited"):
+                return self._send_json({"ok": True, "note": "already processed"})
+            
+            update_payment(payment_id, {"payment_status": payment_status})
+            
+            if payment_status in ("finished", "confirmed"):
+                user_id = str(payment.get("user_id", ""))
+                tokens = float(payment.get("tokens_to_credit", 0))
+                
+                if tokens > 0:
+                    # Token purchase
+                    profile = get_profile(int(user_id)) if user_id else None
+                    if profile:
+                        balance = float(profile.get("token_balance", 0))
+                        new_balance = balance + tokens
+                        update_profile(int(user_id), {"token_balance": new_balance})
+                        log_transaction(int(user_id), tokens, "purchase", new_balance,
+                                      f"Purchased {tokens} tokens via NOWPayments (webhook)")
+                        update_payment(payment_id, {"payment_status": "credited"})
+                        log.info(f"Webhook credited {tokens} tokens to user {user_id}")
+                else:
+                    # VIP payment
+                    profile = get_profile(int(user_id)) if user_id else None
+                    if profile:
+                        update_profile(int(user_id), {
+                            "is_vip": True
+                        })
+                        update_payment(payment_id, {"payment_status": "credited"})
+                        log.info(f"Webhook activated VIP for user {user_id}")
+            
+            return self._send_json({"ok": True})
+        except Exception as e:
+            log.error(f"Webhook processing failed: {e}")
+            return self._send_error(f"Webhook error: {e}", 500)
+
     def _handle_create_topup(self):
         profile, err = self._require_auth()
         if err:
@@ -910,11 +965,8 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                         tokens = float(payment.get("tokens_to_credit", 0))
                         if tokens <= 0:
                             # VIP payment — activate VIP
-                            now = int(time.time())
-                            seven_days = now + 7 * 86400
                             update_profile(profile["id"], {
-                                "is_vip": True,
-                                "vip_expires_at": f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(seven_days))}"
+                                "is_vip": True
                             })
                         else:
                             # Token payment — credit balance
@@ -1185,30 +1237,28 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             return self._send_error('Account suspended or banned', 403)
         
         # Token check (admins and VIPs bypass)
+        # Minimum balance required to place a call — actual billing happens
+        # via /api/calls/report when the call ends (per-minute rate)
         balance = float(profile.get('token_balance', 0))
-        CALL_COST = 1
+        MIN_CALL_TOKENS = 0.50
         new_balance = balance
         if not is_admin and not is_vip:
-            if balance < CALL_COST:
-                return self._send_error(f'Insufficient tokens. Need {CALL_COST}, have {int(balance)}. Buy tokens to call.', 402)
-            new_balance = balance - CALL_COST
-            update_profile(profile['id'], {'token_balance': new_balance})
-            log_transaction(profile['id'], -CALL_COST, 'call_charge', new_balance,
-                          f'Call to {digits} (CID: {caller_id})')
+            if balance < MIN_CALL_TOKENS:
+                return self._send_error(f'Insufficient tokens. Minimum {MIN_CALL_TOKENS} tokens required. Have {balance:.2f}.', 402)
         
         result = originate_call(target, caller_id)
         
-        # Log the call
+        # Log the call (cost = 0, actual billing via /api/calls/report)
         try:
             log_call(profile['id'], caller_id or 'unknown', digits, 0, 
-                    CALL_COST if not is_admin and not is_vip else 0,
+                    0,
                     'initiated' if result['ok'] else 'failed')
         except Exception:
             pass
         
         if result['ok']:
             resp = dict(result)
-            resp['cost'] = CALL_COST if not is_admin and not is_vip else 0
+            resp['cost'] = 0  # Billed per-minute via /api/calls/report when call ends
             resp['new_balance'] = new_balance
             return self._send_json(resp)
         return self._send_error(result['error'])
