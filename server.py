@@ -14,7 +14,7 @@ from urllib.error import HTTPError, URLError
 from pathlib import Path
 from caller_id import set_caller_id, get_caller_id, originate_call
 from supabase_auth import register_user, login_user, validate_session, get_user_profile as local_get_profile, logout as local_logout
-from supabase_data import (get_profile, update_profile, get_next_sip_extension as local_next_ext,
+from supabase_data import (get_profile, update_profile, get_all_calls, get_next_sip_extension as local_next_ext,
     list_profiles, get_all_profiles, log_transaction, log_call, log_payment,
     get_user_transactions, get_user_calls, get_user_payments, get_payment, update_payment, init_tables)
 import supabase_voucher as voucher_system
@@ -751,9 +751,18 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         users = get_all_profiles()
         total_users = len(users)
         vip_users = sum(1 for u in users if u.get("is_vip"))
+        # Count real calls and revenue
+        try:
+            all_calls = get_all_calls()
+            total_calls = len(all_calls) if all_calls else 0
+            total_revenue = sum(float(c.get('cost', 0) or 0) for c in all_calls) if all_calls else 0
+        except:
+            total_calls = 0
+            total_revenue = 0
+        
         self._send_json({
-            "ok": True, "total_users": total_users, "total_calls": 0,
-            "revenue": 0, "active_now": 0, "vip_users": vip_users
+            "ok": True, "total_users": total_users, "total_calls": total_calls,
+            "revenue": round(total_revenue, 2), "active_now": 0, "vip_users": vip_users
         })
 
     # ── NOWPAYMENTS HANDLERS ────────────────────────────────────

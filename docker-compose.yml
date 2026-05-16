@@ -29,14 +29,14 @@ services:
       - API_PORT=8090
       - DOMAIN=hushcircuits.online
       - PUBLIC_IP=18.223.24.42
-      - SUPABASE_URL=https://ejbdrsgciqwvanskckov.supabase.co
-      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYmRyc2djaXF3dmFuc2tja292Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzI1NjQzMiwiZXhwIjoyMDkyODMyNDMyfQ.pPB81lB8Nusj8zmTYTq6UFfVj9uOqUFcchiwTiYHSjQ
-      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVqYmRyc2djaXF3dmFuc2tja292Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyNTY0MzIsImV4cCI6MjA5MjgzMjQzMn0.B2C-oc1Z9h-hnNE63kLUGMWNSTuc80NUhkGo30crEms
+      - SUPABASE_URL=https://kgnwqwghnosgieldiokc.supabase.co
+      - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnbndxd2dobm9zZ2llbGRpb2tjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODgyMTcwNywiZXhwIjoyMDk0Mzk3NzA3fQ.h5spGDu8JjTZY2qaZg3wtKaD5VjNj8Ihss669kVs2oc
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnbndxd2dobm9zZ2llbGRpb2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MjE3MDcsImV4cCI6MjA5NDM5NzcwN30.KgwVXGdjg_2GMfufdvbrRuaRB1HbWhtxRDttcyg6oJA
       - NOWPAYMENTS_API_KEY=9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7
       - SIPUP_USERNAME=10428
       - SIPUP_PASSWORD=Mcjhv877KAK9
       - ADMIN_USERNAME=dysthemix
-      - AMI_HOST=172.18.0.1
+      - AMI_HOST=172.21.0.1
       - AMI_PORT=5038
       - AMI_USER=clawcall
       - AMI_SECRET=clawcall_ami_secret_2026
@@ -46,9 +46,10 @@ services:
     volumes:
       - ./server.py:/app/server.py
       - ./caller_id.py:/app/caller_id.py
-      - ./local_auth.py:/app/local_auth.py
+      - ./supabase_auth.py:/app/supabase_auth.py
+      - ./supabase_data.py:/app/supabase_data.py
+      - ./supabase_voucher.py:/app/supabase_voucher.py
       - ./frontend:/app/frontend
-      - /var/lib/asterisk/realtime.db:/var/lib/asterisk/realtime.db
     networks:
       - voip-net
 

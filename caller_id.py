@@ -1,6 +1,6 @@
 import os, socket, re, logging
 
-AMI_HOST = os.environ.get('AMI_HOST', '172.18.0.1')
+AMI_HOST = os.environ.get('AMI_HOST', '172.21.0.1')
 AMI_PORT = int(os.environ.get('AMI_PORT', '5038'))
 AMI_USER = os.environ.get('AMI_USER', 'clawcall')
 AMI_SECRET = os.environ.get('AMI_SECRET', 'clawcall_ami_secret_2026')
@@ -56,14 +56,15 @@ def ami_command(action: dict) -> dict:
 def originate_call(target: str, caller_id: str = '17804755555') -> dict:
     digits = normalize_number(target)
     cid = normalize_caller_id(caller_id)
-    channel = f'PJSIP/sipup-trunk/sip:{digits}@sip.sipup.org'
+    # Direct PJSIP to SIP.UP — bypass dialplan, proven reliable
+    # SIP.UP expects E.164: +1XXXXXXXXXX
+    e164 = f'+1{digits[1:]}' if digits.startswith('1') else f'+1{digits}'
+    channel = f'PJSIP/sipup-trunk/sip:{e164}@sip.sipup.org'
     action = {
         'Action': 'Originate',
         'Channel': channel,
-        'Context': 'public',
-        'Exten': digits,
-        'Priority': '1',
-        'CallerID': cid,
+        'Application': 'Echo',
+        'CallerID': f'"{cid}" <{cid}>',
         'Timeout': '30000',
         'Async': 'true',
     }
