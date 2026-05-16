@@ -300,6 +300,27 @@
     .call-hud-hangup svg { width: 28px; height: 28px; fill: white; }
     @media (max-width: 480px) { .call-hud-timer { font-size: 2.2rem; } .call-hud-stats { max-width: 340px; gap: 0.5rem; } .call-hud-stat { padding: 0.75rem 0.5rem; } .call-hud-stat-value { font-size: 0.9rem; } .call-hud-spinner { width: 90px; height: 90px; } }
 
+    /* ── Desktop scaling ── */
+    @media (min-width: 768px) {
+      .app { max-width: 600px; }
+      #tab-dialer { padding-bottom: 8px; }
+      .display-card.cid { min-height: 82px; padding: 14px 18px 12px; }
+      .display-card.destination { min-height: 84px; padding: 14px 18px 12px; }
+      .cid .number { font-size: 22px; }
+      .destination .number { font-size: 36px; }
+      .keypad { width: min(100%, 380px); gap: 13px; }
+      .dial-key { height: 72px; border-radius: 24px; }
+      .digit { font-size: 32px; }
+      .letters { font-size: 9px; height: 11px; }
+      .call { width: 72px; height: 72px; }
+      .call svg { width: 28px; height: 28px; }
+      .actions { height: 62px; gap: 16px; }
+      .utility { height: 46px; font-size: 11px; }
+      .bottom-nav { height: 68px; position: relative; z-index: 20; }
+      .status-bar { height: 34px; }
+      .status-user { font-size: 12px; max-width: 140px; }
+    }
+
   </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="sip.min.js"></script>
