@@ -1175,7 +1175,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         
         # Validate number
         digits = ''.join(c for c in target if c.isdigit())
-        if not digits or len(digits.replace('1','').replace('+','')) < 10:
+        if not digits or len(digits) not in {10, 11}:
             return self._send_error('Invalid target number')
         
         # Check authorization
