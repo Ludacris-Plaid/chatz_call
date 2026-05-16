@@ -237,6 +237,10 @@
     .payment-create-btn { display: block; width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--green); background: rgba(34,197,94,0.15); color: var(--green); font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: all 150ms ease; }
     .payment-create-btn:active { background: rgba(34,197,94,0.3); }
     .payment-create-btn:disabled { opacity: 0.4; cursor: default; }
+    .vip-modal { border-color: rgba(245,158,11,0.3); }
+    .vip-features { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0; }
+    .vip-feat { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.02); font-size: 10px; color: var(--muted); text-align: center; }
+    .vip-price-tag { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--amber); margin: 8px 0; }
     .no-tokens-banner { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; text-align: center; }
     .no-tokens-banner .msg { font-size: 12px; color: var(--red); font-weight: 600; }
     .no-tokens-banner .action { font-size: 10px; color: var(--muted); margin-top: 2px; }
@@ -437,7 +441,8 @@
           <input type="text" id="voucherCode" placeholder="HUSH-XX-XXXXXX" autocomplete="off" autocapitalize="characters" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-transform:uppercase;letter-spacing:0.05em" />
           <button id="btnRedeemVoucher" style="padding:10px 14px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">REDEEM</button>
         </div>
-        <button class="wallet-btn primary" id="btnDeposit" style="grid-column:1/-1">+ DEPOSIT TOKENS</button>
+        <button class="wallet-btn primary" id="btnDeposit">+ DEPOSIT TOKENS</button>
+        <button class="wallet-btn" id="btnVip" style="border-color:rgba(245,158,11,0.4);color:var(--amber)">★ BUY VIP • $250</button>
       </div>
       <div class="card">
         <div class="card-label">RECENT TRANSACTIONS</div>
@@ -849,114 +854,32 @@
         }).catch(function(e){ console.error('[Call] Report failed:', e); });
     }
 
-    function handleCall() {
+        function handleCall() {
       var dest = S.destination;
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
       var token = localStorage.getItem('clawcall_token') || '';
       var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
 
-      toast('CONNECTING...');
-      
-      fetch('/api/calls/authorize', { headers: { 'Authorization': 'Bearer ' + token } })
+      toast('CALLING...');
+      if (typeof showCallHud === 'function') showCallHud(dest, cid);
+      if (typeof setHudStatus === 'function') setHudStatus('DIALING');
+
+      fetch('/api/call', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+        body: JSON.stringify({destination: dest, caller_id: cid})
+      })
         .then(function(r){ return r.json(); })
-        .then(function(auth){
-          if (!auth.authorized) { toast('NO TOKENS'); return; }
-          return fetch('/api/sip/credentials', { headers: { 'Authorization': 'Bearer ' + token } })
-            .then(function(r){ return r.json(); })
-            .then(function(creds){
-              if (!creds.ok) { toast('SIP AUTH FAILED'); return; }
-              
-              var target = (''+dest).replace(/\D/g,'');
-              if (target.length===10) target = '1'+target;
-              var callerId = (''+cid).replace(/\D/g,'');
-              if (callerId.length===10) callerId = '1'+callerId;
-              
-              // Show HUD if available
-              if (typeof showCallHud === 'function') showCallHud(target, callerId);
-              
-              try {
-                var ua = new SIP.UA({
-                  uri: 'sip:'+creds.extension+'@'+creds.domain,
-                  password: creds.password,
-                  displayName: creds.display_name || 'Caller',
-                  register: false,
-                  transportOptions: {
-                    wsServers: [creds.wss_url],
-                    traceSip: true
-                  }
-                });
-                
-                var connected = false;
-                var connectTimeout = setTimeout(function(){
-                  if (!connected) {
-                    console.error('WSS connect timeout for ext ' + creds.extension);
-                    toast('CONNECTION FAILED');
-                    window.activeSIPSession = null;
-                    if (typeof hideCallHud === 'function') hideCallHud();
-                    ua.stop();
-                  }
-                }, 8000);
-                
-                ua.transport.on('connected', function(){
-                  connected = true;
-                  clearTimeout(connectTimeout);
-                  var session = ua.invite('sip:'+target+'@'+creds.domain, {
-                    extraHeaders: ['P-Asserted-Identity: <sip:'+callerId+'@sip.sipup.org>'],
-                    media: {
-                      constraints: { audio: true, video: false },
-                      render: {
-                        remote: document.getElementById('remoteAudio'),
-                        local: null
-                      }
-                    }
-                  });
-                  if (!session) {
-                    console.error('ua.invite() returned null — transport connected but invite failed');
-                    toast('CALL ERROR');
-                    if (typeof hideCallHud === 'function') hideCallHud();
-                    return;
-                  }
-                  if (session) {
-                    window.activeSIPSession = session;
-                    var callStartTime = Date.now();
-                    var callConnected = false;
-                    session.on('accepted', function(){ 
-                      callConnected = true;
-                      if (typeof startHudTimer === 'function') startHudTimer();
-                      toast('CONNECTED');
-                    });
-                    session.on('progress', function(){ 
-                      if (typeof setHudStatus === 'function') setHudStatus('RINGING');
-                    });
-                    session.on('failed', function(r,c){ 
-                      var dur = Math.round((Date.now() - callStartTime) / 1000);
-                      reportCall(target, callerId, dur, 'FAILED', token);
-                      window.activeSIPSession = null;
-                      toast('CALL FAILED');
-                      if (typeof hideCallHud === 'function') hideCallHud();
-                    });
-                    session.on('bye', function(){ 
-                      var dur = Math.round((Date.now() - callStartTime) / 1000);
-                      reportCall(target, callerId, dur, callConnected ? 'COMPLETED' : 'FAILED', token);
-                      window.activeSIPSession = null;
-                      if (typeof hangupCall === 'function') hangupCall();
-                    });
-                  }
-                });
-                
-                ua.on('disconnected', function(){
-                  window.activeSIPSession = null;
-                  if (typeof hideCallHud === 'function') hideCallHud();
-                });
-                
-                ua.start();
-              } catch(e) {
-                console.error('SIP error:', e);
-                toast('SIP ERROR');
-              }
-            });
+        .then(function(d){
+          if (d.ok) {
+            toast('CALL PLACED');
+            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
+          } else {
+            toast(d.error || 'CALL FAILED');
+            if (typeof hideCallHud === 'function') hideCallHud();
+          }
         })
-        .catch(function(){ toast('CONNECTION ERROR'); });
+        .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
     }
 
     function showNoTokensBanner() {
@@ -1070,7 +993,7 @@
 
     // ── Deposit Flow ──
     var paymentData = null, paymentPollTimer = null;
-    var selectedAmt = 20, selectedCurr = 'btc';
+    var selectedAmt = 50, selectedCurr = 'btc';
 
     // Amount selection
     $$('.payment-amt-btn').forEach(function(b){
@@ -1217,6 +1140,110 @@
       }, 10000);
     }
     bindClick($('#btnWithdraw'), function(){ toast('WITHDRAW: Feature coming soon'); });
+
+    // VIP Flow
+    var vipData = null, vipPollTimer = null, vipSelectedCurr = "btc";
+    $$("#vipCurrencyRow .payment-curr-btn").forEach(function(b){
+      b.addEventListener("click", function(){
+        $$("#vipCurrencyRow .payment-curr-btn").forEach(function(x){ x.classList.remove("selected"); });
+        b.classList.add("selected");
+        vipSelectedCurr = b.dataset.curr;
+      });
+    });
+    bindClick($("#btnVip"), function(){
+      $("#vipDetails").style.display = "none";
+      $("#vipCreate").style.display = "";
+      $("#vipCreate").disabled = false;
+      $("#vipCreate").textContent = "ACTIVATE VIP";
+      $("#vipQR").innerHTML = "";
+      $("#vipStatus").textContent = "";
+      $("#vipStatus").className = "payment-status";
+      $("#vipOverlay").classList.add("open");
+    });
+    bindClick($("#vipClose"), function(){
+      $("#vipOverlay").classList.remove("open");
+      if (vipPollTimer) { clearInterval(vipPollTimer); vipPollTimer = null; }
+    });
+    var vo = $("#vipOverlay"); if (vo) vo.addEventListener("click", function(e){ if (e.target === vo) { $("#vipClose").click(); } });
+    bindClick($("#vipCreate"), function(){
+      var btn = $("#vipCreate");
+      btn.disabled = true; btn.textContent = "CREATING...";
+      var token = localStorage.getItem("clawcall_token") || "";
+      fetch("/api/topups/vip", {
+        method: "POST",
+        headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
+        body: JSON.stringify({pay_currency: vipSelectedCurr})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (!d.ok) { toast(d.error || "Failed"); btn.disabled = false; btn.textContent = "ACTIVATE VIP"; return; }
+        vipData = d;
+        btn.style.display = "none";
+        $("#vipDetails").style.display = "";
+        renderVipDetails(d);
+        startVipPolling(d.payment_id);
+      }).catch(function(e){
+        toast("VIP payment creation failed");
+        btn.disabled = false; btn.textContent = "ACTIVATE VIP";
+      });
+    });
+    bindClick($("#vipAddress"), function(){
+      var addr = vipData && vipData.pay_address;
+      if (!addr) { toast("ADDRESS NOT YET AVAILABLE"); return; }
+      if (navigator.clipboard) { navigator.clipboard.writeText(addr).then(function(){ toast("ADDRESS COPIED"); }); }
+      $("#vipAddress").style.borderColor = "var(--amber)";
+      setTimeout(function(){ $("#vipAddress").style.borderColor = ""; }, 800);
+    });
+    function renderVipDetails(d) {
+      var qrEl = $("#vipQR"); qrEl.innerHTML = "";
+      if (d.pay_address) {
+        var qrText = d.pay_currency.toLowerCase() + ":" + d.pay_address + "?amount=" + d.pay_amount;
+        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: "#f59e0b", colorLight: "#020617" }); } catch(e){}
+        $("#vipAddress").textContent = d.pay_address;
+        var explorerUrl = d.pay_currency === "BTC" ? "https://www.blockchain.com/explorer/addresses/btc/" + d.pay_address : "https://blockchair.com/litecoin/address/" + d.pay_address;
+        $("#vipExplorer").href = explorerUrl;
+      } else {
+        qrEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--dim);font-size:12px">AWAITING<br>ADDRESS</div>';
+        $("#vipAddress").textContent = "Assigning...";
+      }
+      $("#vipCryptoAmount").innerHTML = d.pay_amount + " <span>" + d.pay_currency + "</span>";
+      $("#vipStatus").textContent = "WAITING FOR PAYMENT...";
+      $("#vipStatus").className = "payment-status";
+    }
+    var vipAddrPollTimer = null;
+    function pollVipAddress(paymentId, attempts) {
+      if (vipData && vipData.pay_address) return;
+      if (attempts > 10) return;
+      fetch("/api/topups/" + paymentId, { headers: {"Authorization":"Bearer "+(localStorage.getItem("clawcall_token")||"")} })
+        .then(function(r){return r.json()}).then(function(d){
+          if (d.pay_address && (!vipData || !vipData.pay_address)) { vipData = d; renderVipDetails(d); }
+        }).catch(function(){});
+      if (!vipData || !vipData.pay_address) {
+        vipAddrPollTimer = setTimeout(function(){ pollVipAddress(paymentId, (attempts||0)+1); }, 3000);
+      }
+    }
+    function startVipPolling(paymentId) {
+      if (!vipData || !vipData.pay_address) pollVipAddress(paymentId, 0);
+      if (vipPollTimer) clearInterval(vipPollTimer);
+      var attempts = 0;
+      vipPollTimer = setInterval(function(){
+        attempts++;
+        var token = localStorage.getItem("clawcall_token") || "";
+        fetch("/api/topups/" + paymentId, { headers: {"Authorization":"Bearer "+token} })
+          .then(function(r){return r.json()}).then(function(d){
+            if (!d.ok) return;
+            var s = d.status || "";
+            if (s === "finished" || s === "confirmed" || s === "credited") {
+              $("#vipStatus").textContent = "PAYMENT RECEIVED! VIP ACTIVATED";
+              $("#vipStatus").className = "payment-status done";
+              clearInterval(vipPollTimer); vipPollTimer = null;
+              loadProfile();
+              setTimeout(function(){ $("#vipOverlay").classList.remove("open"); }, 2000);
+            } else if (s === "waiting") { $("#vipStatus").textContent = "WAITING FOR PAYMENT..."; }
+            else if (s === "confirming" || s === "sending") { $("#vipStatus").textContent = "CONFIRMING..."; }
+            else if (s === "expired" || s === "failed") { $("#vipStatus").textContent = "PAYMENT " + s.toUpperCase(); clearInterval(vipPollTimer); }
+          });
+        if (attempts > 60) { clearInterval(vipPollTimer); vipPollTimer = null; }
+      }, 10000);
+    }
     // ── End deposit flow ──
 
     // ══════════════════════════════════════════
@@ -1439,9 +1466,10 @@
       <div class="payment-title">BUY TOKENS</div>
       <div class="payment-subtitle">Send crypto to receive calling tokens</div>
       <div class="payment-amount-row" id="paymentAmountRow">
-        <button class="payment-amt-btn" data-amt="10">10 TK<br><span style="font-size:9px;color:var(--dim);font-weight:400">~$0.01</span></button>
-        <button class="payment-amt-btn selected" data-amt="20">20 TK<br><span style="font-size:9px;color:var(--dim);font-weight:400">~$0.01</span></button>
-        <button class="payment-amt-btn" data-amt="50">50 TK<br><span style="font-size:9px;color:var(--dim);font-weight:400">~$0.03</span></button>
+        <button class="payment-amt-btn" data-amt="20" data-usd="10">$10<br><span style="font-size:9px;color:var(--dim);font-weight:400">20 tokens</span></button>
+        <button class="payment-amt-btn selected" data-amt="50" data-usd="25">$25<br><span style="font-size:9px;color:var(--dim);font-weight:400">50 tokens</span></button>
+        <button class="payment-amt-btn" data-amt="100" data-usd="50">$50<br><span style="font-size:9px;color:var(--dim);font-weight:400">100 tokens</span></button>
+        <button class="payment-amt-btn" data-amt="200" data-usd="100">$100<br><span style="font-size:9px;color:var(--dim);font-weight:400">200 tokens</span></button>
       </div>
       <div class="payment-currency-row" id="paymentCurrencyRow">
         <button class="payment-curr-btn" data-curr="ltc">LTC</button>
@@ -1457,6 +1485,35 @@
         <div class="payment-status" id="paymentStatus">WAITING FOR PAYMENT...</div>
       </div>
     </div>
+
+  <!-- VIP MODAL -->
+  <div class="payment-overlay" id="vipOverlay">
+    <div class="payment-modal vip-modal">
+      <button class="payment-close" id="vipClose">&times;</button>
+      <div class="payment-title" style="color:var(--amber)">★ UNLOCK VIP</div>
+      <div class="payment-subtitle">7 days unlimited calling &bull; one-time payment</div>
+      <div class="vip-features">
+        <div class="vip-feat">&#x221E; Unlimited calling</div>
+        <div class="vip-feat">&#x1F512; Priority routing</div>
+        <div class="vip-feat">&#x26A1; No per-minute charges</div>
+        <div class="vip-feat">&#x1F31F; VIP badge on profile</div>
+      </div>
+      <div class="vip-price-tag">$250 USD</div>
+      <div class="payment-currency-row" id="vipCurrencyRow">
+        <button class="payment-curr-btn" data-curr="ltc">LTC</button>
+        <button class="payment-curr-btn selected" data-curr="btc">BTC</button>
+      </div>
+      <button class="payment-create-btn" id="vipCreate" style="border-color:rgba(245,158,11,0.4);color:var(--amber);background:rgba(245,158,11,0.12)">ACTIVATE VIP</button>
+      <div id="vipDetails" style="display:none">
+        <div class="payment-qr-wrap" id="vipQR"></div>
+        <div class="payment-amount-crypto" id="vipCryptoAmount"></div>
+        <div class="payment-address" id="vipAddress" title="Tap to copy"></div>
+        <div class="payment-copy-hint">TAP ADDRESS TO COPY</div>
+        <a class="payment-link" id="vipExplorer" target="_blank" rel="noopener">VIEW ON BLOCKCHAIN EXPLORER &nearr;</a>
+        <div class="payment-status" id="vipStatus">WAITING FOR PAYMENT...</div>
+      </div>
+    </div>
+  </div>
   </div>
 
 <div class="call-hud" id="callHud"><div class="call-hud-spinner"><div class="ring"></div><div class="ring pulse"></div><div class="ring spin"></div><div class="ring spin2"></div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div></div><div class="call-hud-timer" id="hudTimer">00:00</div><div class="call-hud-status" id="hudStatus">CONNECTING</div><div class="call-hud-stats"><div class="call-hud-stat"><div class="call-hud-stat-label">Cost</div><div class="call-hud-stat-value" id="hudCost">$0.00</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Rate</div><div class="call-hud-stat-value" id="hudRate">$0.50/min</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Balance</div><div class="call-hud-stat-value" id="hudBalance">--</div></div></div><div class="call-hud-numbers"><div>CID: <span id="hudCID">--</span></div><div>TO: <span id="hudTarget">--</span></div></div><button class="call-hud-hangup" id="hudHangup"><svg viewBox="0 0 24 24"><path d="M10.68 13.32a15.3 15.3 0 0 0 2.64 2.64l4.55-4.55a1.5 1.5 0 0 1 1.7-.3l4.1 1.7a1.5 1.5 0 0 1 .9 1.45v5.15a1.5 1.5 0 0 1-1.5 1.5C13.27 21.91 2.09 10.73 2.09 1.5A1.5 1.5 0 0 1 3.59 0h5.15a1.5 1.5 0 0 1 1.45.9l1.7 4.1a1.5 1.5 0 0 1-.3 1.7L8.68 9.68a15.3 15.3 0 0 0 2 2"/></svg></button></div>
