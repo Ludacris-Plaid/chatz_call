@@ -16,7 +16,8 @@ from caller_id import set_caller_id, get_caller_id, originate_call
 from supabase_auth import register_user, login_user, validate_session, get_user_profile as local_get_profile, logout as local_logout
 from supabase_data import (get_profile, update_profile, get_all_calls, get_next_sip_extension as local_next_ext,
     list_profiles, get_all_profiles, log_transaction, log_call, log_payment,
-    get_user_transactions, get_user_calls, get_user_payments, get_payment, update_payment, init_tables)
+    get_user_transactions, get_user_calls, get_user_payments, get_payment, update_payment, init_tables,
+    get_vip_days_left)
 import supabase_voucher as voucher_system
 import subprocess, socket
 from pathlib import Path
@@ -450,6 +451,17 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if err:
             return err
         username = profile.get("username", "unknown")
+        is_vip = bool(profile.get("is_vip"))
+        
+        # Calculate real VIP days remaining from transactions
+        vip_days = 0
+        vip_expires = None
+        if is_vip:
+            user_id = profile["id"]
+            try:
+                vip_days, vip_expires = get_vip_days_left(user_id)
+            except Exception:
+                pass
 
         self._send_json({
             "ok": True,
@@ -458,13 +470,16 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                 "username": username,
                 "token_balance": float(profile.get("token_balance", 0)),
                 "is_admin": profile.get("role") == "admin",
-                "is_vip": bool(profile.get("is_vip")),
-                "vip_expires_at": profile.get("vip_expires_at"),
+                "is_vip": is_vip,
+                "vip_expires_at": vip_expires,
+                "vip_days_left": vip_days,
                 "account_status": "banned" if profile.get("is_banned") else ("suspended" if profile.get("is_suspended") else "active"),
                 "sip_extension": profile.get("sip_extension"),
                 "sip_password": profile.get("sip_password"),
             },
-            "vip_active": bool(profile.get("is_vip")),
+            "vip_active": is_vip,
+            "vip_days_left": vip_days,
+            "vip_expires_at": vip_expires,
             "rate_per_minute_usd": TOKEN_PRICE,
             "vip_price_usd": VIP_PRICE,
         })

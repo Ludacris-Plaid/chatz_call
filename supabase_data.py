@@ -226,6 +226,32 @@ def update_profile(user_id, updates):
     supa_updates["updated_at"] = "now()"
     return _patch("clawcall_users", supa_updates, {"id": str(int(user_id))})
 
+def get_vip_expiry(user_id):
+    """Get VIP expiry timestamp for a user from their latest vip_activated transaction."""
+    rows = _get("clawcall_transactions", {
+        "user_id": str(int(user_id)),
+        "transaction_type": "vip_activated",
+        "order": "created_at.desc",
+        "limit": "1",
+        "select": "description",
+    })
+    if rows and rows[0].get("description"):
+        try:
+            return float(rows[0]["description"])
+        except (ValueError, TypeError):
+            pass
+    return None
+
+def get_vip_days_left(user_id):
+    """Get days remaining of VIP for a user. Returns (days_left, expiry_ts) or (0, None)."""
+    expiry = get_vip_expiry(user_id)
+    if expiry:
+        remaining = expiry - time.time()
+        days = max(0, int(remaining / 86400 + 0.5))  # round to nearest day
+        return days, expiry
+    return 0, None
+
+
 def list_profiles(limit=50):
     rows = _get("clawcall_users", {
         "select": "id,username,tokens,role,status",
