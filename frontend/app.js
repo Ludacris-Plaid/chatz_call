@@ -218,7 +218,7 @@ async function placeCall() {
   try {
     const result = await api("/api/call", {
       method: "POST",
-      body: JSON.stringify({ target: apiDigits(dest), caller_id: apiDigits(callerId) }),
+      body: JSON.stringify({"destination": apiDigits(dest), "caller_id": apiDigits(callerId)}),
     });
 
     if (result.ok) {
@@ -437,7 +437,7 @@ els.cidLockBtn.addEventListener("click", async () => {
     activeField = null;
 
     // Persist CID to server
-    api("/api/set-caller-id", {
+    api("/api/caller-id", {
       method: "POST",
       body: JSON.stringify({ caller_id: apiDigits(digits) }),
     }).then(d => logEvent(`CID: ${d.caller_id} // saved`))
