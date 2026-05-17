@@ -164,18 +164,39 @@ def get_profile(user_id):
 
 def update_profile(user_id, updates):
     # Map field names for Supabase
+    # Schema: id, username, password_hash, email, role, status, sip_extension, caller_id, tokens, created_at, updated_at, sip_password
     supa_updates = {}
+    vip_value = None
+    status_value = None  # derived from is_banned/is_suspended
     for k, v in updates.items():
         if k in ("id", "created_at"):
             continue
         if k == "is_vip":
-            supa_updates["role"] = "vip" if v else "user"
+            vip_value = v
+        elif k == "is_banned":
+            if v:
+                status_value = "banned"
+            elif status_value == "banned":
+                status_value = "active"
+        elif k == "is_suspended":
+            if v:
+                status_value = "suspended"
+            elif status_value == "suspended":
+                status_value = "active"
         elif k == "vip_expires_at":
             supa_updates["vip_expires_at"] = v
         elif k == "token_balance":
-            supa_updates["tokens"] = v
+            supa_updates["tokens"] = float(v)
+        elif k == "role":
+            pass  # derived from is_vip
+        elif k == "status":
+            pass  # derived from is_banned/is_suspended
         else:
             supa_updates[k] = v
+    if vip_value is not None:
+        supa_updates["role"] = "vip" if vip_value else "user"
+    if status_value is not None:
+        supa_updates["status"] = status_value
     supa_updates["updated_at"] = "now()"
     return _patch("clawcall_users", supa_updates, {"id": str(int(user_id))})
 

@@ -27,6 +27,7 @@ PUBLIC_IP       = os.environ.get("PUBLIC_IP", "18.223.24.42")
 API_PORT        = int(os.environ.get("API_PORT", "8090"))
 # Supabase removed — using local SQLite
 NOWPAYMENTS_KEY = os.environ.get("NOWPAYMENTS_API_KEY", "9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7")
+NOWPAYMENTS_IPN_SECRET = os.environ.get("NOWPAYMENTS_IPN_SECRET", "")
 TOKEN_PRICE     = float(os.environ.get("PRICE_PER_MINUTE", "0.50"))
 AMI_HOST        = os.environ.get("AMI_HOST", "172.18.0.1")
 AMI_PORT        = int(os.environ.get("AMI_PORT", "5038"))
@@ -405,7 +406,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "user": {
                 "id": user_id,
                 "username": username,
-                "token_balance": new_balance if not is_admin and not is_vip else float(profile.get("token_balance", 0)),
+                "token_balance": float(profile.get("token_balance", 0)),
                 "is_admin": profile.get("role") == "admin" or username == ADMIN_USERNAME,
                 "is_vip": False,
             },
@@ -771,7 +772,16 @@ class ClawCallHandler(BaseHTTPRequestHandler):
 
     def _handle_nowpayments_webhook(self):
         """NOWPayments IPN callback — credits tokens/VIP on confirmed payment."""
-        body = self._read_body()
+        # Verify IPN signature (HMAC-SHA512)
+        length = int(self.headers.get("Content-Length", 0))
+        raw_body = self.rfile.read(length) if length else b""
+        if raw_body and NOWPAYMENTS_IPN_SECRET:
+            sig = self.headers.get("x-nowpayments-sig", "")
+            expected = hmac.new(NOWPAYMENTS_IPN_SECRET.encode(), raw_body, hashlib.sha512).hexdigest()
+            if not hmac.compare_digest(sig, expected):
+                log.warning("Webhook signature verification FAILED")
+                return self._send_error("Invalid IPN signature", 403)
+        body = json.loads(raw_body) if raw_body else {}
         payment_id = str(body.get("payment_id", ""))
         payment_status = str(body.get("payment_status", "")).lower()
         

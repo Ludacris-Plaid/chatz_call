@@ -30,7 +30,7 @@
     .app { position: relative; z-index: 1; width: 100%; max-width: 520px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
 
     /* ── Tab Pages ── */
-    .tab-page { display: none; flex: 1; overflow: hidden; padding: max(8px, env(safe-area-inset-top)) 18px 10px; }
+    .tab-page { display: none; flex: 1; overflow-y: auto; padding: 8px 14px 60px; box-sizing: border-box; }
     .tab-page.active { display: flex; flex-direction: column; gap: 10px; }
     .tab-page-title { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: rgba(248,250,252,0.88); margin: 0 0 2px 0; flex-shrink: 0; }
 
@@ -51,14 +51,14 @@
     .nav-btn:active { background: rgba(34,197,94,0.06); }
 
     /* ── Dialer tab (compact for nav space) ── */
-    #tab-dialer { padding-bottom: 4px; }
-    #tab-dialer .header { height: 30px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+    #tab-dialer { padding-bottom: 14px; padding-top: 8px; }
+    #tab-dialer .header { height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; box-sizing: border-box; }
     .brand { display: inline-flex; align-items: center; gap: 5px; }
     .hush-word, .circuits-word { font-family: "Orbitron", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #fff; }
     .circuits-word { color: #22D3EE; text-shadow: 0 0 8px rgba(34,211,238,0.5); }
 
     /* ── Status Bar ── */
-    .status-bar { flex-shrink: 0; border: 1px solid var(--border-soft); border-radius: 12px; background: rgba(10,18,32,0.55); backdrop-filter: blur(8px); padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 11px; margin-top: 4px; height: 30px; }
+    .status-bar { flex-shrink: 0; border: 1px solid var(--border-soft); border-radius: 12px; background: rgba(10,18,32,0.55); backdrop-filter: blur(8px); padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 11px; margin-top: 4px; margin-bottom: 8px; height: 30px; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .status-dot.online { background: #22C55E; box-shadow: 0 0 8px rgba(34,197,94,0.6); animation: dotPulse 2s ease-in-out infinite; }
     .status-dot.offline { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
@@ -72,6 +72,7 @@
     .status-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap; }
     .status-badge.admin { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
     .status-badge.vip { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
+    .status-right { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .status-tokens { color: var(--muted); font-size: 10px; font-weight: 500; white-space: nowrap; }
     .status-balance { margin-left: auto; color: #22C55E; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
     .status-balance.infinite { font-size: 16px; }
@@ -105,10 +106,10 @@
     .cnam.scanning { color: var(--green); }
     .cnam.resolved { color: rgba(203,213,225,0.85); }
     .cnam.glitch { animation: glitchFlash 230ms steps(2, end); }
-    .keypad-wrap { flex: 1; min-height: 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
-    .keypad { width: min(100%, 340px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .keypad-wrap { flex: 1; min-height: 0; max-height: 58%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 16px; }
+    .keypad { width: min(100%, 340px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
     button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; background: none; }
-    .dial-key { height: clamp(54px, 9dvh, 64px); border-radius: 20px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+    .dial-key { height: clamp(48px, 7dvh, 56px); border-radius: 20px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
     .dial-key:active { transform: scale(0.94); border-color: rgba(34,197,94,0.42); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 20px rgba(34,197,94,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
     .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 6.2vw, 30px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.95); }
     .letters { height: 10px; font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: rgba(100,116,139,0.8); }
@@ -124,7 +125,7 @@
     .balance-ring svg { transform: rotate(-90deg); }
     .balance-ring .bg { fill: none; stroke: rgba(255,255,255,0.06); stroke-width: 8; }
     .balance-ring .fill { fill: none; stroke: var(--green); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 800ms ease; }
-    .balance-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
+    .balance-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
     .balance-amount { font-family: "Space Grotesk", sans-serif; font-size: 22px; font-weight: 700; color: var(--text); }
     .balance-label { font-size: 9px; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 2px; }
     .wallet-actions { display: grid; grid-template-columns: 1fr; gap: 10px; }
@@ -416,9 +417,9 @@
       <div class="status-bar" id="statusBar">
         <div class="status-dot" id="statusDot"></div>
         <span class="status-label" id="statusLabel">CHECKING</span>
-        <span class="status-user" id="statusUser">---</span>
-        <span class="status-badge" id="statusBadge" style="display:none"></span>
-        <div class="status-meta">
+        <div class="status-right">
+          <span class="status-badge" id="statusBadge" style="display:none"></span>
+          <span class="status-user" id="statusUser">---</span>
           <span class="status-tokens" id="statusTokens">---</span>
         </div>
       </div>
@@ -464,7 +465,7 @@
           <svg width="120" height="120" viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fill" id="balanceArc" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="100"/></svg>
           <div class="balance-center"><div class="balance-amount" id="balanceAmount">0</div><div class="balance-label">TOKENS</div></div>
         </div>
-        <div class="card-sub" style="margin-top:8px" id="balanceUSD">≈ $0.00 USD</div>
+        <div class="card-sub" style="margin-top:8px" id="balanceUSD">No talk time — deposit tokens</div>
       </div>
       <div class="wallet-actions">
         <div style="display:flex;gap:6px;grid-column:1/-1;margin-bottom:4px">
@@ -612,11 +613,11 @@
           if (d.ok) {
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
-            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; $("#statusBalance").textContent = isAdmin ? "∞" : "$" + bal.toFixed(2); if (isAdmin) $("#statusBalance").classList.add("infinite");
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
 
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
-              badge.textContent = 'ADMIN'; $('#statusBalance').textContent = '∞'; $('#statusBalance').classList.add('infinite'); badge.className = 'status-badge admin'; badge.style.display = '';
+              badge.textContent = 'ADMIN'; $('#statusTokens').textContent = '∞'; $('#statusTokens').classList.add('infinite'); badge.className = 'status-badge admin'; badge.style.display = '';
             } else if (u.is_vip) {
               badge.textContent = 'VIP'; badge.className = 'status-badge vip'; badge.style.display = '';
             } else {
@@ -857,12 +858,6 @@
       var d = (num || '').replace(/\D/g, '');
       return d.length === 10 ? '1' + d : d;
     }
-
-    // Normalize number for API: strip non-digits, add leading 1 for 10-digit numbers
-    function apiDigits(num) {
-      var d = (num || '').replace(/\D/g, '');
-      return d.length === 10 ? '1' + d : d;
-    }
     function reportCall(target, cid, duration, status, token) {
       if (!token) { token = localStorage.getItem('clawcall_token') || ''; if (!token) return; }
       fetch('/api/calls/report', {
@@ -879,7 +874,7 @@
           if (d.ok) {
             console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
             if (d.user && d.user.token_balance !== undefined) {
-              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusBalance').textContent = '$' + S.userBalance.toFixed(2);
+              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusTokens').textContent = Math.floor(S.userBalance) + ' TK';
             }
           }
         }).catch(function(e){ console.error('[Call] Report failed:', e); });
@@ -1017,7 +1012,10 @@
       var circ = 326.7, offset = circ - (pct / 100) * circ;
       $('#balanceArc').setAttribute('stroke-dashoffset', offset);
       $('#balanceAmount').textContent = Math.floor(bal).toLocaleString();
-      $('#balanceUSD').textContent = '\u2248 $' + (bal * 0.001).toFixed(2) + ' USD';
+      var talkMin = Math.floor(bal / 0.50);
+      var talkStr = talkMin >= 60 ? '~ ' + Math.floor(talkMin/60) + 'h ' + (talkMin%60) + 'm talk time' : '~ ' + talkMin + ' min talk time';
+      if (bal <= 0) talkStr = 'No talk time — deposit tokens';
+      $('#balanceUSD').textContent = talkStr;
       var txHtml = '';
       var txs = (data && data.transactions) || [];
       if (txs.length === 0) txHtml = '<div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div>';
@@ -1030,7 +1028,7 @@
     function renderWalletDemo() {
       $('#balanceArc').setAttribute('stroke-dashoffset', '80');
       $('#balanceAmount').textContent = '2,450';
-      $('#balanceUSD').textContent = '\u2248 $2.45 USD';
+      $('#balanceUSD').textContent = '~ 81h 40m talk time';
       $('#txList').innerHTML =
         '<div class="tx-row"><div><div class="tx-type">Deposit</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount in">+1,000 TK</div></div>' +
         '<div class="tx-row"><div><div class="tx-type">Call: +15875906282</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount out">-15 TK</div></div>' +
@@ -1282,7 +1280,7 @@
               $("#vipStatus").textContent = "PAYMENT RECEIVED! VIP ACTIVATED";
               $("#vipStatus").className = "payment-status done";
               clearInterval(vipPollTimer); vipPollTimer = null;
-              loadProfile();
+              loadWallet();
               setTimeout(function(){ $("#vipOverlay").classList.remove("open"); }, 2000);
             } else if (s === "waiting") { $("#vipStatus").textContent = "WAITING FOR PAYMENT..."; }
             else if (s === "confirming" || s === "sending") { $("#vipStatus").textContent = "CONFIRMING..."; }
@@ -1420,11 +1418,11 @@
       filtered.forEach(function(u){
         var badges = '';
         if (u.role === 'admin') badges += '<span class="admin-badge admin">ADMIN</span>';
-        if (u.vip) badges += '<span class="admin-badge vip">VIP</span>';
-        if (u.banned) badges += '<span class="admin-badge banned">BANNED</span>';
-        if (u.suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
+        if (u.is_vip) badges += '<span class="admin-badge vip">VIP</span>';
+        if (u.is_banned) badges += '<span class="admin-badge banned">BANNED</span>';
+        if (u.is_suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
         html += '<div class="admin-user-row">' +
-          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+u.tokens+' TK</div></div>' +
+          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+(u.token_balance || 0)+' TK</div></div>' +
           '<div class="admin-badges">'+badges+'</div>' +
           '<div class="admin-actions">' +
             '<button class="admin-btn" onclick="adminAction('+u.id+',\'tokens\')" title="Adjust tokens">+</button>' +
@@ -1442,13 +1440,13 @@
       if (!user) return;
       var token = localStorage.getItem('clawcall_token') || '';
       if (action === 'ban') {
-        if (!user.banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
-        user.banned = !user.banned; toast(user.username + (user.banned ? ' BANNED' : ' UNBANNED'));
+        if (!user.is_banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
+        user.is_banned = !user.is_banned; toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
       }
-      else if (action === 'suspend') { user.suspended = !user.suspended; toast(user.username + (user.suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
-      else if (action === 'vip') { user.vip = !user.vip; toast(user.username + (user.vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
+      else if (action === 'suspend') { user.is_suspended = !user.is_suspended; toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
+      else if (action === 'vip') { user.is_vip = !user.is_vip; toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
       else if (action === 'tokens') {
-        var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.tokens + ')');
+        var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.token_balance + ')');
         if (amt !== null && !isNaN(parseInt(amt))) { user.token_balance = parseInt(amt); toast(user.username + ' tokens set to ' + user.token_balance); }
       }
       // Try API
