@@ -194,7 +194,15 @@ def update_profile(user_id, updates):
         else:
             supa_updates[k] = v
     if vip_value is not None:
-        supa_updates["role"] = "vip" if vip_value else "user"
+        # Check current role first - never overwrite admin
+        existing = _get("clawcall_users", {"id": str(int(user_id)), "select": "role"})
+        current_role = existing[0].get("role") if existing else None
+        if current_role == "admin":
+            pass  # Never change admin role
+        elif vip_value:
+            supa_updates["role"] = "vip"
+        else:
+            supa_updates["role"] = "user"
     if status_value is not None:
         supa_updates["status"] = status_value
     supa_updates["updated_at"] = "now()"

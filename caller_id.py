@@ -56,10 +56,9 @@ def ami_command(action: dict) -> dict:
 def originate_call(target: str, caller_id: str = '17804755555') -> dict:
     digits = normalize_number(target)
     cid = normalize_caller_id(caller_id)
-    # Direct PJSIP to SIP.UP — bypass dialplan, proven reliable
-    # SIP.UP expects E.164: +1XXXXXXXXXX
-    e164 = f'+1{digits[1:]}' if digits.startswith('1') else f'+1{digits}'
-    channel = f'PJSIP/sipup-trunk/sip:{e164}@sip.sipup.org'
+    # Use dialplan routing via Local/ channel — reliable, sets CallerID properly
+    # AMI direct PJSIP originate fails with 'Failure' in this container
+    channel = f'Local/{digits}@public'
     action = {
         'Action': 'Originate',
         'Channel': channel,

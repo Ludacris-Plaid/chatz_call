@@ -804,7 +804,8 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             
             if payment_status in ("finished", "confirmed"):
                 user_id = str(payment.get("user_id", ""))
-                tokens = float(payment.get("tokens_to_credit", 0))
+                usd_amount = float(payment.get("amount", 0))
+                tokens = usd_amount / TOKEN_PRICE  # $0.50/min → 1 token = $0.50
                 
                 if tokens > 0:
                     # Token purchase
@@ -857,35 +858,28 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                 "is_fixed_rate": False,
                 "is_fee_paid_by_user": True,
             }
-            result = nowpayments_request("/invoice", np_body)
-            payment_id = str(result.get("id") or result.get("invoice_id") or "")
+            result = nowpayments_request("/payment", np_body)
+            payment_id = str(result.get("payment_id") or "")
 
             if not payment_id:
-                return self._send_error("Failed to create payment invoice")
+                return self._send_error("Failed to create payment")
 
             # Store payment locally
             log_payment(user_id, usd_amount, payment_id, "waiting")
 
-            # Poll NOWPayments for the actual payment address
-            pay_address = ""
-            pay_amount = 0.0
-            try:
-                np_payment = nowpayments_request(f"/payment/{payment_id}")
-                pay_address = str(np_payment.get("pay_address", ""))
-                pay_amount = float(np_payment.get("pay_amount", 0))
-            except Exception:
-                pass
+            pay_address = str(result.get("pay_address", ""))
+            pay_amount = float(result.get("pay_amount", 0))
+            payment_status = str(result.get("payment_status", "waiting"))
 
             self._send_json({
                 "ok": True,
                 "payment_id": payment_id,
-                "invoice_url": result.get("invoice_url", ""),
-                "pay_address": pay_address or result.get("pay_address", ""),
-                "pay_amount": pay_amount or float(result.get("pay_amount", 0)),
+                "pay_address": pay_address,
+                "pay_amount": pay_amount,
                 "pay_currency": pay_currency.upper(),
                 "usd_amount": usd_amount,
                 "token_amount": token_amount,
-                "status": "waiting",
+                "status": payment_status,
             })
         except Exception as e:
             self._send_error(f"Payment creation failed: {e}")
@@ -913,31 +907,25 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                 "is_fixed_rate": False,
                 "is_fee_paid_by_user": True,
             }
-            result = nowpayments_request("/invoice", np_body)
-            payment_id = str(result.get("id") or result.get("invoice_id") or "")
+            result = nowpayments_request("/payment", np_body)
+            payment_id = str(result.get("payment_id") or "")
 
             if not payment_id:
-                return self._send_error("Failed to create VIP invoice")
+                return self._send_error("Failed to create VIP payment")
 
             log_payment(user_id, VIP_PRICE, payment_id, "waiting")
-            pay_address = ""
-            pay_amount = 0.0
-            try:
-                np_payment = nowpayments_request(f"/payment/{payment_id}")
-                pay_address = str(np_payment.get("pay_address", ""))
-                pay_amount = float(np_payment.get("pay_amount", 0))
-            except Exception:
-                pass
+            pay_address = str(result.get("pay_address", ""))
+            pay_amount = float(result.get("pay_amount", 0))
+            payment_status = str(result.get("payment_status", "waiting"))
             self._send_json({
                 "ok": True,
                 "payment_id": payment_id,
-                "invoice_url": result.get("invoice_url", ""),
-                "pay_address": pay_address or result.get("pay_address", ""),
-                "pay_amount": pay_amount or float(result.get("pay_amount", 0)),
+                "pay_address": pay_address,
+                "pay_amount": pay_amount,
                 "pay_currency": pay_currency.upper(),
                 "usd_amount": VIP_PRICE,
                 "product_type": "vip",
-                "status": "waiting",
+                "status": payment_status,
             })
         except Exception as e:
             self._send_error(f"VIP payment creation failed: {e}")
