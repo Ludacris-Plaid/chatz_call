@@ -106,7 +106,7 @@ def create_batch(amount, count, created_by):
             codes.append(code)
     return codes
 
-def redeem_voucher(code, username):
+def redeem_voucher(code, user_id):
     rows = _get("clawcall_vouchers", {"code": code, "select": "*"})
     if not rows:
         return ("Voucher not found", False)
@@ -116,7 +116,7 @@ def redeem_voucher(code, username):
     
     result = _patch("clawcall_vouchers", {
         "status": "redeemed",
-        "redeemed_by": str(username),
+        "redeemed_by": int(user_id),
         "redeemed_at": "now()",
     }, {"code": code})
     

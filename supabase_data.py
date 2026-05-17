@@ -158,6 +158,7 @@ def get_profile(user_id):
         "token_balance": float(row.get("tokens", 0)),
         "tokens": float(row.get("tokens", 0)),
         "is_vip": row.get("role") == "vip",
+        "created_at": row.get("created_at", ""),
         "is_banned": row.get("status") == "banned",
         "is_suspended": row.get("status") == "suspended",
     }
@@ -252,26 +253,35 @@ def get_vip_days_left(user_id):
     return 0, None
 
 
-def list_profiles(limit=50):
+def list_profiles(page=1, per_page=15):
+    limit = per_page
+    offset = (page - 1) * per_page
     rows = _get("clawcall_users", {
-        "select": "id,username,tokens,role,status",
-        "order": "id.desc",
+        "select": "id,username,email,tokens,role,status,updated_at,created_at",
+        "order": "updated_at.desc.nullslast",
         "limit": str(limit),
+        "offset": str(offset),
     })
+    # Get total count for pagination
+    count_rows = _get("clawcall_users", {"select": "id"})
+    total = len(count_rows) if isinstance(count_rows, list) else 0
     if not rows:
-        return []
+        return {"users": [], "total": total, "page": page, "per_page": per_page}
     result = []
     for r in rows:
         result.append({
             "id": str(r["id"]),
             "username": r.get("username", ""),
+            "email": r.get("email", ""),
             "token_balance": float(r.get("tokens", 0)),
             "is_vip": r.get("role") == "vip",
             "role": r.get("role", "user"),
             "is_banned": r.get("status") == "banned",
             "is_suspended": r.get("status") == "suspended",
+            "updated_at": r.get("updated_at", ""),
+            "created_at": r.get("created_at", ""),
         })
-    return result
+    return {"users": result, "total": total, "page": page, "per_page": per_page}
 
 def get_all_profiles():
     rows = _get("clawcall_users", {"select": "id,role,tokens"})

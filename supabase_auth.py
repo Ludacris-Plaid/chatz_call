@@ -162,7 +162,7 @@ def get_user_profile(user_id: str) -> dict:
     try:
         rows = _get("clawcall_users", {
             "id": str(int(user_id)),
-            "select": "id,username,tokens,role,sip_extension,status",
+            "select": "id,username,tokens,role,sip_extension,status,caller_id,created_at",
         })
         if not rows:
             return None
@@ -175,6 +175,10 @@ def get_user_profile(user_id: str) -> dict:
             "role": user.get("role", "user"),
             "sip_extension": user.get("sip_extension", ""),
             "sip_password": user.get("sip_password", ""),
+            "caller_id": user.get("caller_id", ""),
+            "created_at": user.get("created_at", ""),
+            "is_banned": user.get("status") == "banned",
+            "is_suspended": user.get("status") == "suspended",
         }
     except Exception:
         return None

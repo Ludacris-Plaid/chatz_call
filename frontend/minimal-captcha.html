@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Captcha Test</title>
+<style>
+:root { --bg: #090d14; --panel: #0f1824; --text: #fff; --green: #22c55e; --muted: #4b6280; }
+body { margin: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; font-family: "Space Grotesk", sans-serif; }
+.card { background: var(--panel); border: 1px solid rgba(255,255,255,0.07); border-radius: 22px; padding: 28px; max-width: 360px; width: 90%; }
+.ac-field { margin-bottom: 12px; }
+.ac-field > label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
+.ac-inner { background: #0f1824; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 18px 16px 16px; }
+.ac-inner.success { border-color: rgba(34,197,94,0.45); box-shadow: 0 0 40px rgba(34,197,94,0.12); }
+.ac-inner.fail { animation: acShake 0.45s ease; }
+@keyframes acShake { 0%,100%{transform:translateX(0)}25%{transform:translateX(-9px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)} }
+@keyframes acPop { 0%{transform:scale(1)}50%{transform:scale(1.14)}100%{transform:scale(1)} }
+@keyframes acGreenPulse { 0%,100%{box-shadow:0 0 0 rgba(34,197,94,0)}50%{box-shadow:0 0 28px 4px rgba(34,197,94,0.35)} }
+.ac-status-label { font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; text-align: center; margin-bottom: 14px; color: #4b6280; }
+.ac-status-label.fail { color: #EF4444; }
+.ac-instruction { color: #3d5470; font-size: 12px; text-align: center; margin: 0 0 14px; }
+.ac-play-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 auto 16px; background: #182230; border: 1px solid rgba(0,212,180,0.3); border-radius: 50px; padding: 10px 24px; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: #fff; cursor: pointer; transition: all 0.18s; outline: none; }
+.ac-play-btn:disabled { opacity: 0.6; color: #4b6280; border-color: rgba(255,255,255,0.07); cursor: default; }
+.ac-play-dot { width: 8px; height: 8px; border-radius: 50%; background: #00d4b4; box-shadow: 0 0 8px #00d4b4; flex-shrink: 0; }
+.ac-play-btn:disabled .ac-play-dot { background: #4b6280; box-shadow: none; }
+.ac-section-label { font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; color: #4b6280; margin-bottom: 8px; }
+.ac-slots { display: flex; gap: 6px; background: #182230; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px; margin-bottom: 14px; }
+.ac-slot-empty { flex: 1 1 0; aspect-ratio: 1/1.2; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(255,255,255,0.06); }
+.ac-slot-filled { flex: 1 1 0; aspect-ratio: 1/1.2; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; position: relative; animation: acPop 0.18s ease; }
+.ac-slot-remove { position: absolute; top: 3px; right: 4px; font-size: 7px; color: rgba(255,255,255,0.15); }
+.ac-slot-label { font-weight: 700; font-size: 8px; }
+.ac-tiles { display: flex; gap: 6px; margin-bottom: 14px; }
+.ac-tile { flex: 1 1 0; aspect-ratio: 1/1.25; border-radius: 14px; background: #182230; border: 1px solid rgba(255,255,255,0.07); box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform 0.13s, box-shadow 0.13s, background 0.13s; outline: none; }
+.ac-tile:active { transform: scale(0.94); }
+.ac-tile.ac-used { opacity: 0.12; cursor: default; pointer-events: none; }
+.ac-tile-label { font-weight: 700; font-size: 10px; text-transform: uppercase; color: rgba(255,255,255,0.55); }
+.ac-verify-btn { display: block; width: 100%; border-radius: 50px; padding: 12px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; cursor: pointer; transition: all 0.18s; outline: none; border: none; }
+.ac-verify-btn.ready { background: #22C55E; color: #020617; box-shadow: 0 4px 24px rgba(34,197,94,0.35); }
+.ac-verify-btn.not-ready { background: rgba(34,197,94,0.08); color: #2a3a50; border: 1px solid rgba(34,197,94,0.12); cursor: default; }
+.ac-footer { font-size: 10px; color: #2a3a50; text-align: center; letter-spacing: 0.06em; margin-top: 14px; }
+.ac-success-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0; }
+.ac-success-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(34,197,94,0.12); border: 2px solid #22C55E; display: flex; align-items: center; justify-content: center; animation: acGreenPulse 1.8s infinite; font-size: 22px; color: #22C55E; }
+.ac-success-title { font-weight: 700; font-size: 16px; text-transform: uppercase; color: #22C55E; letter-spacing: 0.16em; }
+.ac-success-sub { font-size: 11px; color: #4b6280; }
+.debug { position: fixed; bottom: 0; left: 0; right: 0; background: #000; color: #0f0; font-family: monospace; font-size: 10px; padding: 8px; max-height: 100px; overflow-y: auto; white-space: pre-wrap; }
+</style></head>
+<body>
+<div class="card">
+  <div class="ac-field">
+    <label>AUDIO VERIFICATION</label>
+    <div class="ac-inner" id="loginAcInner">
+      <div class="ac-status-label" id="loginAcStatus">AUDIO VERIFICATION</div>
+      <p class="ac-instruction" id="loginAcInstr">Play the sequence, then tap the tones below in the same order.</p>
+      <button class="ac-play-btn" id="loginAcPlay"><span class="ac-play-dot"></span> PLAY SEQUENCE</button>
+      <div class="ac-section-label">YOUR ANSWER — TAP TO REMOVE</div>
+      <div class="ac-slots" id="loginAcSlots">
+        <div class="ac-slot-empty">1</div><div class="ac-slot-empty">2</div><div class="ac-slot-empty">3</div><div class="ac-slot-empty">4</div><div class="ac-slot-empty">5</div>
+      </div>
+      <div class="ac-section-label">TAP TO ADD</div>
+      <div class="ac-tiles" id="loginAcTiles"></div>
+      <button class="ac-verify-btn not-ready" id="loginAcVerify">SELECT 5 MORE</button>
+      <div class="ac-footer" id="loginAcFooter">TAP A FILLED SLOT TO REMOVE IT</div>
+    </div>
+  </div>
+</div>
+<div class="debug" id="debug"></div>
+
+<script>
+var D = document.getElementById("debug");
+function log(m) { D.textContent += m + "\n"; D.scrollTop = D.scrollHeight; console.log(m); }
+
+var AC = {
+  CORRECT: [0, 1, 2, 3, 4],
+  NOTES: [
+    { id: 0, freq: 587.3, label: "I", color: "#22c55e" },
+    { id: 1, freq: 659.3, label: "II", color: "#00d4b4" },
+    { id: 2, freq: 523.3, label: "III", color: "#60a5fa" },
+    { id: 3, freq: 261.6, label: "IV", color: "#c084fc" },
+    { id: 4, freq: 392.0, label: "V", color: "#fbbf24" },
+  ],
+  ctx: null, passed: false, answer: [], playing: false, activeTile: null, status: "idle", attempts: 0, tiles: null
+};
+
+function acGetCtx() {
+  try {
+    if (!AC.ctx) { AC.ctx = new (window.AudioContext || window.webkitAudioContext)(); log("Created AudioContext: " + AC.ctx.state); }
+    if (AC.ctx.state === "suspended") { AC.ctx.resume(); }
+    if (AC.ctx.state === "closed") { AC.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
+  } catch(e) { log("AudioContext error: " + e.message); return null; }
+  return AC.ctx;
+}
+
+function acPlayTone(freq, startTime, duration) {
+  duration = duration || 0.45;
+  var ctx = acGetCtx(); if (!ctx) return;
+  var osc = ctx.createOscillator(), gain = ctx.createGain();
+  osc.type = "sine"; osc.frequency.value = freq;
+  osc.connect(gain); gain.connect(ctx.destination);
+  gain.gain.setValueAtTime(0, startTime);
+  gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
+  gain.gain.setValueAtTime(0.4, startTime + duration - 0.05);
+  gain.gain.linearRampToValueAtTime(0, startTime + duration);
+  osc.start(startTime); osc.stop(startTime + duration);
+}
+
+function acPlay() {
+  log("acPlay() called. playing=" + AC.playing + " passed=" + AC.passed);
+  if (AC.playing || AC.passed) return;
+  var ctx = acGetCtx(); if (!ctx) { log("NO AUDIO CONTEXT"); return; }
+  AC.playing = true;
+  var now = ctx.currentTime, so = 0.05, step = 0.6;
+  AC.CORRECT.forEach(function(id, i) { acPlayTone(AC.NOTES[id].freq, now + so + i * step); });
+  AC.CORRECT.forEach(function(id, i) {
+    setTimeout(function() { acSetActive(id); }, (so + i * step) * 1000);
+    setTimeout(function() { acSetActive(null); }, (so + i * step) * 1000 + 420);
+  });
+  var totalMs = (so + (AC.CORRECT.length - 1) * step + 0.45) * 1000;
+  setTimeout(function() { AC.playing = false; acRender(); log("Playback done"); }, totalMs);
+  acRender();
+}
+
+function acSetActive(id) { AC.activeTile = id; acRender(); }
+function acTapTile(noteId) {
+  log("tapTile " + noteId);
+  if (AC.status !== "idle" || AC.answer.indexOf(noteId) !== -1 || AC.passed) return;
+  var ctx = acGetCtx(); if (ctx) acPlayTone(AC.NOTES[noteId].freq, ctx.currentTime, 0.25);
+  AC.answer.push(noteId); acRender();
+}
+function acRemoveAnswer(idx) { if (AC.status !== "idle" || AC.passed) return; AC.answer.splice(idx, 1); acRender(); }
+function acVerify() {
+  if (AC.answer.length !== AC.CORRECT.length || AC.passed) return;
+  var ok = true;
+  for (var i = 0; i < AC.CORRECT.length; i++) { if (AC.answer[i] !== AC.CORRECT[i]) { ok = false; break; } }
+  if (ok) { AC.passed = true; AC.status = "success"; acRender(); log("PASSED!"); }
+  else { AC.attempts++; AC.status = "fail"; acRender(); log("FAILED attempt " + AC.attempts); setTimeout(function() { AC.status = "idle"; AC.answer = []; acShuffleTiles(); acRender(); }, 1600); }
+}
+function acShuffleTiles() {
+  var arr = AC.CORRECT.slice();
+  for (var i = arr.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp; }
+  AC.tiles = arr;
+}
+function acReset() { AC.passed = false; AC.answer = []; AC.playing = false; AC.activeTile = null; AC.status = "idle"; AC.attempts = 0; acShuffleTiles(); acRender(); }
+function acGetPrefix() { return "login"; } // Always login in this test
+
+function acRender() {
+  var prefix = "login";
+  log("acRender: status=" + AC.status + " playing=" + AC.playing + " passed=" + AC.passed + " answer=" + JSON.stringify(AC.answer));
+  
+  var inner = document.getElementById(prefix + "AcInner");
+  if (!inner) { log("ERROR: inner not found!"); return; }
+  inner.className = "ac-inner" + (AC.status === "success" ? " success" : "") + (AC.status === "fail" ? " fail" : "");
+  
+  if (AC.passed) {
+    inner.innerHTML = "<div class=\"ac-success-inner\"><div class=\"ac-success-circle\">✓</div><div class=\"ac-success-title\">ACCESS GRANTED</div><div class=\"ac-success-sub\">Verification complete</div></div>";
+    return;
+  }
+  
+  var playBtn = document.getElementById(prefix + "AcPlay");
+  if (playBtn) { 
+    playBtn.disabled = AC.playing; 
+    if (!AC.playing) playBtn.removeAttribute("disabled");
+    playBtn.innerHTML = "<span class=\"ac-play-dot\"></span> " + (AC.playing ? "PLAYING..." : "PLAY SEQUENCE");
+    log("Play button: disabled=" + playBtn.disabled + " hasAttr=" + playBtn.hasAttribute("disabled") + " opacity=" + getComputedStyle(playBtn).opacity);
+  } else { log("ERROR: playBtn not found!"); }
+  
+  var statusEl = document.getElementById(prefix + "AcStatus");
+  if (statusEl) { statusEl.className = "ac-status-label" + (AC.status === "fail" ? " fail" : ""); statusEl.textContent = AC.status === "fail" ? "⚠  INCORRECT — LISTEN AND RETRY" : "AUDIO VERIFICATION"; }
+  
+  var instrEl = document.getElementById(prefix + "AcInstr");
+  if (instrEl) instrEl.textContent = AC.status === "fail" ? "Wrong sequence." : "Play the sequence, then tap the tones below in the same order.";
+  
+  var slotsEl = document.getElementById(prefix + "AcSlots");
+  if (slotsEl) {
+    var sh = "";
+    for (var i = 0; i < AC.CORRECT.length; i++) {
+      var nid = AC.answer[i];
+      if (nid !== undefined) {
+        var note = AC.NOTES[nid], bh = 12, wf = "";
+        [0.4,0.75,1,0.75,0.4].forEach(function(r,j){ wf += "<rect x=\""+(j*4.5)+"\" y=\""+(bh-bh*r)+"\" width=\"2.5\" height=\""+(bh*r)+"\" rx=\"1\" fill=\""+note.color+"\"/>"; });
+        sh += "<div class=\"ac-slot-filled\" style=\"background:"+note.color+"14;border:1px solid "+note.color+"60;box-shadow:0 0 12px "+note.color+"18\" onclick=\"acRemoveAnswer("+i+")\"><span class=\"ac-slot-remove\">✕</span><svg width=\"24\" height=\""+bh+"\" viewBox=\"0 0 24 "+bh+"\">"+wf+"</svg><span class=\"ac-slot-label\" style=\"color:"+note.color+"\">"+note.label+"</span></div>";
+      } else { sh += "<div class=\"ac-slot-empty\">"+(i+1)+"</div>"; }
+    }
+    slotsEl.innerHTML = sh;
+  }
+  
+  var tilesEl = document.getElementById(prefix + "AcTiles");
+  if (tilesEl) {
+    var th = "";
+    (AC.tiles || AC.CORRECT).forEach(function(id) {
+      var note = AC.NOTES[id], isA = AC.activeTile === id, isU = AC.answer.indexOf(id) !== -1;
+      var bg = isA ? note.color+"22" : "#182230";
+      var border = isA ? "1px solid "+note.color : "1px solid rgba(255,255,255,0.07)";
+      var shadow = isA ? "0 0 20px "+note.color+"44, inset 0 0 12px "+note.color+"18" : "0 4px 12px rgba(0,0,0,0.3)";
+      var bh = isA ? 20 : 13, bc = isA ? note.color : note.color+"E6", bs = isA ? "0 0 6px "+note.color : "none";
+      var lc = isA ? note.color : "rgba(255,255,255,0.55)", wf = "";
+      [0.35,0.65,1,0.65,0.35].forEach(function(r,j){ wf += "<rect x=\""+(j*5.5+1)+"\" y=\""+(bh-bh*r)+"\" width=\"3\" height=\""+(bh*r)+"\" rx=\"1\" fill=\""+bc+"\" style=\"box-shadow:"+bs+"\"/>"; });
+      th += "<div class=\"ac-tile"+(isU?" ac-used":"")+"\" style=\"background:"+bg+";border:"+border+";box-shadow:"+shadow+"\""+(isU?"":" onclick=\"acTapTile("+id+")\"")+">"+
+        "<svg class=\"ac-waveform-svg\" width=\"30\" height=\""+bh+"\" viewBox=\"0 0 30 "+bh+"\">"+wf+"</svg>"+
+        "<span class=\"ac-tile-label\" style=\"color:"+lc+"\">"+note.label+"</span></div>";
+    });
+    tilesEl.innerHTML = th;
+    log("Tiles rendered: " + AC.tiles);
+  }
+  
+  var vBtn = document.getElementById(prefix + "AcVerify");
+  if (vBtn) {
+    var cv = AC.answer.length === AC.CORRECT.length;
+    vBtn.className = "ac-verify-btn " + (cv ? "ready" : "not-ready");
+    vBtn.disabled = !cv;
+    if (cv) vBtn.removeAttribute("disabled");
+    vBtn.textContent = cv ? "VERIFY SEQUENCE" : "SELECT " + (AC.CORRECT.length - AC.answer.length) + " MORE";
+    log("Verify button: disabled=" + vBtn.disabled + " class=" + vBtn.className);
+  }
+  
+  var fEl = document.getElementById(prefix + "AcFooter");
+  if (fEl) fEl.textContent = AC.attempts > 0 ? AC.attempts + " FAILED ATTEMPT" + (AC.attempts > 1 ? "S" : "") : "TAP A FILLED SLOT TO REMOVE IT";
+}
+
+// Export
+window.acPlay = acPlay; window.acVerify = acVerify; window.acTapTile = acTapTile; window.acRemoveAnswer = acRemoveAnswer;
+
+// Init
+log("=== INIT ===");
+acShuffleTiles();
+acRender();
+log("=== READY ===");
+log("Click PLAY SEQUENCE to test");
+</script>
+</body></html>

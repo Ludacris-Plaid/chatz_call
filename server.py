@@ -48,6 +48,13 @@ STATIC_DIR      = Path(__file__).parent / "frontend"
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("clawcall")
+# File handler for admin log viewer
+try:
+    fh = logging.FileHandler("/tmp/clawcall.log", mode="a")
+    fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+    log.addHandler(fh)
+except Exception:
+    pass
 
 BROWSER_HEADERS = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
@@ -211,6 +218,25 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     daemon_threads = True
 
 
+
+
+# ── App-Wide Event Log (ring buffer) ──
+EVENT_LOG = []
+MAX_EVENTS = 200
+
+def log_event(event_type, message, detail=""):
+    """Push an event onto the in-memory ring buffer."""
+    from datetime import datetime, timezone
+    entry = {
+        "type": event_type,
+        "message": message,
+        "detail": str(detail)[:200] if detail else "",
+        "time": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+    }
+    EVENT_LOG.append(entry)
+    if len(EVENT_LOG) > MAX_EVENTS:
+        EVENT_LOG.pop(0)
+
 class ClawCallHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
@@ -307,9 +333,15 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/admin/users": self._handle_admin_users,
             "/api/admin/stats": self._handle_admin_stats,
             "/api/admin/vouchers": self._handle_admin_vouchers,
+            "/api/admin/call-analytics": self._handle_admin_call_analytics,
+            "/api/admin/logs": self._handle_admin_logs,
+            "/api/admin/deposits": self._handle_admin_deposits,
+            "/api/admin/cleanup-deposits": self._handle_admin_cleanup_deposits,
+            "/api/admin/user-detail": self._handle_admin_user_detail,
             "/api/wallet": self._handle_wallet,
             "/api/admin/overview": self._handle_admin_overview,
             "/api/calls/history": self._handle_call_history,
+            "/api/calls/export": self._handle_call_export,
             "/api/stats": self._handle_stats,
         }
 
@@ -332,6 +364,9 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "/api/topups/vip": self._handle_create_vip,
             "/api/topups": self._handle_create_topup,
             "/api/admin/": self._handle_admin_action,
+            "/api/admin/restart-asterisk": self._handle_admin_restart_asterisk,
+            "/api/admin/reload-config": self._handle_admin_reload_config,
+            "/api/admin/restart-backend": self._handle_admin_restart_backend,
             "/api/vouchers/redeem": self._handle_redeem_voucher,
             "/api/caller-id": self._handle_set_caller_id,
             "/api/call": self._handle_originate_call,
@@ -430,6 +465,9 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         token = result["token"]
         profile = local_get_profile(user_id) or {}
 
+        # Update last_active timestamp
+        update_profile(user_id, {"updated_at": "now()"})
+
         self._send_json({
             "ok": True,
             "user": {
@@ -463,6 +501,11 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass
 
+        # Get total calls count
+        from supabase_data import get_user_calls
+        user_calls = get_user_calls(profile["id"], 1000)
+        total_user_calls = len(user_calls)
+        
         self._send_json({
             "ok": True,
             "user": {
@@ -474,8 +517,11 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                 "vip_expires_at": vip_expires,
                 "vip_days_left": vip_days,
                 "account_status": "banned" if profile.get("is_banned") else ("suspended" if profile.get("is_suspended") else "active"),
+                "caller_id": profile.get("caller_id", ""),
                 "sip_extension": profile.get("sip_extension"),
                 "sip_password": profile.get("sip_password"),
+                "created_at": profile.get("created_at", ""),
+                "total_calls": total_user_calls,
             },
             "vip_active": is_vip,
             "vip_days_left": vip_days,
@@ -1022,11 +1068,17 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if profile.get("role") != "admin":
             return self._send_error("Admin access required", 403)
 
-        users = list_profiles(50)
-        if not isinstance(users, list):
-            users = []
-
-        self._send_json({"ok": True, "users": users})
+        qs = {}
+        if self.path and "?" in self.path:
+            from urllib.parse import parse_qs
+            qs = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        page = int(qs.get("page", 1))
+        per_page = int(qs.get("per_page", 15))
+        result = list_profiles(page=page, per_page=per_page)
+        if isinstance(result, dict):
+            self._send_json({"ok": True, **result})
+        else:
+            self._send_json({"ok": True, "users": result, "total": len(result) if isinstance(result, list) else 0, "page": 1, "per_page": 15})
 
     def _handle_admin_stats(self):
         profile, err = self._require_auth()
@@ -1037,27 +1089,80 @@ class ClawCallHandler(BaseHTTPRequestHandler):
 
         # Aggregate stats
         users = get_all_profiles()
-        # Revenue stats from Supabase
-        try:
-            from urllib.request import Request as Rq, urlopen as uo
-            supa_url = os.environ.get("SUPABASE_URL", "https://kgnwqwghnosgieldiokc.supabase.co")
-            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
-            supa_hdrs = {"apikey": supa_key, "Authorization": f"Bearer {supa_key}"}
-            pay_req = Rq(f"{supa_url}/rest/v1/clawcall_deposits?payment_status=eq.finished&select=amount", headers=supa_hdrs)
-            with uo(pay_req, timeout=5) as resp:
-                p_data = json.loads(resp.read())
-            total_revenue = sum(float(p.get("amount", 0)) for p in p_data) if p_data else 0
-        except:
-            total_revenue = 0
-
         total_users = len(users) if isinstance(users, list) else 0
         vip_users = sum(1 for u in users if u.get("is_vip")) if isinstance(users, list) else 0
+        banned_users = sum(1 for u in users if u.get("is_banned")) if isinstance(users, list) else 0
+        suspended_users = sum(1 for u in users if u.get("is_suspended")) if isinstance(users, list) else 0
+
+        # Total tokens in circulation
+        total_tokens = sum(float(u.get("token_balance", 0)) for u in users if u.get("role") != "admin") if isinstance(users, list) else 0
+
+        # Revenue + call stats from Supabase
+        try:
+            from urllib.request import Request as Rq, urlopen as uo
+            supa_url = os.environ.get("SUPABASE_URL", "")
+            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            supa_hdrs = {"apikey": supa_key, "Authorization": f"Bearer {supa_key}"}
+
+            # Deposits
+            dep_req = Rq(f"{supa_url}/rest/v1/clawcall_deposits?payment_status=eq.finished&select=amount", headers=supa_hdrs)
+            with uo(dep_req, timeout=5) as resp:
+                dep_data = json.loads(resp.read())
+            total_deposits = sum(float(p.get("amount", 0)) for p in dep_data) if dep_data else 0
+            deposit_count = len(dep_data) if dep_data else 0
+
+            # Calls
+            call_req = Rq(f"{supa_url}/rest/v1/clawcall_calls?select=id,cost,duration_seconds,started_at&order=started_at.desc&limit=200", headers=supa_hdrs)
+            with uo(call_req, timeout=5) as resp:
+                call_data = json.loads(resp.read())
+            total_calls = len(call_data) if call_data else 0
+            total_call_cost = sum(float(c.get("cost", 0)) for c in call_data) if call_data else 0
+            total_duration = sum(float(c.get("duration_seconds", 0)) for c in call_data) if call_data else 0
+
+            # Revenue over time (last 7 days, simplified)
+            from datetime import datetime, timedelta
+            daily_calls = {}
+            daily_revenue = {}
+            now = datetime.utcnow()
+            for i in range(7):
+                day = (now - timedelta(days=i)).strftime("%a")
+                daily_calls[day] = 0
+                daily_revenue[day] = 0
+            if call_data:
+                for c in call_data:
+                    try:
+                        ts = c.get("started_at", "")
+                        if ts:
+                            dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+                            day = dt.strftime("%a")
+                            if day in daily_calls:
+                                daily_calls[day] += 1
+                                daily_revenue[day] += float(c.get("cost", 0))
+                    except Exception:
+                        pass
+        except Exception:
+            total_deposits = 0
+            deposit_count = 0
+            total_calls = 0
+            total_call_cost = 0
+            total_duration = 0
+            daily_calls = {}
+            daily_revenue = {}
 
         self._send_json({
             "ok": True,
             "total_users": total_users,
-            "total_revenue": round(total_revenue, 2),
             "vip_users": vip_users,
+            "banned_users": banned_users,
+            "suspended_users": suspended_users,
+            "total_tokens": round(total_tokens, 2),
+            "total_deposits": round(total_deposits, 2),
+            "deposit_count": deposit_count,
+            "total_calls": total_calls,
+            "total_call_cost": round(total_call_cost, 4),
+            "total_duration_min": round(total_duration / 60, 1) if total_duration else 0,
+            "daily_calls": daily_calls,
+            "daily_revenue": {k: round(v, 4) for k, v in daily_revenue.items()},
         })
 
     def _handle_admin_vouchers(self):
@@ -1068,19 +1173,236 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         vouchers = voucher_system.list_vouchers(limit=100)
         return self._send_json({"ok": True, "vouchers": vouchers})
 
+    def _handle_admin_cleanup_deposits(self):
+        """Delete waiting deposits older than 120 minutes."""
+        internal_key = self.headers.get("X-Internal-Cleanup", "")
+        if internal_key != "hushcircuits_cleanup_2026":
+            profile, err = self._require_auth()
+            if err: return err
+            if profile.get("role") != "admin":
+                return self._send_error("Admin access required", 403)
+        from datetime import datetime, timedelta, timezone
+        from urllib.request import Request as Rq, urlopen
+        from urllib.error import HTTPError
+        # Format cutoff without timezone for Supabase compatibility
+        cutoff_dt = datetime.now(timezone.utc) - timedelta(minutes=120)
+        cutoff = cutoff_dt.strftime("%Y-%m-%dT%H:%M:%S")
+        try:
+            supa_url = os.environ.get("SUPABASE_URL", "https://kgnwqwghnosgieldiokc.supabase.co")
+            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            base_hdrs = {
+                "apikey": supa_key,
+                "Authorization": f"Bearer {supa_key}",
+            }
+            # Count stale waiting deposits
+            count_url = f"{supa_url}/rest/v1/clawcall_deposits?select=id&payment_status=eq.waiting&created_at=lt.{cutoff}"
+            count_req = Rq(count_url, headers=base_hdrs)
+            with urlopen(count_req) as resp:
+                stale = json.loads(resp.read().decode())
+            count = len(stale) if isinstance(stale, list) else 0
+            if count > 0:
+                # Delete individually via _delete helper
+                for item in stale:
+                    dep_id = item.get("id")
+                    if dep_id:
+                        del_url = f"{supa_url}/rest/v1/clawcall_deposits?id=eq.{dep_id}"
+                        del_req = Rq(del_url, headers={**base_hdrs, "Prefer": "return=minimal"}, method="DELETE")
+                        try:
+                            urlopen(del_req)
+                        except HTTPError:
+                            pass
+                print(f"[cleanup] Removed {count} stale deposits older than 120 min")
+            self._send_json({"ok": True, "removed": count})
+        except Exception as e:
+            print(f"[cleanup] Error: {e}")
+            self._send_json({"ok": False, "error": str(e)})
+
+    def _handle_admin_deposits(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        try:
+            from urllib.request import Request as Rq, urlopen as uo
+            supa_url = os.environ.get("SUPABASE_URL", "")
+            supa_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+            supa_hdrs = {"apikey": supa_key, "Authorization": f"Bearer {supa_key}"}
+            dep_req = Rq(f"{supa_url}/rest/v1/clawcall_deposits?select=*&order=created_at.desc&limit=30", headers=supa_hdrs)
+            with uo(dep_req, timeout=5) as resp:
+                dep_data = json.loads(resp.read())
+            deposits = dep_data if dep_data else []
+        except Exception:
+            deposits = []
+        self._send_json({"ok": True, "deposits": deposits})
+
+    def _handle_admin_call_analytics(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        calls = get_all_calls(500)
+        total = len(calls)
+        total_duration = sum(c.get("duration_seconds", 0) or 0 for c in calls)
+        total_cost = sum(float(c.get("cost", 0) or 0) for c in calls)
+        failed = sum(1 for c in calls if c.get("status") == "failed")
+        # Top destinations
+        dest_map = {}
+        for c in calls:
+            dest = c.get("target_number", "") or c.get("destination", "")
+            if not dest: continue
+            dest_map[dest] = dest_map.get(dest, 0) + 1
+        top_dests = sorted(dest_map.items(), key=lambda x: -x[1])[:10]
+        # Daily counts (last 7 days)
+        from datetime import datetime, timedelta, timezone
+        now = datetime.now(timezone.utc)
+        daily = {}
+        for i in range(7):
+            d = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+            daily[d] = 0
+        for c in calls:
+            ts = c.get("started_at") or c.get("created_at")
+            if not ts: continue
+            try:
+                dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                day = dt.strftime("%Y-%m-%d")
+                if day in daily:
+                    daily[day] += 1
+            except (ValueError, TypeError):
+                pass
+        daily_counts = [{"date": d, "count": daily[d]} for d in sorted(daily.keys())]
+        # Status breakdown
+        status_map = {}
+        for c in calls:
+            s = c.get("status", "unknown") or "unknown"
+            status_map[s] = status_map.get(s, 0) + 1
+        status_breakdown = [{"status": k, "count": v} for k, v in sorted(status_map.items(), key=lambda x: -x[1])]
+        # Duration buckets
+        buckets = {"<30s": 0, "30s-2m": 0, "2m-5m": 0, ">5m": 0}
+        for c in calls:
+            d = c.get("duration_seconds", 0) or 0
+            if d < 30:
+                buckets["<30s"] += 1
+            elif d < 120:
+                buckets["30s-2m"] += 1
+            elif d < 300:
+                buckets["2m-5m"] += 1
+            else:
+                buckets[">5m"] += 1
+        duration_buckets = [{"bucket": k, "count": v} for k, v in buckets.items()]
+        self._send_json({
+            "ok": True,
+            "total_calls": total,
+            "total_duration_sec": total_duration,
+            "avg_duration_sec": round(total_duration / total) if total else 0,
+            "total_cost": round(total_cost, 4),
+            "failed": failed,
+            "fail_rate": round(failed / total * 100, 1) if total else 0,
+            "top_destinations": [{"number": d, "count": c} for d, c in top_dests],
+            "daily_counts": daily_counts,
+            "status_breakdown": status_breakdown,
+            "duration_buckets": duration_buckets,
+        })
+
+    def _handle_admin_user_detail(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        qs = {}
+        if self.path and "?" in self.path:
+            from urllib.parse import parse_qs
+            qs = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        user_id = qs.get("user_id", "")
+        if not user_id:
+            return self._send_error("user_id required")
+        target = get_user_profile(user_id)
+        if not target:
+            return self._send_error("User not found")
+        calls = get_user_calls(user_id, 10)
+        transactions = get_user_transactions(user_id, 10)
+        self._send_json({
+            "ok": True,
+            "profile": {
+                "id": str(target.get("id", "")),
+                "username": target.get("username", ""),
+                "token_balance": float(target.get("token_balance", 0)),
+                "role": target.get("role", "user"),
+                "is_vip": target.get("role") == "vip",
+                "is_banned": target.get("status") == "banned",
+                "is_suspended": target.get("status") == "suspended",
+                "sip_extension": target.get("sip_extension", ""),
+                "caller_id": target.get("caller_id", ""),
+                "updated_at": target.get("updated_at", ""),
+                "created_at": target.get("created_at", ""),
+            },
+            "calls": calls[:10],
+            "transactions": transactions[:10],
+        })
+
     def _handle_redeem_voucher(self):
         profile, err = self._require_auth()
         if err: return err
         body = self._read_body()
         code = str(body.get("code", "")).strip().upper()
         if not code: return self._send_error("Voucher code required")
-        result, ok = voucher_system.redeem_voucher(code, profile.get("username", "unknown"))
+        result, ok = voucher_system.redeem_voucher(code, profile["id"])
         if not ok: return self._send_error(result)
         balance = float(profile.get("token_balance", 0))
         new_balance = balance + result
         update_profile(profile["id"], {"token_balance": new_balance})
         log_transaction(profile["id"], result, "voucher_redemption", new_balance, f"Redeemed voucher {code}")
         return self._send_json({"ok": True, "amount": result, "new_balance": new_balance, "code": code})
+
+    def _handle_admin_logs(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        events = list(EVENT_LOG[-100:]) if EVENT_LOG else []
+        try:
+            with open("/tmp/clawcall.log") as lf:
+                lines = lf.readlines()
+                file_logs = "".join(lines[-20:])
+        except:
+            file_logs = ""
+        self._send_json({"ok": True, "events": events, "file_logs": file_logs})
+
+    def _handle_admin_restart_asterisk(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        import subprocess, threading
+        def do_restart():
+            subprocess.run(["docker", "restart", "clawcall-asterisk"],
+                         capture_output=True, timeout=30)
+        threading.Thread(target=do_restart, daemon=True).start()
+        log.info(f"Asterisk restart initiated by {profile.get('username')}")
+        self._send_json({"ok": True, "message": "Asterisk restart initiated"})
+
+    def _handle_admin_reload_config(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        import subprocess
+        try:
+            result = subprocess.run(["docker", "exec", "clawcall-asterisk",
+                                   "asterisk", "-rx", "module", "reload"],
+                                  capture_output=True, text=True, timeout=10)
+            self._send_json({"ok": True, "message": "Config reload initiated", "output": result.stdout[:500]})
+        except Exception as e:
+            self._send_error(f"Reload failed: {e}")
+
+    def _handle_admin_restart_backend(self):
+        profile, err = self._require_auth()
+        if err: return err
+        if profile.get("role") != "admin":
+            return self._send_error("Admin access required", 403)
+        log.warning(f"Backend restart initiated by {profile.get('username')} - service will restart")
+        import os, signal
+        self._send_json({"ok": True, "message": "Backend restarting..."})
+        os.kill(os.getpid(), signal.SIGTERM)
 
     def _handle_admin_action(self):
         """Handle admin actions like adjusting balance or creating vouchers."""
@@ -1118,7 +1440,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
                 return self._send_error("Amount must be 10, 25, or 50")
             if count < 1 or count > 50:
                 return self._send_error("Count must be 1-50")
-            codes = voucher_system.create_batch(amount, count, profile.get("username", "admin"))
+            codes = voucher_system.create_batch(amount, count, int(profile.get("id", 1)))
             return self._send_json({"ok": True, "codes": codes, "amount": amount, "count": len(codes)})
 
         self._send_error("Unknown admin action", 404)
@@ -1189,6 +1511,35 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             log.error(f"AMI hangup failed: {e}")
             return self._send_error(f"Hangup failed: {e}")
 
+    def _handle_call_export(self):
+        """Export user calls as CSV."""
+        profile, err = self._require_auth()
+        if err: return err
+        from supabase_data import get_user_calls
+        import csv, io
+        calls = get_user_calls(profile["id"], 500)
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["Date", "Caller ID", "Destination", "Duration (s)", "Status", "Cost (TK)"])
+        for c in calls:
+            writer.writerow([
+                c.get("started_at", c.get("created_at", "")),
+                c.get("caller_id", c.get("cid", "")),
+                c.get("target_number", c.get("destination", c.get("dest", ""))),
+                c.get("duration_seconds", c.get("duration", 0)),
+                c.get("status", ""),
+                c.get("cost", 0),
+            ])
+        csv_data = output.getvalue()
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv")
+        self.send_header("Content-Disposition", "attachment; filename=clawcall_history.csv")
+        self.send_header("Content-Length", str(len(csv_data)))
+        for h, v in cors_headers():
+            self.send_header(h, v)
+        self.end_headers()
+        self.wfile.write(csv_data.encode("utf-8"))
+
     def _handle_call_history(self):
         """Return user's call history."""
         profile, err = self._require_auth()
@@ -1202,21 +1553,53 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if err: return err
         calls = get_user_calls(profile["id"], 1000)
         total_calls = len(calls)
-        total_seconds = sum((c.get("duration", 0) or 0) for c in calls)
+        total_seconds = sum((c.get("duration_seconds", 0) or 0) for c in calls)
         total_cost = round(sum((c.get("cost", 0) or 0) for c in calls), 2)
-        total_minutes = round(total_seconds / 60, 1)
         avg_seconds = round(total_seconds / total_calls) if total_calls else 0
         completed = sum(1 for c in calls if c.get("status") == "completed")
         failed = sum(1 for c in calls if c.get("status") == "failed")
+        # Daily usage (last 7 days)
+        from datetime import datetime, timedelta, timezone
+        now = datetime.now(timezone.utc)
+        daily = {}
+        for i in range(7):
+            d = (now - timedelta(days=i)).strftime("%Y-%m-%d")
+            daily[d] = 0
+        for c in calls:
+            ts = c.get("started_at") or c.get("created_at")
+            if not ts: continue
+            try:
+                dt = datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+                day = dt.strftime("%Y-%m-%d")
+                if day in daily:
+                    daily[day] += 1
+            except (ValueError, TypeError):
+                pass
+        daily_usage = [{"date": d, "count": daily[d]} for d in sorted(daily.keys())]
+        # Status breakdown
+        status_map = {}
+        for c in calls:
+            s = c.get("status", "unknown") or "unknown"
+            status_map[s] = status_map.get(s, 0) + 1
+        status_breakdown = [{"status": k, "count": v} for k, v in sorted(status_map.items(), key=lambda x: -x[1])]
+        # Top destinations
+        dest_map = {}
+        for c in calls:
+            dest = c.get("target_number", "") or c.get("destination", "")
+            if not dest: continue
+            dest_map[dest] = dest_map.get(dest, 0) + 1
+        top_dests = sorted(dest_map.items(), key=lambda x: -x[1])[:5]
         self._send_json({
             "ok": True,
             "total_calls": total_calls,
-            "total_minutes": total_minutes,
             "total_cost": total_cost,
             "avg_duration": avg_seconds,
             "completed": completed,
             "failed": failed,
-            "calls": [dict(c) for c in calls[-20:]]  # Last 20 as proper dicts
+            "daily_usage": daily_usage,
+            "status_breakdown": status_breakdown,
+            "top_destinations": [{"number": d, "count": c} for d, c in top_dests],
+            "calls": [dict(c) for c in calls[-20:]],
         })
 
     def _handle_set_caller_id(self):
