@@ -260,8 +260,11 @@
     .auth-screen.active { display: flex; }
     .auth-card { width: 100%; max-width: 360px; border: 1px solid var(--border); border-radius: 24px; background: var(--panel); backdrop-filter: blur(20px); padding: 32px 28px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
     .auth-logo { text-align: center; margin-bottom: 28px; }
-    .auth-logo .brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; color: var(--green); }
-    .auth-logo .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; margin-top: 4px; }
+    .auth-brand { display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+    .auth-hush-word, .auth-circuits-word { font-family: "Orbitron", sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.14em; color: #fff; display: inline-block; }
+    .auth-circuits-word { color: #22D3EE; text-shadow: 0 0 10px rgba(34,211,238,0.5); }
+    .auth-bolt { transform: scale(1.6); flex-shrink: 0; }
+    .auth-pro-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: var(--green); font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
     .pro-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(135deg, #22C55E, #00E5A0); color: #000; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.15em; vertical-align: middle; position: relative; top: -1px; animation: proPulse 2s ease-in-out infinite; }
     @keyframes proPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .auth-field { margin-bottom: 16px; }
@@ -344,11 +347,53 @@
   <div class="auth-screen active" id="authLogin">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text brand-glitch" id="authHushWord">HUSH</div>
-        <div class="brand-sub brand-glitch" id="authCircuitsWord">CIRCUITS <span class="pro-badge">PRO</span></div>
+        <div class="auth-brand">
+          <span class="auth-hush-word" id="authHushWord">HUSH</span>
+          <div class="bolt-wrap auth-bolt">
+            <div class="bolt-glow-ring"></div>
+            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+              <defs>
+                <linearGradient id="authBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22C55E"/>
+                  <stop offset="40%" stop-color="#00E5A0"/>
+                  <stop offset="70%" stop-color="#00E5E5"/>
+                  <stop offset="100%" stop-color="#22D3EE"/>
+                </linearGradient>
+                <linearGradient id="authBoltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4ADE80"/>
+                  <stop offset="100%" stop-color="#67E8F9"/>
+                </linearGradient>
+                <linearGradient id="authBoltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#99F6E4"/>
+                </linearGradient>
+                <linearGradient id="authArc1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="authArc2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#authArc1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc"/>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#authArc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#authBoltGrad)" stroke="url(#authBoltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#authBoltInner)" opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="auth-circuits-word" id="authCircuitsWord">CIRCUITS</span>
+        </div>
+        <div class="auth-pro-badge">pro</div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" /></div>
+      <div class="captcha-row">
+        <span class="captcha-question" id="loginCaptchaQ">1 + 2 = ?</span>
+        <input type="text" class="captcha-input" id="loginCaptcha" placeholder="?" maxlength="2" inputmode="numeric" autocomplete="off" />
+      </div>
       <button class="auth-btn primary" id="loginBtn">SIGN IN</button>
       <div class="auth-error" id="loginError"></div>
       <div class="auth-switch">Need an account? <a id="showRegister">Create one</a></div>
@@ -359,11 +404,53 @@
   <div class="auth-screen" id="authRegister">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text brand-glitch" id="authHushWordReg">HUSH</div>
-        <div class="brand-sub brand-glitch" id="authCircuitsWordReg">CIRCUITS <span class="pro-badge">PRO</span></div>
+        <div class="auth-brand">
+          <span class="auth-hush-word" id="authHushWordReg">HUSH</span>
+          <div class="bolt-wrap auth-bolt">
+            <div class="bolt-glow-ring"></div>
+            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+              <defs>
+                <linearGradient id="regBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22C55E"/>
+                  <stop offset="40%" stop-color="#00E5A0"/>
+                  <stop offset="70%" stop-color="#00E5E5"/>
+                  <stop offset="100%" stop-color="#22D3EE"/>
+                </linearGradient>
+                <linearGradient id="regBoltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4ADE80"/>
+                  <stop offset="100%" stop-color="#67E8F9"/>
+                </linearGradient>
+                <linearGradient id="regBoltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#99F6E4"/>
+                </linearGradient>
+                <linearGradient id="regArc1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="regArc2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#regArc1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc"/>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#regArc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#regBoltGrad)" stroke="url(#regBoltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#regBoltInner)" opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="auth-circuits-word" id="authCircuitsWordReg">CIRCUITS</span>
+        </div>
+        <div class="auth-pro-badge">pro</div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="registerUser" placeholder="Choose username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="registerPass" placeholder="Choose password" autocomplete="new-password" /></div>
+      <div class="captcha-row">
+        <span class="captcha-question" id="registerCaptchaQ">1 + 2 = ?</span>
+        <input type="text" class="captcha-input" id="registerCaptcha" placeholder="?" maxlength="2" inputmode="numeric" autocomplete="off" />
+      </div>
       <button class="auth-btn primary" id="registerBtn">CREATE ACCOUNT</button>
       <div class="auth-error" id="registerError"></div>
       <div class="auth-switch">Already have one? <a id="showLogin">Sign in</a></div>
@@ -634,6 +721,7 @@
       $('#authLogin').classList.toggle('active', mode === 'login');
       $('#authRegister').classList.toggle('active', mode === 'register');
       $('.app').classList.add('app-hidden');
+      genCaptcha();
     }
 
     function showApp() {
@@ -704,10 +792,26 @@
     // Poll status every 30s
     setInterval(loadStatusBar, 30000);
 
+    // ── Captcha ──
+    var captchaAnswer = {};
+    function genCaptcha() {
+      var a = Math.floor(Math.random() * 8) + 2;
+      var b = Math.floor(Math.random() * 8) + 1;
+      captchaAnswer = { login: a + b, register: a + b };
+      var q = a + ' + ' + b + ' = ?';
+      var elQ = $('#loginCaptchaQ'); if (elQ) elQ.textContent = q;
+      var elR = $('#registerCaptchaQ'); if (elR) elR.textContent = q;
+      var elI = $('#loginCaptcha'); if (elI) { elI.value = ''; elI.style.borderColor = ''; }
+      var elJ = $('#registerCaptcha'); if (elJ) { elJ.value = ''; elJ.style.borderColor = ''; }
+    }
+    genCaptcha();
+
     function doLogin() {
       var u = $('#loginUser').value.trim();
       var p = $('#loginPass').value;
       if (!u || !p) { $('#loginError').textContent = 'Fill in both fields'; return; }
+      var ca = $('#loginCaptcha').value.trim();
+      if (ca !== String(captchaAnswer.login)) { $('#loginError').textContent = 'Wrong answer — try again'; $('#loginCaptcha').style.borderColor = '#EF4444'; genCaptcha(); return; }
       $('#loginError').textContent = '';
       fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
         .then(function(r){ return r.json(); })
@@ -729,6 +833,8 @@
       var u = $('#registerUser').value.trim();
       var p = $('#registerPass').value;
       if (!u || !p) { $('#registerError').textContent = 'Fill in both fields'; return; }
+      var ca = $('#registerCaptcha').value.trim();
+      if (ca !== String(captchaAnswer.register)) { $('#registerError').textContent = 'Wrong answer — try again'; $('#registerCaptcha').style.borderColor = '#EF4444'; genCaptcha(); return; }
       if (p.length < 4) { $('#registerError').textContent = 'Password too short (min 4)'; return; }
       $('#registerError').textContent = '';
       fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
@@ -760,6 +866,8 @@
     $('#showLogin').addEventListener('click', function(e){ e.preventDefault(); showAuth('login'); });
     $('#loginPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
     $('#registerPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doRegister(); });
+    $('#loginCaptcha').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    $('#registerCaptcha').addEventListener('keydown', function(e){ if (e.key === 'Enter') doRegister(); });
 
     // ── State ──
     var S = {
