@@ -1501,21 +1501,36 @@
     }
 
     window.adminAction = function(id, action) {
-      var user = S.users.find(function(u){ return u.id === id; });
-      if (!user) return;
+      var user = S.users.find(function(u){ return String(u.id) === String(id); });
+      if (!user) { console.warn('adminAction: user not found for id=' + id); return; }
       var token = localStorage.getItem('clawcall_token') || '';
+      var payload = {};
       if (action === 'ban') {
         if (!user.is_banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
-        user.is_banned = !user.is_banned; toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
+        user.is_banned = !user.is_banned; payload.is_banned = user.is_banned;
+        toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
       }
-      else if (action === 'suspend') { user.is_suspended = !user.is_suspended; toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
-      else if (action === 'vip') { user.is_vip = !user.is_vip; toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
+      else if (action === 'suspend') {
+        user.is_suspended = !user.is_suspended; payload.is_suspended = user.is_suspended;
+        toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED'));
+      }
+      else if (action === 'vip') {
+        user.is_vip = !user.is_vip; payload.is_vip = user.is_vip;
+        toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED'));
+      }
       else if (action === 'tokens') {
         var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.token_balance + ')');
-        if (amt !== null && !isNaN(parseInt(amt))) { user.token_balance = parseInt(amt); toast(user.username + ' tokens set to ' + user.token_balance); }
+        if (amt !== null && !isNaN(parseInt(amt))) {
+          user.token_balance = parseInt(amt); payload.token_balance = parseInt(amt);
+          toast(user.username + ' tokens set to ' + user.token_balance);
+        }
       }
-      // Try API
-      fetch('/api/admin/users/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(user) }).catch(function(){});
+      if (Object.keys(payload).length) {
+        fetch('/api/admin/users/' + encodeURIComponent(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) })
+          .then(function(r){ return r.json(); })
+          .then(function(d){ if (!d.ok) toast('API error: ' + (d.error || 'unknown')); })
+          .catch(function(e){ toast('Server error: ' + e.message); });
+      }
       renderUserList(S.users);
     };
 

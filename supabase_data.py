@@ -201,8 +201,26 @@ def update_profile(user_id, updates):
             pass  # Never change admin role
         elif vip_value:
             supa_updates["role"] = "vip"
+            # Log VIP activation for expiry tracking (7 days)
+            expiry_ts = time.time() + 7 * 86400
+            log.info(f"VIP activated for user {user_id}, expires {time.strftime('%Y-%m-%d', time.localtime(expiry_ts))}")
+            _post("clawcall_transactions", {
+                "user_id": int(user_id),
+                "amount": 0,
+                "transaction_type": "vip_activated",
+                "balance_after": 0,
+                "description": str(expiry_ts),
+            })
         else:
             supa_updates["role"] = "user"
+            # Log VIP deactivation
+            _post("clawcall_transactions", {
+                "user_id": int(user_id),
+                "amount": 0,
+                "transaction_type": "vip_deactivated",
+                "balance_after": 0,
+                "description": str(time.time()),
+            })
     if status_value is not None:
         supa_updates["status"] = status_value
     supa_updates["updated_at"] = "now()"
