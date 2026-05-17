@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
   <meta name="theme-color" content="#020617" />
   <title>hushcircuits pro</title>
@@ -16,7 +19,7 @@
       --green-soft: rgba(34,197,94,0.16); --green-mid: rgba(34,197,94,0.34);
       --text: rgba(248,250,252,0.96); --muted: rgba(148,163,184,0.86);
       --dim: rgba(100,116,139,0.82); --red: #EF4444; --amber: #F59E0B;
-      --nav-h: 72px;
+      --nav-h: 64px;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: var(--bg); color: var(--text); font-family: "DM Sans", system-ui, -apple-system, sans-serif; }
@@ -24,12 +27,11 @@
     body::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% -10%, rgba(34,197,94,0.105), transparent 34%), radial-gradient(circle at 18% 20%, rgba(255,255,255,0.035), transparent 28%), linear-gradient(180deg, rgba(255,255,255,0.015), transparent 44%); opacity: 0.95; z-index: 0; }
     body::after { content: ""; position: fixed; inset: 0; pointer-events: none; opacity: 0.04; background-image: linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px); background-size: 42px 42px; mask-image: linear-gradient(to bottom, black, transparent 78%); z-index: 0; }
 
-    .app { position: relative; z-index: 1; width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
+    .app { position: relative; z-index: 1; width: 100%; max-width: 520px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.018), transparent 26%), transparent; box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 36px 90px rgba(0,0,0,0.52); }
 
     /* ── Tab Pages ── */
-    .tab-page { display: none; flex: 1; overflow-y: auto; overflow-x: hidden; padding: max(12px, env(safe-area-inset-top)) 18px 18px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .tab-page::-webkit-scrollbar { display: none; }
-    .tab-page.active { display: flex; flex-direction: column; gap: 14px; }
+    .tab-page { display: none; flex: 1; overflow-y: auto; padding: 8px 14px 60px; box-sizing: border-box; }
+    .tab-page.active { display: flex; flex-direction: column; gap: 10px; }
     .tab-page-title { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.14em; color: rgba(248,250,252,0.88); margin: 0 0 2px 0; flex-shrink: 0; }
 
     /* ── Cards (shared) ── */
@@ -49,12 +51,32 @@
     .nav-btn:active { background: rgba(34,197,94,0.06); }
 
     /* ── Dialer tab (compact for nav space) ── */
-    #tab-dialer { padding-bottom: 4px; overflow: hidden; gap: 8px; }
-    #tab-dialer .header { height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; }
+    #tab-dialer { padding-bottom: 14px; padding-top: 8px; }
+    #tab-dialer .header { height: 36px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; box-sizing: border-box; }
     .brand { display: inline-flex; align-items: center; gap: 5px; }
     .hush-word, .circuits-word { font-family: "Orbitron", sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; color: #fff; }
     .circuits-word { color: #22D3EE; text-shadow: 0 0 8px rgba(34,211,238,0.5); }
-    .bolt-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+
+    /* ── Status Bar ── */
+    .status-bar { flex-shrink: 0; border: 1px solid var(--border-soft); border-radius: 12px; background: rgba(10,18,32,0.55); backdrop-filter: blur(8px); padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 11px; margin-top: 4px; margin-bottom: 8px; height: 30px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .status-dot.online { background: #22C55E; box-shadow: 0 0 8px rgba(34,197,94,0.6); animation: dotPulse 2s ease-in-out infinite; }
+    .status-dot.offline { background: #EF4444; box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+    .status-dot.connecting { background: #F59E0B; box-shadow: 0 0 8px rgba(245,158,11,0.5); animation: dotPulse 1s ease-in-out infinite; }
+    @keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .status-label { font-family: 'Space Grotesk', sans-serif; font-weight: 600; letter-spacing: 0.06em; font-size: 10px; text-transform: uppercase; white-space: nowrap; }
+    .status-label.online { color: #22C55E; }
+    .status-label.offline { color: #EF4444; }
+    .status-label.connecting { color: #F59E0B; }
+    .status-user { color: var(--text); font-weight: 600; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 110px; }
+    .status-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap; }
+    .status-badge.admin { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
+    .status-badge.vip { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
+    .status-right { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .status-tokens { color: var(--muted); font-size: 10px; font-weight: 500; white-space: nowrap; }
+    .status-balance { margin-left: auto; color: #22C55E; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+    .status-balance.infinite { font-size: 16px; }
+    .bolt-wrap { position: relative; display: inline-flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; }
     .bolt-glow-ring { position: absolute; inset: -4px; border-radius: 50%; background: radial-gradient(circle, rgba(34,197,94,0.3), transparent 70%); animation: boltGlow 1.5s ease-in-out infinite; }
     .bolt-svg { width: 18px; height: 22px; position: relative; z-index: 1; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); animation: boltSurge 1.5s ease-in-out infinite; }
     .bolt-arc { animation: arcFlash 2s ease-in-out infinite; }
@@ -65,13 +87,13 @@
     
     .settings { width: 34px; height: 34px; border: 1px solid var(--border-soft); border-radius: 12px; color: rgba(148,163,184,0.85); background: rgba(255,255,255,0.03); display: grid; place-items: center; cursor: pointer; }
     .settings:active { border-color: rgba(34,197,94,0.45); background: rgba(34,197,94,0.08); }
-    .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 8px; }
+    .display-stack { flex-shrink: 0; display: flex; flex-direction: column; gap: 10px; }
     .display-card { position: relative; width: 100%; border: 1px solid var(--border); border-radius: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.022)), var(--panel); box-shadow: 0 14px 28px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); backdrop-filter: blur(14px); overflow: hidden; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease; }
     .display-card::before { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent, rgba(34,197,94,0.055), transparent); transform: translateX(-120%); opacity: 0; }
     .display-card.active { border-color: rgba(34,197,94,0.7); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 24px rgba(34,197,94,0.1), 0 14px 32px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.06); animation: fieldPulse 2.35s ease-in-out infinite; }
     .display-card.active::before { opacity: 1; animation: scanLine 2.4s ease-in-out infinite; }
-    .display-card.cid { min-height: 70px; padding: 12px 14px 11px; }
-    .display-card.destination { min-height: 86px; padding: 14px 14px 13px; }
+    .display-card.cid { min-height: 68px; padding: 10px 14px 9px; }
+    .display-card.destination { min-height: 68px; padding: 10px 14px 9px; }
     .display-topline { z-index: 1; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
     .label { font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; color: rgba(148,163,184,0.8); }
     .active-tag { height: 16px; padding: 0 7px; border-radius: 99px; display: inline-flex; align-items: center; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.12em; color: var(--green); background: rgba(34,197,94,0.09); border: 1px solid rgba(34,197,94,0.14); opacity: 0; transform: translateY(-2px); transition: opacity 160ms ease, transform 160ms ease; }
@@ -84,14 +106,14 @@
     .cnam.scanning { color: var(--green); }
     .cnam.resolved { color: rgba(203,213,225,0.85); }
     .cnam.glitch { animation: glitchFlash 230ms steps(2, end); }
-    .keypad-wrap { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
-    .keypad { width: min(100%, 300px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .keypad-wrap { flex: 1; min-height: 0; max-height: 58%; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 16px; }
+    .keypad { width: min(100%, 340px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
     button { appearance: none; border: 0; font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; background: none; }
-    .dial-key { height: clamp(50px, 7.8dvh, 64px); border-radius: 22px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
+    .dial-key { height: clamp(48px, 7dvh, 56px); border-radius: 20px; border: 1px solid var(--border-soft); background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.07), transparent 60%), linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 22px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: transform 120ms ease, border-color 150ms ease, box-shadow 150ms ease; }
     .dial-key:active { transform: scale(0.94); border-color: rgba(34,197,94,0.42); box-shadow: 0 0 0 1px rgba(34,197,94,0.1), 0 0 20px rgba(34,197,94,0.16), inset 0 1px 0 rgba(255,255,255,0.05); }
-    .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(22px, 5.8vw, 28px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.95); }
+    .digit { font-family: "Space Grotesk", sans-serif; font-size: clamp(24px, 6.2vw, 30px); line-height: 1; font-weight: 600; letter-spacing: -0.03em; color: rgba(248,250,252,0.95); }
     .letters { height: 10px; font-size: 8px; font-weight: 700; letter-spacing: 0.2em; color: rgba(100,116,139,0.8); }
-    .actions { flex-shrink: 0; height: 60px; display: grid; grid-template-columns: 1fr 68px 1fr; align-items: center; gap: 12px; }
+    .actions { flex-shrink: 0; height: 52px; display: grid; grid-template-columns: 1fr 68px 1fr; align-items: center; gap: 12px; }
     .utility { height: 44px; border-radius: 16px; border: 1px solid var(--border-soft); background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)), rgba(8,15,28,0.8); box-shadow: 0 10px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.04); color: rgba(203,213,225,0.85); font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: transform 120ms ease, border-color 150ms ease; }
     .utility:active { transform: scale(0.94); border-color: rgba(34,197,94,0.35); }
     .call { width: 64px; height: 64px; border-radius: 50%; color: #021107; background: radial-gradient(circle at 42% 18%, rgba(255,255,255,0.32), transparent 34%), linear-gradient(180deg, #2ee36d, var(--green)); box-shadow: 0 14px 30px rgba(34,197,94,0.22), 0 0 0 7px rgba(34,197,94,0.05), inset 0 1px 0 rgba(255,255,255,0.22); display: grid; place-items: center; transition: transform 120ms ease, box-shadow 150ms ease; }
@@ -143,7 +165,7 @@
     .call-log-time { color: var(--dim); text-align: right; font-size: 10px; }
 
     /* ── Admin Tab ── */
-    .admin-user-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 8px; }
+    .admin-user-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04); gap: 10px; }
     .admin-username { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; }
     .admin-email { font-size: 10px; color: var(--dim); }
     .admin-badges { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -160,23 +182,6 @@
     .toggle-switch.on { background: var(--green); }
     .toggle-switch::after { content: ""; width: 16px; height: 16px; border-radius: 50%; background: white; position: absolute; top: 2px; left: 2px; transition: transform 180ms ease; }
     .toggle-switch.on::after { transform: translateX(18px); }
-
-    /* ── Header token balance ── */
-    .header-balance { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
-    .header-balance-label { font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.14em; color: var(--dim); text-transform: uppercase; }
-    .header-balance-value { font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: -0.01em; }
-
-    /* ── Status bar ── */
-    .status-bar { flex-shrink: 0; height: 28px; display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-    .sip-indicator { display: inline-flex; align-items: center; gap: 6px; }
-    .sip-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 0 rgba(34,197,94,0.5); animation: sipPulse 1.8s ease-in-out infinite; flex-shrink: 0; }
-    .sip-label { font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.14em; color: var(--green); }
-    .status-user { display: inline-flex; align-items: center; gap: 5px; }
-    .status-username { font-family: "Space Grotesk", sans-serif; font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
-    .status-badge { height: 15px; padding: 0 6px; border-radius: 99px; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.1em; display: inline-flex; align-items: center; }
-    .status-badge.admin { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.22); }
-    .status-badge.vip { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.22); }
-    @keyframes sipPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); } 60% { box-shadow: 0 0 0 5px rgba(34,197,94,0); } }
 
     /* ── Settings overlay ── */
     .settings-panel { position: fixed; inset: 0; z-index: 100; background: rgba(2,6,23,0.94); backdrop-filter: blur(24px); display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 220ms ease; }
@@ -204,17 +209,162 @@
     @keyframes countUp { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
     @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
     .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+
+    /* ── Payment Modal ── */
+    .payment-overlay { position: fixed; inset: 0; background: rgba(2,6,23,0.92); z-index: 1000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .payment-overlay.open { display: flex; }
+    .payment-modal { background: var(--panel); border: 1px solid var(--border); border-radius: 20px; padding: 24px 20px; width: calc(100vw - 32px); max-width: 380px; max-height: 90dvh; overflow-y: auto; position: relative; animation: modalIn 0.3s ease; }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.92) translateY(12px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    @keyframes qrReveal { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    @keyframes statusPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes paymentSuccess { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+    @keyframes glowPulse { 0%,100% { box-shadow: 0 0 20px rgba(34,197,94,0.3); } 50% { box-shadow: 0 0 40px rgba(34,197,94,0.6); } }
+    .payment-qr-wrap canvas, .payment-qr-wrap img { animation: qrReveal 0.5s ease-out; }
+    .payment-status { animation: statusPulse 2s ease-in-out infinite; }
+    .payment-status.done { animation: paymentSuccess 0.6s ease-out; color: #22C55E !important; }
+    .payment-modal { transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+    .payment-modal.has-payment { border-color: rgba(34,197,94,0.3); animation: glowPulse 3s ease-in-out infinite; }
+    .payment-close { position: absolute; top: 12px; right: 16px; z-index: 2; background: none; border: none; color: var(--muted); font-size: 22px; cursor: pointer; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; }
+    .payment-close:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+    .payment-title { font-family: "Space Grotesk", sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .payment-subtitle { font-size: 11px; color: var(--dim); margin-bottom: 16px; }
+    .payment-amount-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .payment-amt-btn { flex: 1; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); color: var(--text); font-family: "Space Grotesk", sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms ease; }
+    .payment-amt-btn.selected { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+    .payment-currency-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .payment-curr-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-size: 11px; font-weight: 600; cursor: pointer; transition: all 150ms ease; text-transform: uppercase; letter-spacing: 0.05em; }
+    .payment-curr-btn.selected { border-color: var(--green); color: var(--green); background: rgba(34,197,94,0.08); }
+    .payment-qr-wrap { text-align: center; margin: 16px 0; padding: 16px; background: white; border-radius: 16px; }
+    .payment-qr-wrap canvas, .payment-qr-wrap img { display: block; margin: 0 auto; max-width: 180px; }
+    .payment-address { background: rgba(0,0,0,0.4); border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; font-family: monospace; font-size: 10px; color: var(--muted); word-break: break-all; margin-bottom: 8px; position: relative; cursor: pointer; }
+    .payment-address:active { border-color: var(--green); }
+    .payment-copy-hint { font-size: 9px; color: var(--dim); text-align: center; margin-bottom: 8px; }
+    .payment-amount-crypto { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 16px; font-weight: 700; color: var(--green); margin: 8px 0; }
+    .payment-amount-crypto span { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .payment-link { display: block; text-align: center; font-size: 10px; color: var(--green); text-decoration: underline; margin: 12px 0; cursor: pointer; }
+    .payment-status { text-align: center; font-size: 11px; color: var(--amber); padding: 8px; }
+    .payment-status.done { color: var(--green); }
+    .payment-create-btn { display: block; width: 100%; padding: 12px; border-radius: 14px; border: 1px solid var(--green); background: rgba(34,197,94,0.15); color: var(--green); font-family: "Space Grotesk", sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 12px; transition: all 150ms ease; }
+    .payment-create-btn:active { background: rgba(34,197,94,0.3); }
+    .payment-create-btn:disabled { opacity: 0.4; cursor: default; }
+    .vip-modal { border-color: rgba(245,158,11,0.3); }
+    .vip-features { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0; }
+    .vip-feat { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.02); font-size: 10px; color: var(--muted); text-align: center; }
+    .vip-price-tag { text-align: center; font-family: "Space Grotesk", sans-serif; font-size: 28px; font-weight: 700; color: var(--amber); margin: 8px 0; }
+    .no-tokens-banner { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); border-radius: 10px; padding: 10px 14px; margin: 8px 0; text-align: center; }
+    .no-tokens-banner .msg { font-size: 12px; color: var(--red); font-weight: 600; }
+    .no-tokens-banner .action { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Auth Screens ── */
+    .auth-screen { display: none; position: fixed; inset: 0; z-index: 100; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .auth-screen.active { display: flex; }
+    .auth-card { width: 100%; max-width: 360px; border: 1px solid var(--border); border-radius: 24px; background: var(--panel); backdrop-filter: blur(20px); padding: 32px 28px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+    .auth-logo { text-align: center; margin-bottom: 28px; }
+    .auth-logo .brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; color: var(--green); }
+    .auth-logo .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; margin-top: 4px; }
+    .auth-field { margin-bottom: 16px; }
+    .auth-field label { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
+    .auth-field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 180ms; }
+    .auth-field input:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(34,197,94,0.08); }
+    .auth-btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: all 180ms; margin-top: 8px; }
+    .auth-btn.primary { background: var(--green); color: #020617; }
+    .auth-btn.primary:active { background: #16a34a; transform: scale(0.98); }
+    .auth-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); margin-top: 10px; }
+    .auth-error { text-align: center; color: var(--red); font-size: 12px; margin-top: 10px; min-height: 18px; }
+    .auth-switch { text-align: center; margin-top: 18px; font-size: 12px; color: var(--muted); }
+    .auth-switch a { color: var(--green); cursor: pointer; text-decoration: underline; }
+    .auth-switch a:hover { color: #4ade80; }
+    .app-hidden { display: none !important; }
+
+
+    /* ── Call HUD ─────────────────────────────────────── */
+    .call-hud {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(2, 6, 23, 0.97);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    .call-hud.active { opacity: 1; pointer-events: auto; }
+    .call-hud-spinner { width: 120px; height: 120px; position: relative; margin-bottom: 2rem; }
+    .call-hud-spinner .ring { position: absolute; inset: 0; border: 4px solid rgba(34,197,94,0.15); border-radius: 50%; }
+    .call-hud-spinner .ring.pulse { border-color: #22C55E; animation: hud-pulse 2s ease-out infinite; }
+    .call-hud-spinner .ring.spin { border-color: transparent; border-top-color: #22C55E; animation: hud-spin 1.5s linear infinite; }
+    .call-hud-spinner .ring.spin2 { border-color: transparent; border-right-color: rgba(34,197,94,0.5); animation: hud-spin 2.2s linear infinite reverse; inset: 12px; }
+    .call-hud-spinner .icon { position: absolute; inset: 28px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: rgba(34,197,94,0.08); }
+    .call-hud-spinner .icon svg { width: 32px; height: 32px; stroke: #22C55E; }
+    @keyframes hud-pulse { 0% { transform: scale(0.95); opacity: 1; } 100% { transform: scale(1.2); opacity: 0; } }
+    @keyframes hud-spin { to { transform: rotate(360deg); } }
+    .call-hud-timer { font-family: 'DM Sans','Inter',sans-serif; font-size: 3rem; font-weight: 700; color: #22C55E; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; margin-bottom: 0.5rem; }
+    .call-hud-status { font-size: 0.85rem; font-weight: 600; color: #22C55E; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 2rem; animation: hud-status-flicker 4s ease-in-out infinite; }
+    @keyframes hud-status-flicker { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .call-hud-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; width: 100%; max-width: 420px; margin-bottom: 2rem; }
+    .call-hud-stat { background: rgba(34,197,94,0.04); border: 1px solid rgba(34,197,94,0.12); border-radius: 12px; padding: 1rem; text-align: center; }
+    .call-hud-stat-label { font-size: 0.65rem; color: rgba(34,197,94,0.5); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 0.35rem; }
+    .call-hud-stat-value { font-size: 1.1rem; font-weight: 700; color: #22C55E; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .call-hud-numbers { display: flex; gap: 2rem; align-items: center; margin-bottom: 2rem; font-size: 0.8rem; color: rgba(34,197,94,0.6); }
+    .call-hud-numbers span { font-weight: 600; color: #22C55E; }
+    .call-hud-hangup { width: 64px; height: 64px; border-radius: 50%; background: #ef4444; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 0 30px rgba(239,68,68,0.3); }
+    .call-hud-hangup:hover { transform: scale(1.08); box-shadow: 0 0 45px rgba(239,68,68,0.5); }
+    .call-hud-hangup:active { transform: scale(0.95); }
+    .call-hud-hangup svg { width: 28px; height: 28px; fill: white; }
+    @media (max-width: 480px) { .call-hud-timer { font-size: 2.2rem; } .call-hud-stats { max-width: 340px; gap: 0.5rem; } .call-hud-stat { padding: 0.75rem 0.5rem; } .call-hud-stat-value { font-size: 0.9rem; } .call-hud-spinner { width: 90px; height: 90px; } }
+
+    /* ── Desktop scaling ── */
+    @media (min-width: 768px) {
+      .app { max-width: 600px; padding-bottom: 60px; }
+      #tab-dialer { padding-bottom: 8px; }
+      .display-card.cid { min-height: 82px; padding: 14px 18px 12px; }
+      .display-card.destination { min-height: 84px; padding: 14px 18px 12px; }
+      .cid .number { font-size: 22px; }
+      .destination .number { font-size: 36px; }
+      .keypad { width: min(100%, 380px); gap: 13px; }
+      .dial-key { height: 72px; border-radius: 24px; }
+      .digit { font-size: 32px; }
+      .letters { font-size: 9px; height: 11px; }
+      .call { width: 72px; height: 72px; }
+      .call svg { width: 28px; height: 28px; }
+      .actions { height: 62px; gap: 16px; }
+      .utility { height: 46px; font-size: 11px; }
+      .bottom-nav { height: 68px; position: relative; z-index: 20; }
+      .status-bar { height: 34px; }
+      .status-user { font-size: 12px; max-width: 140px; }
+    }
+
   </style>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="sip.min.js"></script>
 </head>
 <body>
-  <!-- Settings overlay -->
-  <div class="settings-panel" id="settingsPanel">
-    <div class="settings-inner">
-      <h2>SETTINGS</h2>
-      <div class="settings-field"><label>DEFAULT CALLER ID</label><input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" /></div>
-      <div class="settings-field"><label>API TOKEN</label><input type="password" id="settingsToken" placeholder="Bearer token" /></div>
-      <button class="settings-btn green" id="settingsSave">SAVE & CLOSE</button>
-      <button class="settings-btn danger" id="settingsClose">CLOSE</button>
+
+
+  <!-- ═══════ AUTH: LOGIN ═══════ -->
+  <div class="auth-screen active" id="authLogin">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="brand-text">HUSH</div>
+        <div class="brand-sub">CIRCUITS PRO</div>
+      </div>
+      <div class="auth-field"><label>USERNAME</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" /></div>
+      <div class="auth-field"><label>PASSWORD</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" /></div>
+      <button class="auth-btn primary" id="loginBtn">SIGN IN</button>
+      <div class="auth-error" id="loginError"></div>
+      <div class="auth-switch">Need an account? <a id="showRegister">Create one</a></div>
+    </div>
+  </div>
+
+  <!-- ═══════ AUTH: REGISTER ═══════ -->
+  <div class="auth-screen" id="authRegister">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="brand-text">HUSH</div>
+        <div class="brand-sub">CREATE ACCOUNT</div>
+      </div>
+      <div class="auth-field"><label>USERNAME</label><input type="text" id="registerUser" placeholder="Choose username" autocomplete="username" /></div>
+      <div class="auth-field"><label>PASSWORD</label><input type="password" id="registerPass" placeholder="Choose password" autocomplete="new-password" /></div>
+      <button class="auth-btn primary" id="registerBtn">CREATE ACCOUNT</button>
+      <div class="auth-error" id="registerError"></div>
+      <div class="auth-switch">Already have one? <a id="showLogin">Sign in</a></div>
     </div>
   </div>
 
@@ -224,59 +374,53 @@
     <section class="tab-page active" id="tab-dialer">
       <header class="header">
         <div class="brand" id="brandLogo">
-          <span class="hush-word" id="hushWord">HUSH</span>
-          <div class="bolt-wrap">
-            <div class="bolt-glow-ring"></div>
-            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
-              <defs>
-                <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#22C55E"/>
-                  <stop offset="40%" stop-color="#00E5A0"/>
-                  <stop offset="70%" stop-color="#00E5E5"/>
-                  <stop offset="100%" stop-color="#22D3EE"/>
-                </linearGradient>
-                <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#4ADE80"/>
-                  <stop offset="100%" stop-color="#67E8F9"/>
-                </linearGradient>
-                <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#86EFAC"/>
-                  <stop offset="100%" stop-color="#99F6E4"/>
-                </linearGradient>
-                <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
-                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
-                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
-                </linearGradient>
-                <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
-                  <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
-                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
-                </linearGradient>
-              </defs>
-              <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
-              <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
-              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
-              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
-            </svg>
-          </div>
-          <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
-          <span class="brand-pro">pro</span>
-        </div>
-        <div class="header-balance">
-          <span class="header-balance-label">TOKENS</span>
-          <span class="header-balance-value" id="headerBalance"></span>
-        </div>
+  <span class="hush-word" id="hushWord">HUSH</span>
+  <div class="bolt-wrap">
+    <div class="bolt-glow-ring"></div>
+    <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+      <defs>
+        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22C55E"/>
+          <stop offset="40%" stop-color="#00E5A0"/>
+          <stop offset="70%" stop-color="#00E5E5"/>
+          <stop offset="100%" stop-color="#22D3EE"/>
+        </linearGradient>
+        <linearGradient id="boltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#4ADE80"/>
+          <stop offset="100%" stop-color="#67E8F9"/>
+        </linearGradient>
+        <linearGradient id="boltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#86EFAC"/>
+          <stop offset="100%" stop-color="#99F6E4"/>
+        </linearGradient>
+        <linearGradient id="arc1" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="arc2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#60A5FA" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M16 3L8 13l4 0-2 8" stroke="url(#arc1)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:0ms"/>
+      <path d="M17 4L9 14l4 0-2 8" stroke="url(#arc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+      <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#boltGrad)" stroke="url(#boltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+      <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#boltInner)" opacity="0.6"/>
+    </svg>
+  </div>
+  <span class="circuits-word" id="circuitsWord">CIRCUITS</span>
+  <span class="brand-pro">pro</span>
+</div>
       </header>
-      <div class="status-bar">
-        <div class="sip-indicator">
-          <div class="sip-dot"></div>
-          <span class="sip-label">SIP ONLINE</span>
-        </div>
-        <div class="status-user">
-          <span class="status-username" id="statusUsername"></span>
-          <span class="status-badge admin" id="statusBadgeAdmin" style="display:none">ADMIN</span>
-          <span class="status-badge vip" id="statusBadgeVip" style="display:none">VIP</span>
+      <div class="status-bar" id="statusBar">
+        <div class="status-dot" id="statusDot"></div>
+        <span class="status-label" id="statusLabel">CHECKING</span>
+        <div class="status-right">
+          <span class="status-badge" id="statusBadge" style="display:none"></span>
+          <span class="status-user" id="statusUser">---</span>
+          <span class="status-tokens" id="statusTokens">---</span>
         </div>
       </div>
       <div class="display-stack">
@@ -321,10 +465,25 @@
           <svg width="120" height="120" viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fill" id="balanceArc" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="100"/></svg>
           <div class="balance-center"><div class="balance-amount" id="balanceAmount">0</div><div class="balance-label">TOKENS</div></div>
         </div>
-        <div class="card-sub" style="margin-top:8px" id="balanceUSD">≈ $0.00 USD</div>
+        <div class="card-sub" style="margin-top:8px" id="balanceUSD">No talk time — deposit tokens</div>
       </div>
       <div class="wallet-actions">
-        <button class="wallet-btn primary" id="btnDeposit" style="grid-column:1/-1">+ DEPOSIT TOKENS</button>
+        <div style="display:flex;gap:6px;grid-column:1/-1;margin-bottom:4px">
+          <input type="text" id="voucherCode" placeholder="HUSH-XX-XXXXXX" autocomplete="off" autocapitalize="characters" style="flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-transform:uppercase;letter-spacing:0.05em" />
+          <button id="btnRedeemVoucher" style="padding:10px 14px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">REDEEM</button>
+        </div>
+        <div class="payment-currency-row" id="walletCurrencyRow" style="margin-bottom:6px">
+          <button class="payment-curr-btn" data-curr="ltc">LTC</button>
+          <button class="payment-curr-btn selected" data-curr="btc">BTC</button>
+        </div>
+        <div class="payment-amount-row" id="walletAmountRow" style="margin-bottom:8px">
+          <button class="payment-amt-btn" data-amt="20">$10<br><span style="font-size:9px;color:var(--dim);font-weight:400">20 tokens</span></button>
+          <button class="payment-amt-btn selected" data-amt="50">$25<br><span style="font-size:9px;color:var(--dim);font-weight:400">50 tokens</span></button>
+          <button class="payment-amt-btn" data-amt="100">$50<br><span style="font-size:9px;color:var(--dim);font-weight:400">100 tokens</span></button>
+          <button class="payment-amt-btn" data-amt="200">$100<br><span style="font-size:9px;color:var(--dim);font-weight:400">200 tokens</span></button>
+        </div>
+        <button class="wallet-btn primary" id="btnDeposit">GENERATE INVOICE</button>
+        <button class="wallet-btn" id="btnVip" style="border-color:rgba(245,158,11,0.4);color:var(--amber)">★ BUY VIP • $250</button>
       </div>
       <div class="card">
         <div class="card-label">RECENT TRANSACTIONS</div>
@@ -367,6 +526,38 @@
         </div>
         <div id="adminUserList"></div>
       </div>
+      <div class="card" style="padding:12px 16px;margin-top:10px">
+        <div class="card-header">
+          <div class="card-label">VOUCHER CREATION</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <select id="voucherAmount" style="padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none">
+            <option value="10">HUSH-10 (10 tokens)</option>
+            <option value="25" selected>HUSH-25 (25 tokens)</option>
+            <option value="50">HUSH-50 (50 tokens)</option>
+          </select>
+          <input type="number" id="voucherCount" value="1" min="1" max="50" style="width:60px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-align:center" />
+          <button id="btnCreateVouchers" style="padding:8px 16px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">CREATE</button>
+        </div>
+        <div id="voucherResult" style="margin-top:8px;font-size:10px;font-family:mono;max-height:120px;overflow-y:auto;color:var(--muted)"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ TAB: SETTINGS ═══════ -->
+    <section class="tab-page" id="tab-settings">
+      <h2 class="tab-page-title">SETTINGS</h2>
+      <div class="card">
+        <div class="card-header"><div class="card-label">ACCOUNT</div></div>
+        <div class="settings-field"><label>DEFAULT CALLER ID</label><input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" /></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="settings-btn green" id="settingsSave" style="flex:1">SAVE CALLER ID</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><div class="card-label">SESSION</div></div>
+        <div id="settingsUserInfo" style="font-size:11px;color:var(--muted);margin-bottom:12px"></div>
+        <button class="settings-btn danger" id="settingsLogout">SIGN OUT</button>
+      </div>
     </section>
 
     <!-- ═══════ BOTTOM NAV ═══════ -->
@@ -374,16 +565,199 @@
       <button class="nav-btn active" data-tab="dialer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg><span>DIALER</span></button>
       <button class="nav-btn" data-tab="wallet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg><span>TOKENS</span></button>
       <button class="nav-btn" data-tab="stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><span>STATS</span></button>
-      <button class="nav-btn" id="navSettings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>SETTINGS</span></button>
       <button class="nav-btn admin-only" data-tab="admin" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>ADMIN</span></button>
+      <button class="nav-btn" data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>SETTINGS</span></button>
     </nav>
   </div>
   <div class="toast" id="toast" aria-live="polite"></div>
+
+
+  <!-- ═══════ PAYMENT MODAL ═══════ -->
+  <div class="payment-overlay" id="paymentOverlay">
+    <div class="payment-modal">
+      <button class="payment-close" id="paymentClose">&times;</button>
+      <div class="payment-title">SEND PAYMENT</div>
+      <div class="payment-subtitle" id="paymentInfo">Send exactly the amount shown below</div>
+      <button class="payment-create-btn" id="paymentCreate" style="display:none">GENERATE INVOICE</button>
+      <div id="paymentDetails" style="display:none">
+        <div class="payment-qr-wrap" id="paymentQR"></div>
+        <div class="payment-amount-crypto" id="paymentCryptoAmount" title="Tap to copy" style="cursor:pointer"></div>
+        <div class="payment-address" id="paymentAddress" title="Tap to copy"></div>
+        <div class="payment-copy-hint">TAP ADDRESS TO COPY</div>
+        <a class="payment-link" id="paymentExplorer" target="_blank" rel="noopener">VIEW ON BLOCKCHAIN EXPLORER &nearr;</a>
+        <div class="payment-status" id="paymentStatus">WAITING FOR PAYMENT...</div>
+      </div>
+  </div>
+    </div>
+
+  <!-- VIP MODAL -->
+  <div class="payment-overlay" id="vipOverlay">
+    <div class="payment-modal vip-modal">
+      <button class="payment-close" id="vipClose">&times;</button>
+      <div class="payment-title" style="color:var(--amber)">★ UNLOCK VIP</div>
+      <div class="payment-subtitle">7 days unlimited calling &bull; one-time payment</div>
+      <div class="vip-features">
+        <div class="vip-feat">&#x221E; Unlimited calling</div>
+        <div class="vip-feat">&#x1F512; Priority routing</div>
+        <div class="vip-feat">&#x26A1; No per-minute charges</div>
+        <div class="vip-feat">&#x1F31F; VIP badge on profile</div>
+      </div>
+      <div class="vip-price-tag">$250 USD</div>
+      <div class="payment-currency-row" id="vipCurrencyRow">
+        <button class="payment-curr-btn" data-curr="ltc">LTC</button>
+        <button class="payment-curr-btn selected" data-curr="btc">BTC</button>
+      </div>
+      <button class="payment-create-btn" id="vipCreate" style="border-color:rgba(245,158,11,0.4);color:var(--amber);background:rgba(245,158,11,0.12)">ACTIVATE VIP</button>
+      <div id="vipDetails" style="display:none">
+        <div class="payment-qr-wrap" id="vipQR"></div>
+        <div class="payment-amount-crypto" id="vipCryptoAmount"></div>
+        <div class="payment-address" id="vipAddress" title="Tap to copy"></div>
+        <div class="payment-copy-hint">TAP ADDRESS TO COPY</div>
+        <a class="payment-link" id="vipExplorer" target="_blank" rel="noopener">VIEW ON BLOCKCHAIN EXPLORER &nearr;</a>
+        <div class="payment-status" id="vipStatus">WAITING FOR PAYMENT...</div>
+      </div>
+    </div>
+  </div>
 
   <script>
   (function() {
     var $ = function(s) { return document.querySelector(s); };
     var $$ = function(s) { return document.querySelectorAll(s); };
+
+    // ── Auth ──
+    function getToken() { return localStorage.getItem('clawcall_token') || ''; }
+    function isLoggedIn() { return !!getToken(); }
+
+    function showAuth(mode) {
+      $('#authLogin').classList.toggle('active', mode === 'login');
+      $('#authRegister').classList.toggle('active', mode === 'register');
+      $('.app').classList.add('app-hidden');
+    }
+
+    function showApp() {
+      $('#authLogin').classList.remove('active');
+      $('#authRegister').classList.remove('active');
+      $('.app').classList.remove('app-hidden');
+      updateAdminVisibility();
+      loadStatusBar();  // Load user + SIP status
+    }
+
+    function verifyAndShow() {
+      // Verify stored token is still valid with backend
+      var token = getToken();
+      if (!token) { showAuth('login'); return; }
+      fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            S.isAdmin = (d.user && d.user.is_admin === true) || d.role === 'admin';
+            localStorage.setItem('clawcall_is_admin', S.isAdmin ? 'true' : 'false');
+            showApp();
+          } else {
+            doLogout();
+          }
+        })
+        .catch(function(){ showApp(); }); // Network error — show app anyway, API will surface errors
+    }
+
+    // ── Status Bar ──
+    function loadStatusBar() {
+      var token = getToken();
+      if (!token) return;
+      // Fetch user info + SIP status
+      fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            var u = d.user || d;
+            $('#statusUser').textContent = u.username || '---';
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
+
+            var badge = $('#statusBadge');
+            if (u.is_admin || u.role === 'admin') {
+              badge.textContent = 'ADMIN'; $('#statusTokens').textContent = '∞'; $('#statusTokens').classList.add('infinite'); badge.className = 'status-badge admin'; badge.style.display = '';
+            } else if (u.is_vip) {
+              badge.textContent = 'VIP'; badge.className = 'status-badge vip'; badge.style.display = '';
+            } else {
+              badge.style.display = 'none';
+            }
+          }
+        }).catch(function(){});
+      // Fetch SIP status
+      fetch('/api/sip/status')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var dot = $('#statusDot');
+          var label = $('#statusLabel');
+          dot.className = 'status-dot ' + (d.status || 'offline');
+          label.className = 'status-label ' + (d.status || 'offline');
+          label.textContent = d.status === 'online' ? 'SIP ONLINE' : d.status === 'offline' ? 'SIP OFFLINE' : 'SIP CHECKING';
+        }).catch(function(){
+          $('#statusDot').className = 'status-dot offline';
+          $('#statusLabel').className = 'status-label offline';
+          $('#statusLabel').textContent = 'SIP OFFLINE';
+        });
+    }
+
+    // Poll status every 30s
+    setInterval(loadStatusBar, 30000);
+
+    function doLogin() {
+      var u = $('#loginUser').value.trim();
+      var p = $('#loginPass').value;
+      if (!u || !p) { $('#loginError').textContent = 'Fill in both fields'; return; }
+      $('#loginError').textContent = '';
+      fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok && d.token) {
+            localStorage.setItem('clawcall_token', d.token);
+            localStorage.setItem('clawcall_username', d.user ? d.user.username : u);
+            localStorage.setItem('clawcall_is_admin', (d.user && d.user.is_admin) ? 'true' : 'false');
+            S.isAdmin = d.user && d.user.is_admin;
+            showApp();
+            toast('Signed in as ' + (d.user ? d.user.username : u));
+          } else {
+            $('#loginError').textContent = d.error || 'Login failed';
+          }
+        }).catch(function(){ $('#loginError').textContent = 'Network error'; });
+    }
+
+    function doRegister() {
+      var u = $('#registerUser').value.trim();
+      var p = $('#registerPass').value;
+      if (!u || !p) { $('#registerError').textContent = 'Fill in both fields'; return; }
+      if (p.length < 4) { $('#registerError').textContent = 'Password too short (min 4)'; return; }
+      $('#registerError').textContent = '';
+      fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            toast('Account created! Sign in.');
+            showAuth('login');
+            $('#loginUser').value = u;
+          } else {
+            $('#registerError').textContent = d.error || 'Registration failed';
+          }
+        }).catch(function(){ $('#registerError').textContent = 'Network error'; });
+    }
+
+    function doLogout() {
+      localStorage.removeItem('clawcall_token');
+      localStorage.removeItem('clawcall_username');
+      localStorage.removeItem('clawcall_is_admin');
+      S.isAdmin = false;
+      showAuth('login');
+      toast('Signed out');
+    }
+
+    // Bind auth UI
+    $('#loginBtn').addEventListener('click', doLogin);
+    $('#registerBtn').addEventListener('click', doRegister);
+    $('#showRegister').addEventListener('click', function(e){ e.preventDefault(); showAuth('register'); });
+    $('#showLogin').addEventListener('click', function(e){ e.preventDefault(); showAuth('login'); });
+    $('#loginPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
+    $('#registerPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doRegister(); });
 
     // ── State ──
     var S = {
@@ -391,12 +765,12 @@
       activeField: 'destination',
       cid: '', destination: '',
       cnamCache: {}, scanningCID: null,
-      isAdmin: true,
-      vip: true,
-      username: 'dysthemix',
-      balance: 9999,
+      isAdmin: localStorage.getItem('clawcall_is_admin') === 'true',
+      userBalance: 0, ratePerMin: 0.50,
       users: [], calls: [], transactions: []
     };
+    window.S = S;  // Expose for call-hud.js
+    window.reportCall = reportCall;
 
     // ── Toast ──
     var toastEl = $('#toast'), toastTimer;
@@ -416,8 +790,47 @@
       if (name === 'admin') loadAdmin();
     }
 
+    // ── Voucher Creation (Admin) ──
+    bindClick($('#btnCreateVouchers'), function(){
+      var amount = parseInt($('#voucherAmount').value);
+      var count = parseInt($('#voucherCount').value);
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/create-vouchers', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({amount:amount,count:count})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (d.ok) {
+          $('#voucherResult').innerHTML = d.codes.map(function(c){return '<div style="padding:2px 0;color:var(--green)">'+c+'</div>'}).join('');
+          toast(d.count + ' vouchers created');
+        } else {
+          toast(d.error || 'Failed');
+        }
+      }).catch(function(){ toast('Failed to create vouchers'); });
+    });
+
+    // ── Voucher Redemption (Wallet) ──
+    bindClick($('#btnRedeemVoucher'), function(){
+      var code = $('#voucherCode').value.trim().toUpperCase();
+      if (!code) { toast('Enter a voucher code'); return; }
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/vouchers/redeem', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({code:code})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (d.ok) {
+          toast('Redeemed! +' + d.amount + ' tokens');
+          $('#voucherCode').value = '';
+          loadWallet();
+        } else {
+          toast(d.error || 'Invalid voucher');
+        }
+      }).catch(function(){ toast('Redemption failed'); });
+    });
+
     $$('.nav-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(){ if (btn.dataset.tab) switchTab(btn.dataset.tab); });
+      btn.addEventListener('click', function(){ switchTab(btn.dataset.tab); });
     });
 
     // ── Admin visibility ──
@@ -426,19 +839,13 @@
       var show = S.isAdmin;
       adminBtns.forEach(function(b){ b.style.display = show ? '' : 'none'; });
     }
-    updateAdminVisibility();
 
-    // ── Header / Status bar ──
-    function renderHeader() {
-      var balEl = document.getElementById('headerBalance');
-      balEl.textContent = S.isAdmin ? '\u221e' : S.balance.toFixed(2);
-      document.getElementById('statusUsername').textContent = S.username;
-      var adminBadge = document.getElementById('statusBadgeAdmin');
-      var vipBadge = document.getElementById('statusBadgeVip');
-      adminBadge.style.display = S.isAdmin ? '' : 'none';
-      vipBadge.style.display = (!S.isAdmin && S.vip) ? '' : 'none';
+    // Auth guard — must run AFTER S and updateAdminVisibility are defined
+    if (isLoggedIn()) {
+      verifyAndShow();  // Verify token with backend before showing app
+    } else {
+      showAuth('login');
     }
-    renderHeader();
 
     // ══════════════════════════════════════════
     // DIALER LOGIC
@@ -449,6 +856,8 @@
     function formatNumber(raw) {
       if (!raw) return '';
       var d = raw.replace(/[^0-9*#+]/g, '');
+      // Strip leading 1 for 11-digit NANP numbers
+      if (d.length === 11 && d[0] === '1') d = d.slice(1);
       if (d.length <= 3) return d;
       if (d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
       return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6,10);
@@ -480,7 +889,7 @@
         var s = ''; for (var i = 0; i < 9; i++) s += SCRAMBLE_CHARS[Math.floor(Math.random() * SCRAMBLE_CHARS.length)];
         cnamValue.textContent = s;
       }, 50);
-      fetch('/api/cnam?number=' + encodeURIComponent(number), { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') } })
+      fetch('/api/cnam?q=1' + encodeURIComponent(number), { headers: { 'Accept': 'application/json' } })
         .then(function(r){ return r.json(); }).then(function(d){
           clearInterval(iv);
           if (d.label) { S.cnamCache[number] = d.label; resolveCNAM(d.label); }
@@ -501,15 +910,89 @@
       if (cur.length > 0) { S[prop] = cur.slice(0, -1); renderDisplays(); if (prop === 'cid' && S.cid.length < 10) { cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; } }
     }
     function handleClearAll() { S.cid = ''; S.destination = ''; if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } cnamValue.textContent = 'NO CALLER ID SET'; cnamValue.className = 'cnam'; renderDisplays(); toast('CLEARED'); }
-    function handleCall() {
+
+    // Normalize number for API: strip non-digits, add leading 1 for 10-digit numbers
+    function apiDigits(num) {
+      var d = (num || '').replace(/\D/g, '');
+      return d.length === 10 ? '1' + d : d;
+    }
+    function reportCall(target, cid, duration, status, token) {
+      if (!token) { token = localStorage.getItem('clawcall_token') || ''; if (!token) return; }
+      fetch('/api/calls/report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          destination: target,
+          caller_id: cid,
+          duration_seconds: duration,
+          status: status
+        })
+      }).then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
+            if (d.user && d.user.token_balance !== undefined) {
+              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusTokens').textContent = Math.floor(S.userBalance) + ' TK';
+            }
+          }
+        }).catch(function(e){ console.error('[Call] Report failed:', e); });
+    }
+
+        function handleCall() {
       var dest = S.destination;
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
+      var token = localStorage.getItem('clawcall_token') || '';
       var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
-      toast('CONNECTING\u2026');
-      fetch('/api/call', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token') || '') }, body: JSON.stringify({ target: dest, caller_id: cid }) })
-        .then(function(r){ return r.json().catch(function(){ return {}; }); })
-        .then(function(d){ toast(d.success || d.status === 'ringing' ? 'CALL PLACED' : 'CALL FAILED'); })
-        .catch(function(){ toast('CALL PLACED'); });
+
+      // Pre-call token check
+      var bal = S.userBalance || 0;
+      var isAdmin = S.isAdmin || false;
+      if (!isAdmin && bal < 0.50) {
+        toast('⚠ LOW BALANCE — ' + bal.toFixed(2) + ' tokens. Add tokens in WALLET tab.');
+        showNoTokensBanner();
+        return;
+      }
+      if (!isAdmin && bal < 1.0) {
+        toast('⚠ Balance: ' + bal.toFixed(2) + ' tokens. Call costs ~0.50/min.');
+      }
+
+      toast('CALLING...');
+      if (typeof showCallHud === 'function') showCallHud(dest, cid);
+      if (typeof setHudStatus === 'function') setHudStatus('DIALING');
+
+      fetch('/api/call', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+        body: JSON.stringify({destination: dest, caller_id: cid})
+      })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            toast('CALL PLACED');
+            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
+            // Start billing timer after ring delay
+            setTimeout(function() {
+              if (typeof startHudTimer === 'function') startHudTimer();
+            }, 4000);
+          } else {
+            toast(d.error || 'CALL FAILED');
+            if (typeof hideCallHud === 'function') hideCallHud();
+          }
+        })
+        .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
+    }
+
+    function showNoTokensBanner() {
+      var existing = document.querySelector('.no-tokens-banner');
+      if (existing) { existing.remove(); return; }
+      var banner = document.createElement('div');
+      banner.className = 'no-tokens-banner';
+      banner.innerHTML = '<div class="msg">NO CALLING TOKENS</div><div class="action">Tap TOKENS tab to purchase &rarr;</div>';
+      banner.addEventListener('click', function(){ banner.remove(); switchTab('wallet'); });
+      var dialerTab = document.getElementById('tab-dialer');
+      var keypad = dialerTab.querySelector('.keypad-wrap');
+      if (keypad) { keypad.parentNode.insertBefore(banner, keypad); }
+      setTimeout(function(){ if (banner.parentNode) banner.remove(); }, 5000);
     }
 
     // Single click handler — modern mobile with user-scalable=no has no 300ms delay.
@@ -524,25 +1007,37 @@
     bindClick($('#btnCall'), handleCall);
 
     // Settings
-    var settingsPanel = $('#settingsPanel');
-    bindClick($('#navSettings'), function(){
-      $('#settingsCID').value = localStorage.getItem('clawcall_default_cid') || '17804755555';
-      $('#settingsToken').value = localStorage.getItem('clawcall_token') || '';
-      settingsPanel.classList.add('open');
-    });
-    bindClick($('#btnSettings'), function(){
-      $('#settingsCID').value = localStorage.getItem('clawcall_default_cid') || '17804755555';
-      $('#settingsToken').value = localStorage.getItem('clawcall_token') || '';
-      settingsPanel.classList.add('open');
-    });
+    // Settings are now a tab page — nav button handles opening
+    // Settings tab loads user info when opened
+    var origSwitchTab = switchTab;
+    switchTab = function(name) {
+      origSwitchTab(name);
+      if (name === 'settings') {
+        // Load user info into settings tab
+        fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token')||'') } })
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if (d.ok) {
+              var u = d.user || d;
+              $('#settingsUserInfo').textContent = 'Signed in as ' + u.username + ' (ID: ' + u.id + ', Role: ' + (u.is_admin?'admin':(u.is_vip?'vip':'user')) + ')';
+              if (u.caller_id) $('#settingsCID').value = u.caller_id;
+            }
+          })
+          .catch(function(){ $('#settingsUserInfo').textContent = 'Could not load user info'; });
+      }
+    };
+
     bindClick($('#settingsSave'), function(){
-      var c = $('#settingsCID').value.replace(/[^0-9]/g, ''), t = $('#settingsToken').value.trim();
-      if (c && c.length >= 10) localStorage.setItem('clawcall_default_cid', c);
-      if (t) localStorage.setItem('clawcall_token', t);
-      toast('SETTINGS SAVED'); settingsPanel.classList.remove('open');
+      var cid = $('#settingsCID').value.trim();
+      var token = localStorage.getItem('clawcall_token')||'';
+      fetch('/api/me/callerid', { method:'POST', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify({caller_id:cid}) })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) toast('CALLER ID SAVED');
+          else toast('SAVE FAILED');
+        }).catch(function(){ toast('NETWORK ERROR'); });
     });
-    bindClick($('#settingsClose'), function(){ settingsPanel.classList.remove('open'); });
-    settingsPanel.addEventListener('click', function(e){ if (e.target === settingsPanel) settingsPanel.classList.remove('open'); });
+    bindClick($('#settingsLogout'), function(){ switchTab('dialer'); doLogout(); });
 
     // Init dialer
     renderDisplays(); setActive('destination');
@@ -575,7 +1070,10 @@
       var circ = 326.7, offset = circ - (pct / 100) * circ;
       $('#balanceArc').setAttribute('stroke-dashoffset', offset);
       $('#balanceAmount').textContent = Math.floor(bal).toLocaleString();
-      $('#balanceUSD').textContent = '\u2248 $' + (bal * 0.001).toFixed(2) + ' USD';
+      var talkMin = Math.floor(bal / 0.50);
+      var talkStr = talkMin >= 60 ? '~ ' + Math.floor(talkMin/60) + 'h ' + (talkMin%60) + 'm talk time' : '~ ' + talkMin + ' min talk time';
+      if (bal <= 0) talkStr = 'No talk time — deposit tokens';
+      $('#balanceUSD').textContent = talkStr;
       var txHtml = '';
       var txs = (data && data.transactions) || [];
       if (txs.length === 0) txHtml = '<div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div>';
@@ -588,7 +1086,7 @@
     function renderWalletDemo() {
       $('#balanceArc').setAttribute('stroke-dashoffset', '80');
       $('#balanceAmount').textContent = '2,450';
-      $('#balanceUSD').textContent = '\u2248 $2.45 USD';
+      $('#balanceUSD').textContent = '~ 81h 40m talk time';
       $('#txList').innerHTML =
         '<div class="tx-row"><div><div class="tx-type">Deposit</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount in">+1,000 TK</div></div>' +
         '<div class="tx-row"><div><div class="tx-type">Call: +15875906282</div><div class="tx-date">2026-05-08</div></div><div class="tx-amount out">-15 TK</div></div>' +
@@ -596,8 +1094,267 @@
         '<div class="tx-row"><div><div class="tx-type">Deposit</div><div class="tx-date">2026-05-06</div></div><div class="tx-amount in">+2,500 TK</div></div>';
     }
 
-    bindClick($('#btnDeposit'), function(){ toast('DEPOSIT: Open NOWPayments invoice'); });
+    // ── Deposit Flow ──
+    var paymentData = null, paymentPollTimer = null;
+    var selectedAmt = 50, selectedCurr = 'btc';
+
+    // Amount selection
+    $$('#walletAmountRow .payment-amt-btn').forEach(function(b){
+      bindClick(b, function(){
+        $$('#walletAmountRow .payment-amt-btn').forEach(function(x){ x.classList.remove('selected'); });
+        b.classList.add('selected');
+        selectedAmt = parseInt(b.dataset.amt);
+      });
+    });
+
+    // Currency selection
+    $$('#walletCurrencyRow .payment-curr-btn').forEach(function(b){
+      bindClick(b, function(){
+        $$('#walletCurrencyRow .payment-curr-btn').forEach(function(x){ x.classList.remove('selected'); });
+        b.classList.add('selected');
+        selectedCurr = b.dataset.curr;
+      });
+    });
+
+    // Open deposit modal
+    bindClick($('#btnDeposit'), function(){
+      // Open modal and generate invoice immediately
+      $('#paymentDetails').style.display = 'none';
+      $('#paymentCreate').style.display = 'none';
+      $('#paymentQR').innerHTML = '<div style=\'padding:30px;text-align:center;color:var(--dim);font-size:12px\'>GENERATING<br>INVOICE...</div>';
+      $('#paymentCryptoAmount').innerHTML = '';
+      $('#paymentAddress').textContent = 'Creating...';
+      $('#paymentStatus').textContent = '';
+      $('#paymentStatus').className = 'payment-status';
+      $('#paymentInfo').textContent = 'Creating invoice for ' + selectedAmt + ' tokens via ' + selectedCurr.toUpperCase();
+      $('#paymentOverlay').classList.add('open');
+      // Auto-generate
+      createInvoice();
+    });
+
+    // Close modal
+    bindClick($('#paymentClose'), function(){
+      $('#paymentOverlay').classList.remove('open');
+      if (paymentPollTimer) { clearInterval(paymentPollTimer); paymentPollTimer = null; }
+    });
+    var po = $('#paymentOverlay'); if (po) po.addEventListener('click', function(e){ if (e.target === po) { $('#paymentClose').click(); } });
+
+    // Create invoice
+    function createInvoice() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/topups', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({token_amount: selectedAmt, pay_currency: selectedCurr})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (!d.ok) { toast(d.error || 'Failed'); $('#paymentQR').innerHTML = '<div style=\'padding:30px;text-align:center;color:var(--red);font-size:12px\'>FAILED</div>'; return; }
+        paymentData = d;
+        $('#paymentDetails').style.display = '';
+        $('#paymentInfo').textContent = 'Send exactly the amount shown below';
+        renderPaymentDetails(d);
+        startPolling(d.payment_id);
+      }).catch(function(e){
+        toast('Payment creation failed');
+        $('#paymentQR').innerHTML = '<div style=\'padding:30px;text-align:center;color:var(--red);font-size:12px\'>FAILED</div>';
+      });
+    }
+
+    // Copy address on tap
+    bindClick($('#paymentAddress'), function(){
+      var addr = paymentData && paymentData.pay_address;
+      if (!addr) { toast('ADDRESS NOT YET AVAILABLE — WAITING...'); return; }
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(addr).then(function(){ toast('ADDRESS COPIED'); });
+      }
+      $('#paymentAddress').style.borderColor = 'var(--green)';
+      setTimeout(function(){ $('#paymentAddress').style.borderColor = ''; }, 800);
+    });
+
+    function renderPaymentDetails(d) {
+      // QR code
+      var qrEl = $('#paymentQR');
+      qrEl.innerHTML = '';
+      if (d.pay_address) {
+        var qrText = d.pay_currency.toLowerCase() + ':' + d.pay_address + '?amount=' + d.pay_amount;
+        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: '#22c55e', colorLight: '#020617' }); } catch(e){}
+        $('#paymentAddress').textContent = d.pay_address;
+        var explorerUrl = d.pay_currency === 'BTC' 
+          ? 'https://www.blockchain.com/explorer/addresses/btc/' + d.pay_address
+          : 'https://blockchair.com/litecoin/address/' + d.pay_address;
+        $('#paymentExplorer').href = explorerUrl;
+      } else {
+        qrEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--dim);font-size:12px">AWAITING<br>ADDRESS</div>';
+        $('#paymentAddress').textContent = 'Assigning...';
+        $('#paymentExplorer').href = '#';
+      }
+      
+      // Crypto amount (clickable to copy)
+      $('#paymentCryptoAmount').innerHTML = d.pay_amount + ' <span>' + d.pay_currency + '</span>';
+      $('#paymentCryptoAmount').onclick = function(){
+        if (navigator.clipboard && d.pay_amount) {
+          navigator.clipboard.writeText(String(d.pay_amount)).then(function(){ toast('AMOUNT COPIED: ' + d.pay_amount + ' ' + d.pay_currency); });
+        }
+      };
+      
+      
+      // Status
+      $('#paymentStatus').textContent = 'WAITING FOR PAYMENT...';
+      $('#paymentStatus').className = 'payment-status';
+    }
+
+    var addressPollTimer = null;
+    function pollForAddress(paymentId, attempts) {
+      if (paymentData && paymentData.pay_address) return;
+      if (attempts > 10) return;
+      fetch('/api/topups/' + paymentId, { headers: {'Authorization':'Bearer '+(localStorage.getItem('clawcall_token')||'')} })
+        .then(function(r){return r.json()}).then(function(d){
+          if (d.pay_address && (!paymentData || !paymentData.pay_address)) {
+            paymentData = d;
+            renderPaymentDetails(d);
+          }
+        }).catch(function(){});
+      if (!paymentData || !paymentData.pay_address) {
+        addressPollTimer = setTimeout(function(){ pollForAddress(paymentId, (attempts||0)+1); }, 3000);
+      }
+    }
+    function startPolling(paymentId) {
+      if (!paymentData || !paymentData.pay_address) pollForAddress(paymentId, 0);
+      if (paymentPollTimer) clearInterval(paymentPollTimer);
+      var attempts = 0;
+      paymentPollTimer = setInterval(function(){
+        attempts++;
+        var token = localStorage.getItem('clawcall_token') || '';
+        fetch('/api/topups/' + paymentId, { headers: {'Authorization':'Bearer '+token} })
+          .then(function(r){return r.json()}).then(function(d){
+            if (!d.ok) return;
+            var s = d.status || '';
+            if (s === 'finished' || s === 'confirmed' || s === 'credited') {
+              $('#paymentStatus').textContent = 'PAYMENT RECEIVED! TOKENS CREDITED';
+              $('#paymentStatus').className = 'payment-status done';
+              clearInterval(paymentPollTimer);
+              paymentPollTimer = null;
+              loadWallet();
+              setTimeout(function(){ $('#paymentOverlay').classList.remove('open'); }, 2000);
+            } else if (s === 'waiting') {
+              $('#paymentStatus').textContent = 'WAITING FOR PAYMENT...';
+            } else if (s === 'confirming' || s === 'sending') {
+              $('#paymentStatus').textContent = 'CONFIRMING (' + s.toUpperCase() + ')...';
+              $('#paymentStatus').className = 'payment-status';
+            } else if (s === 'expired' || s === 'failed') {
+              $('#paymentStatus').textContent = 'PAYMENT ' + s.toUpperCase();
+              $('#paymentStatus').className = 'payment-status';
+              clearInterval(paymentPollTimer);
+            }
+          });
+        if (attempts > 60) { clearInterval(paymentPollTimer); paymentPollTimer = null; }
+      }, 10000);
+    }
     bindClick($('#btnWithdraw'), function(){ toast('WITHDRAW: Feature coming soon'); });
+
+    // VIP Flow
+    var vipData = null, vipPollTimer = null, vipSelectedCurr = "btc";
+    $$("#vipCurrencyRow .payment-curr-btn").forEach(function(b){
+      b.addEventListener("click", function(){
+        $$("#vipCurrencyRow .payment-curr-btn").forEach(function(x){ x.classList.remove("selected"); });
+        b.classList.add("selected");
+        vipSelectedCurr = b.dataset.curr;
+      });
+    });
+    bindClick($("#btnVip"), function(){
+      $("#vipDetails").style.display = "none";
+      $("#vipCreate").style.display = "";
+      $("#vipCreate").disabled = false;
+      $("#vipCreate").textContent = "ACTIVATE VIP";
+      $("#vipQR").innerHTML = "";
+      $("#vipStatus").textContent = "";
+      $("#vipStatus").className = "payment-status";
+      $("#vipOverlay").classList.add("open");
+    });
+    bindClick($("#vipClose"), function(){
+      $("#vipOverlay").classList.remove("open");
+      if (vipPollTimer) { clearInterval(vipPollTimer); vipPollTimer = null; }
+    });
+    var vo = $("#vipOverlay"); if (vo) vo.addEventListener("click", function(e){ if (e.target === vo) { $("#vipClose").click(); } });
+    bindClick($("#vipCreate"), function(){
+      var btn = $("#vipCreate");
+      btn.disabled = true; btn.textContent = "CREATING...";
+      var token = localStorage.getItem("clawcall_token") || "";
+      fetch("/api/topups/vip", {
+        method: "POST",
+        headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
+        body: JSON.stringify({pay_currency: vipSelectedCurr})
+      }).then(function(r){return r.json()}).then(function(d){
+        if (!d.ok) { toast(d.error || "Failed"); btn.disabled = false; btn.textContent = "ACTIVATE VIP"; return; }
+        vipData = d;
+        btn.style.display = "none";
+        $("#vipDetails").style.display = "";
+        renderVipDetails(d);
+        startVipPolling(d.payment_id);
+      }).catch(function(e){
+        toast("VIP payment creation failed");
+        btn.disabled = false; btn.textContent = "ACTIVATE VIP";
+      });
+    });
+    bindClick($("#vipAddress"), function(){
+      var addr = vipData && vipData.pay_address;
+      if (!addr) { toast("ADDRESS NOT YET AVAILABLE"); return; }
+      if (navigator.clipboard) { navigator.clipboard.writeText(addr).then(function(){ toast("ADDRESS COPIED"); }); }
+      $("#vipAddress").style.borderColor = "var(--amber)";
+      setTimeout(function(){ $("#vipAddress").style.borderColor = ""; }, 800);
+    });
+    function renderVipDetails(d) {
+      var qrEl = $("#vipQR"); qrEl.innerHTML = "";
+      if (d.pay_address) {
+        var qrText = d.pay_currency.toLowerCase() + ":" + d.pay_address + "?amount=" + d.pay_amount;
+        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: "#f59e0b", colorLight: "#020617" }); } catch(e){}
+        $("#vipAddress").textContent = d.pay_address;
+        var explorerUrl = d.pay_currency === "BTC" ? "https://www.blockchain.com/explorer/addresses/btc/" + d.pay_address : "https://blockchair.com/litecoin/address/" + d.pay_address;
+        $("#vipExplorer").href = explorerUrl;
+      } else {
+        qrEl.innerHTML = '<div style="padding:30px;text-align:center;color:var(--dim);font-size:12px">AWAITING<br>ADDRESS</div>';
+        $("#vipAddress").textContent = "Assigning...";
+      }
+      $("#vipCryptoAmount").innerHTML = d.pay_amount + " <span>" + d.pay_currency + "</span>";
+      $("#vipStatus").textContent = "WAITING FOR PAYMENT...";
+      $("#vipStatus").className = "payment-status";
+    }
+    var vipAddrPollTimer = null;
+    function pollVipAddress(paymentId, attempts) {
+      if (vipData && vipData.pay_address) return;
+      if (attempts > 10) return;
+      fetch("/api/topups/" + paymentId, { headers: {"Authorization":"Bearer "+(localStorage.getItem("clawcall_token")||"")} })
+        .then(function(r){return r.json()}).then(function(d){
+          if (d.pay_address && (!vipData || !vipData.pay_address)) { vipData = d; renderVipDetails(d); }
+        }).catch(function(){});
+      if (!vipData || !vipData.pay_address) {
+        vipAddrPollTimer = setTimeout(function(){ pollVipAddress(paymentId, (attempts||0)+1); }, 3000);
+      }
+    }
+    function startVipPolling(paymentId) {
+      if (!vipData || !vipData.pay_address) pollVipAddress(paymentId, 0);
+      if (vipPollTimer) clearInterval(vipPollTimer);
+      var attempts = 0;
+      vipPollTimer = setInterval(function(){
+        attempts++;
+        var token = localStorage.getItem("clawcall_token") || "";
+        fetch("/api/topups/" + paymentId, { headers: {"Authorization":"Bearer "+token} })
+          .then(function(r){return r.json()}).then(function(d){
+            if (!d.ok) return;
+            var s = d.status || "";
+            if (s === "finished" || s === "confirmed" || s === "credited") {
+              $("#vipStatus").textContent = "PAYMENT RECEIVED! VIP ACTIVATED";
+              $("#vipStatus").className = "payment-status done";
+              clearInterval(vipPollTimer); vipPollTimer = null;
+              loadWallet();
+              setTimeout(function(){ $("#vipOverlay").classList.remove("open"); }, 2000);
+            } else if (s === "waiting") { $("#vipStatus").textContent = "WAITING FOR PAYMENT..."; }
+            else if (s === "confirming" || s === "sending") { $("#vipStatus").textContent = "CONFIRMING..."; }
+            else if (s === "expired" || s === "failed") { $("#vipStatus").textContent = "PAYMENT " + s.toUpperCase(); clearInterval(vipPollTimer); }
+          });
+        if (attempts > 60) { clearInterval(vipPollTimer); vipPollTimer = null; }
+      }, 10000);
+    }
+    // ── End deposit flow ──
 
     // ══════════════════════════════════════════
     // STATS LOGIC
@@ -612,16 +1369,17 @@
     }
 
     function renderStats(data) {
-      var totalCalls = (data && data.total_calls) || 0;
-      var totalMin = (data && data.total_minutes) || 0;
-      var avgCall = (data && data.avg_duration) || 0;
-      var spent = (data && data.tokens_spent) || 0;
+      if (!data || !data.ok) { renderStatsDemo(); return; }
+      var totalCalls = data.total_calls || 0;
+      var totalMin = data.total_minutes || 0;
+      var avgCall = data.avg_duration || 0;
+      var spent = data.total_cost || 0;
       animateStat('statTotalCalls', totalCalls);
-      animateStat('statTotalMin', totalMin);
+      animateStat('statTotalMin', totalMin.toFixed(1));
       animateStat('statAvgCall', Math.round(avgCall) + 's');
-      animateStat('statSpent', spent);
-      renderBarChart(data && data.daily_usage || []);
-      renderCallLog(data && data.calls || []);
+      animateStat('statSpent', '$' + spent.toFixed(2));
+      renderBarChart(data.daily_usage || []);
+      renderCallLog(data.calls || []);
     }
 
     function renderStatsDemo() {
@@ -665,7 +1423,13 @@
       var html = '<div class="call-log-row header"><span>FROM</span><span>TO</span><span>DURATION</span><span>COST</span></div>';
       if (!calls.length) html += '<div style="padding:16px;text-align:center;color:var(--dim)">No calls yet</div>';
       else calls.slice(0, 15).forEach(function(c){
-        html += '<div class="call-log-row"><span class="call-log-cid">'+formatNumber(c.cid || '')+'</span><span class="call-log-dest">'+formatNumber(c.dest || '')+'</span><span style="font-size:11px">'+(c.duration||0)+'s</span><span class="call-log-cost">'+(c.cost||0)+' TK</span></div>';
+        var cid = c.caller_id || c.cid || '';
+        var dest = c.destination || c.dest || '';
+        var dur = c.duration || 0;
+        var cost = c.cost || 0;
+        var status = c.status || '';
+        var statusBadge = status === 'completed' ? '<span style="color:#22C55E;font-size:10px">✓</span>' : (status === 'failed' ? '<span style="color:#ef4444;font-size:10px">✗</span>' : '<span style="color:#f59e0b;font-size:10px">···</span>');
+        html += '<div class="call-log-row"><span class="call-log-cid">'+formatNumber(cid)+'</span><span class="call-log-dest">'+formatNumber(dest)+'</span><span style="font-size:11px">'+dur+'s '+statusBadge+'</span><span class="call-log-cost">$'+cost.toFixed(2)+'</span></div>';
       });
       $('#callLog').innerHTML = html;
     }
@@ -703,27 +1467,27 @@
 
     function loadDemoUsers() {
       S.users = [
-        { id: 1, username: 'dysthemix', email: 'admin@clawcall.io', role: 'admin', vip: true, banned: false, suspended: false, tokens: 5000 },
-        { id: 2, username: 'shadow_caller', email: 'shadow@dark.net', role: 'user', vip: true, banned: false, suspended: false, tokens: 1200 },
-        { id: 3, username: 'voice_phantom', email: 'phantom@mail.com', role: 'user', vip: false, banned: false, suspended: false, tokens: 450 },
-        { id: 4, username: 'spam_king_99', email: 'spam@throwaway.io', role: 'user', vip: false, banned: true, suspended: false, tokens: 0 },
-        { id: 5, username: 'test_user_7', email: 'test7@test.com', role: 'user', vip: false, banned: false, suspended: true, tokens: 89 },
+        { id: 1, username: 'dysthemix', email: 'admin@clawcall.io', role: 'admin', vip: true, banned: false, suspended: false, token_balance: 5000 },
+        { id: 2, username: 'shadow_caller', email: 'shadow@dark.net', role: 'user', vip: true, banned: false, suspended: false, token_balance: 1200 },
+        { id: 3, username: 'voice_phantom', email: 'phantom@mail.com', role: 'user', vip: false, banned: false, suspended: false, token_balance: 450 },
+        { id: 4, username: 'spam_king_99', email: 'spam@throwaway.io', role: 'user', vip: false, banned: true, suspended: false, token_balance: 0 },
+        { id: 5, username: 'test_user_7', email: 'test7@test.com', role: 'user', vip: false, banned: false, suspended: true, token_balance: 89 },
       ];
       renderUserList(S.users);
     }
 
     function renderUserList(users) {
       var q = ($('#adminSearch').value || '').toLowerCase();
-      var filtered = users.filter(function(u){ return u.username.toLowerCase().indexOf(q) >= 0 || u.email.toLowerCase().indexOf(q) >= 0; });
+      var filtered = users.filter(function(u){ var email = u.email || ''; return u.username.toLowerCase().indexOf(q) >= 0 || (typeof email === 'string' && email.toLowerCase().indexOf(q) >= 0); });
       var html = '';
       filtered.forEach(function(u){
         var badges = '';
         if (u.role === 'admin') badges += '<span class="admin-badge admin">ADMIN</span>';
-        if (u.vip) badges += '<span class="admin-badge vip">VIP</span>';
-        if (u.banned) badges += '<span class="admin-badge banned">BANNED</span>';
-        if (u.suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
+        if (u.is_vip) badges += '<span class="admin-badge vip">VIP</span>';
+        if (u.is_banned) badges += '<span class="admin-badge banned">BANNED</span>';
+        if (u.is_suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
         html += '<div class="admin-user-row">' +
-          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+u.tokens+' TK</div></div>' +
+          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+(u.token_balance || 0)+' TK</div></div>' +
           '<div class="admin-badges">'+badges+'</div>' +
           '<div class="admin-actions">' +
             '<button class="admin-btn" onclick="adminAction('+u.id+',\'tokens\')" title="Adjust tokens">+</button>' +
@@ -741,14 +1505,14 @@
       if (!user) return;
       var token = localStorage.getItem('clawcall_token') || '';
       if (action === 'ban') {
-        if (!user.banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
-        user.banned = !user.banned; toast(user.username + (user.banned ? ' BANNED' : ' UNBANNED'));
+        if (!user.is_banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
+        user.is_banned = !user.is_banned; toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
       }
-      else if (action === 'suspend') { user.suspended = !user.suspended; toast(user.username + (user.suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
-      else if (action === 'vip') { user.vip = !user.vip; toast(user.username + (user.vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
+      else if (action === 'suspend') { user.is_suspended = !user.is_suspended; toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
+      else if (action === 'vip') { user.is_vip = !user.is_vip; toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
       else if (action === 'tokens') {
-        var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.tokens + ')');
-        if (amt !== null && !isNaN(parseInt(amt))) { user.tokens = parseInt(amt); toast(user.username + ' tokens set to ' + user.tokens); }
+        var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.token_balance + ')');
+        if (amt !== null && !isNaN(parseInt(amt))) { user.token_balance = parseInt(amt); toast(user.username + ' tokens set to ' + user.token_balance); }
       }
       // Try API
       fetch('/api/admin/users/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(user) }).catch(function(){});
@@ -757,9 +1521,14 @@
 
     $('#adminSearch').addEventListener('input', function(){ renderUserList(S.users); });
 
+    // Voucher code Enter key
+    $('#voucherCode').addEventListener('keydown', function(e){
+      if (e.key === 'Enter') { e.preventDefault(); $('#btnRedeemVoucher').click(); }
+    });
+
     // Keyboard
     document.addEventListener('keydown', function(e) {
-      if (settingsPanel.classList.contains('open')) { if (e.key === 'Escape') settingsPanel.classList.remove('open'); return; }
+      if (paymentOverlay.classList.contains('open')) { if (e.key === 'Escape') closePayment(); return; }
       if (S.activeTab !== 'dialer') return;
       if (e.key >= '0' && e.key <= '9') { handleKey(e.key); }
       else if (e.key === '*' || e.key === '#') handleKey(e.key);
@@ -799,5 +1568,8 @@
 })();
   })();
   </script>
+<div class="call-hud" id="callHud"><div class="call-hud-spinner"><div class="ring"></div><div class="ring pulse"></div><div class="ring spin"></div><div class="ring spin2"></div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div></div><div class="call-hud-timer" id="hudTimer">00:00</div><div class="call-hud-status" id="hudStatus">CONNECTING</div><div class="call-hud-stats"><div class="call-hud-stat"><div class="call-hud-stat-label">Cost</div><div class="call-hud-stat-value" id="hudCost">$0.00</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Rate</div><div class="call-hud-stat-value" id="hudRate">$0.50/min</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Balance</div><div class="call-hud-stat-value" id="hudBalance">--</div></div></div><div class="call-hud-numbers"><div>CID: <span id="hudCID">--</span></div><div>TO: <span id="hudTarget">--</span></div></div><button class="call-hud-hangup" id="hudHangup"><svg viewBox="0 0 24 24"><path d="M10.68 13.32a15.3 15.3 0 0 0 2.64 2.64l4.55-4.55a1.5 1.5 0 0 1 1.7-.3l4.1 1.7a1.5 1.5 0 0 1 .9 1.45v5.15a1.5 1.5 0 0 1-1.5 1.5C13.27 21.91 2.09 10.73 2.09 1.5A1.5 1.5 0 0 1 3.59 0h5.15a1.5 1.5 0 0 1 1.45.9l1.7 4.1a1.5 1.5 0 0 1-.3 1.7L8.68 9.68a15.3 15.3 0 0 0 2 2"/></svg></button></div>
+<script src="call-hud.js?v=3"></script>
+<audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
 </body>
 </html>
