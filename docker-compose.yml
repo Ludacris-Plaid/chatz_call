@@ -11,6 +11,8 @@ services:
     container_name: clawcall-asterisk
     restart: unless-stopped
     network_mode: host
+    volumes:
+      - /var/spool/clawcall:/var/spool/asterisk/outgoing
     deploy:
       resources:
         limits:
@@ -51,6 +53,7 @@ services:
       - ./supabase_data.py:/app/supabase_data.py
       - ./supabase_voucher.py:/app/supabase_voucher.py
       - ./frontend:/app/frontend
+      - /var/spool/clawcall:/var/spool/asterisk/outgoing
     networks:
       - voip-net
 
