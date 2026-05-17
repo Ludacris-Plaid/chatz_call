@@ -72,8 +72,6 @@
     .status-badge { display: inline-block; padding: 2px 7px; border-radius: 6px; font-family: 'Space Grotesk', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; white-space: nowrap; }
     .status-badge.admin { background: rgba(34,197,94,0.15); color: #22C55E; border: 1px solid rgba(34,197,94,0.3); }
     .status-badge.vip { background: rgba(245,158,11,0.12); color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
-    #statusTokens.vip-status { color: #F59E0B; }
-    #statusTokens.infinite { color: #22C55E; }
     .status-right { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
     .status-tokens { color: var(--muted); font-size: 10px; font-weight: 500; white-space: nowrap; }
     .status-balance { margin-left: auto; color: #22C55E; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
@@ -264,6 +262,8 @@
     .auth-logo { text-align: center; margin-bottom: 28px; }
     .auth-logo .brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; color: var(--green); }
     .auth-logo .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; margin-top: 4px; }
+    .pro-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(135deg, #22C55E, #00E5A0); color: #000; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.15em; vertical-align: middle; position: relative; top: -1px; animation: proPulse 2s ease-in-out infinite; }
+    @keyframes proPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .auth-field { margin-bottom: 16px; }
     .auth-field label { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
     .auth-field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 180ms; }
@@ -344,8 +344,8 @@
   <div class="auth-screen active" id="authLogin">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text">HUSH</div>
-        <div class="brand-sub">CIRCUITS PRO</div>
+        <div class="brand-text brand-glitch" id="authHushWord">HUSH</div>
+        <div class="brand-sub brand-glitch" id="authCircuitsWord">CIRCUITS <span class="pro-badge">PRO</span></div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" /></div>
@@ -359,8 +359,8 @@
   <div class="auth-screen" id="authRegister">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text">HUSH</div>
-        <div class="brand-sub">CREATE ACCOUNT</div>
+        <div class="brand-text brand-glitch" id="authHushWordReg">HUSH</div>
+        <div class="brand-sub brand-glitch" id="authCircuitsWordReg">CIRCUITS <span class="pro-badge">PRO</span></div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="registerUser" placeholder="Choose username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="registerPass" placeholder="Choose password" autocomplete="new-password" /></div>
@@ -673,7 +673,7 @@
           if (d.ok) {
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
-            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; var isVip = u.is_vip; var vipDays = u.vip_days_left || 0; S.userBalance = bal; S.isAdmin = isAdmin; S.isVip = isVip; S.vipDays = vipDays; if (isAdmin) { $("#statusTokens").textContent = "∞"; $("#statusTokens").classList.add("infinite"); } else if (isVip && vipDays > 0) { $("#statusTokens").textContent = vipDays + "d VIP"; $("#statusTokens").classList.add("vip-status"); } else { $("#statusTokens").textContent = Math.floor(bal) + " TK"; }
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
 
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
@@ -934,10 +934,7 @@
           if (d.ok) {
             console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
             if (d.user && d.user.token_balance !== undefined) {
-              S.userBalance = parseFloat(d.user.token_balance);
-              if (S.isAdmin) { $('#statusTokens').textContent = '∞'; }
-              else if (S.isVip && S.vipDays > 0) { $('#statusTokens').textContent = S.vipDays + 'd VIP'; }
-              else { $('#statusTokens').textContent = Math.floor(S.userBalance) + ' TK'; }
+              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusTokens').textContent = Math.floor(S.userBalance) + ' TK';
             }
           }
         }).catch(function(e){ console.error('[Call] Report failed:', e); });
@@ -1070,33 +1067,6 @@
 
     function renderWallet(data) {
       var bal = (data && data.balance) ? data.balance : 0;
-      var isVip = S.isVip || (data && data.is_vip);
-      var vipDays = S.vipDays || (data && data.vip_days_left) || 0;
-      if (isVip && vipDays > 0) {
-        $('#balanceAmount').textContent = '★ VIP';
-        $('#balanceAmount').style.color = 'var(--amber)';
-        $('#balanceLabel').textContent = vipDays + 'd remaining';
-        $('#balanceUSD').textContent = 'UNLIMITED talk time';
-        $('#balanceArc').setAttribute('stroke-dashoffset', '0');
-        // Hide token deposit UI for VIP users
-        $('#walletCurrencyRow').style.display = 'none';
-        $('#walletAmountRow').style.display = 'none';
-        $('#btnDeposit').style.display = 'none';
-        var txHtml = '';
-        var txs = (data && data.transactions) || [];
-        if (txs.length === 0) txHtml = '<div class="tx-row"><span class="tx-type" style="color:var(--dim)">No transactions yet</span></div>';
-        else txs.slice(0, 8).forEach(function(tx){
-          txHtml += '<div class="tx-row"><div><div class="tx-type">'+ (tx.type || 'transaction') +'</div><div class="tx-date">'+ (tx.date || '') +'</div></div><div class="tx-amount '+(tx.amount > 0 ? 'in' : 'out')+'">'+ (tx.amount > 0 ? '+' : '') + tx.amount +' TK</div></div>';
-        });
-        $('#txList').innerHTML = txHtml;
-        return;
-      }
-      // Non-VIP: restore hidden elements
-      $('#walletCurrencyRow').style.display = '';
-      $('#walletAmountRow').style.display = '';
-      $('#btnDeposit').style.display = '';
-      $('#balanceAmount').style.color = '';
-      $('#balanceLabel').textContent = 'TOKENS';
       var maxTokens = (data && data.max_tokens) || 10000;
       var pct = Math.min(100, (bal / maxTokens) * 100);
       var circ = 326.7, offset = circ - (pct / 100) * circ;
@@ -1522,10 +1492,10 @@
           '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+(u.token_balance || 0)+' TK</div></div>' +
           '<div class="admin-badges">'+badges+'</div>' +
           '<div class="admin-actions">' +
-            '<button class="admin-btn" onclick="adminAction(''+u.id+'','\'tokens\')" title="Adjust tokens">+</button>' +
-            '<button class="admin-btn" onclick="adminAction(''+u.id+'','\'vip\')" title="Toggle VIP">\u2605</button>' +
-            '<button class="admin-btn" onclick="adminAction(''+u.id+'','\'suspend\')" title="Toggle suspend">\u23F8</button>' +
-            '<button class="admin-btn danger" onclick="adminAction(''+u.id+'','\'ban\')" title="Toggle ban">\u2715</button>' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'tokens\')" title="Adjust tokens">+</button>' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'vip\')" title="Toggle VIP">\u2605</button>' +
+            '<button class="admin-btn" onclick="adminAction('+u.id+',\'suspend\')" title="Toggle suspend">\u23F8</button>' +
+            '<button class="admin-btn danger" onclick="adminAction('+u.id+',\'ban\')" title="Toggle ban">\u2715</button>' +
           '</div></div>';
       });
       if (!filtered.length) html = '<div style="padding:20px;text-align:center;color:var(--dim)">No users found</div>';
@@ -1533,36 +1503,21 @@
     }
 
     window.adminAction = function(id, action) {
-      var user = S.users.find(function(u){ return String(u.id) === String(id); });
-      if (!user) { console.warn('adminAction: user not found for id=' + id); return; }
+      var user = S.users.find(function(u){ return u.id === id; });
+      if (!user) return;
       var token = localStorage.getItem('clawcall_token') || '';
-      var payload = {};
       if (action === 'ban') {
         if (!user.is_banned && !confirm('Ban ' + user.username + '? They will be unable to make calls.')) return;
-        user.is_banned = !user.is_banned; payload.is_banned = user.is_banned;
-        toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
+        user.is_banned = !user.is_banned; toast(user.username + (user.is_banned ? ' BANNED' : ' UNBANNED'));
       }
-      else if (action === 'suspend') {
-        user.is_suspended = !user.is_suspended; payload.is_suspended = user.is_suspended;
-        toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED'));
-      }
-      else if (action === 'vip') {
-        user.is_vip = !user.is_vip; payload.is_vip = user.is_vip;
-        toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED'));
-      }
+      else if (action === 'suspend') { user.is_suspended = !user.is_suspended; toast(user.username + (user.is_suspended ? ' SUSPENDED' : ' UNSUSPENDED')); }
+      else if (action === 'vip') { user.is_vip = !user.is_vip; toast(user.username + (user.is_vip ? ' VIP ENABLED' : ' VIP DISABLED')); }
       else if (action === 'tokens') {
         var amt = prompt('Adjust tokens for ' + user.username + ' (current: ' + user.token_balance + ')');
-        if (amt !== null && !isNaN(parseInt(amt))) {
-          user.token_balance = parseInt(amt); payload.token_balance = parseInt(amt);
-          toast(user.username + ' tokens set to ' + user.token_balance);
-        }
+        if (amt !== null && !isNaN(parseInt(amt))) { user.token_balance = parseInt(amt); toast(user.username + ' tokens set to ' + user.token_balance); }
       }
-      if (Object.keys(payload).length) {
-        fetch('/api/admin/users/' + encodeURIComponent(id), { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(payload) })
-          .then(function(r){ return r.json(); })
-          .then(function(d){ if (!d.ok) toast('API error: ' + (d.error || 'unknown')); })
-          .catch(function(e){ toast('Server error: ' + e.message); });
-      }
+      // Try API
+      fetch('/api/admin/users/' + id, { method: 'PATCH', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(user) }).catch(function(){});
       renderUserList(S.users);
     };
 
@@ -1584,7 +1539,41 @@
       else if (e.key === 'Escape') handleClearAll();
     });
 
-    console.log('hushcircuits pro \u2014 v4 beta');
+    // Auth logo glitch animation
+  (function(){
+    var authHush = document.getElementById('authHushWord');
+    var authCircuits = document.getElementById('authCircuitsWord');
+    var authHushReg = document.getElementById('authHushWordReg');
+    var authCircuitsReg = document.getElementById('authCircuitsWordReg');
+    if (authHush || authHushReg) {
+      var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      function glitchWord(el, word) {
+        if (!el) return;
+        var iterations = 0;
+        var iv = setInterval(function(){
+          el.textContent = word.split('').map(function(c, i){
+            return i < iterations ? word[i] : chars[Math.floor(Math.random() * chars.length)];
+          }).join('');
+          iterations += 0.5;
+          if (iterations >= word.length) { clearInterval(iv); el.textContent = word; }
+        }, 40);
+      }
+      // Glitch on load
+      if (authHush) glitchWord(authHush, 'HUSH');
+      if (authCircuits) setTimeout(function(){ glitchWord(authCircuits, 'CIRCUITS'); }, 200);
+      if (authHushReg) glitchWord(authHushReg, 'HUSH');
+      if (authCircuitsReg) setTimeout(function(){ glitchWord(authCircuitsReg, 'CIRCUITS'); }, 200);
+      // Re-glitch every 8 seconds
+      setInterval(function(){
+        if (authHush) glitchWord(authHush, 'HUSH');
+        setTimeout(function(){ if (authCircuits) glitchWord(authCircuits, 'CIRCUITS'); }, 200);
+        if (authHushReg) glitchWord(authHushReg, 'HUSH');
+        setTimeout(function(){ if (authCircuitsReg) glitchWord(authCircuitsReg, 'CIRCUITS'); }, 200);
+      }, 8000);
+    }
+  })();
+
+  console.log('hushcircuits pro \u2014 v4 beta');
 (function(){
   var hushEl = document.getElementById('hushWord');
   var circuitsEl = document.getElementById('circuitsWord');

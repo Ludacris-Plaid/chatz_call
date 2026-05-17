@@ -8,4 +8,7 @@ RUN mkdir -p /etc/asterisk/tls && \
     -out /etc/asterisk/tls/wss.pem \
     -subj "/CN=hushcircuits.online"
 
+# Remove unused runit services that bind port 80 (websmsd/autoband)
+RUN rm -rf /etc/service/websmsd /etc/service/autoband 2>/dev/null; exit 0
+
 EXPOSE 5060/udp 5060/tcp 5080/udp 5080/tcp 7443 8088 16384-32768/udp
