@@ -6,6 +6,9 @@ AMI_USER = os.environ.get("AMI_USER", "clawcall")
 AMI_SECRET = os.environ.get("AMI_SECRET", "clawcall_ami_secret_2026")
 DEFAULT_CID = "17804755555"
 
+# Per-process caller ID storage (set via /api/caller-id, used for calls without explicit caller_id)
+_current_caller_id = DEFAULT_CID
+
 log = logging.getLogger("clawcall.cid")
 
 def normalize_number(num: str) -> str:
@@ -60,7 +63,7 @@ def ami_command(action: dict) -> dict:
 
 def originate_call(target: str, caller_id: str = None) -> dict:
     digits = normalize_number(target)
-    cid = normalize_caller_id(caller_id) if caller_id else DEFAULT_CID
+    cid = normalize_caller_id(caller_id) if caller_id else _current_caller_id
     channel = "Local/" + digits + "@outbound-calls"
     action = {
         "Action": "Originate",
@@ -80,7 +83,12 @@ def originate_call(target: str, caller_id: str = None) -> dict:
         return {"ok": False, "error": str(err)}
 
 def get_caller_id() -> str:
-    return DEFAULT_CID
+    return _current_caller_id
 
 def set_caller_id(number: str) -> bool:
-    return True
+    global _current_caller_id
+    normalized = normalize_caller_id(number)
+    if normalized:
+        _current_caller_id = normalized
+        return True
+    return False

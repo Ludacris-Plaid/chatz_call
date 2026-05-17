@@ -1607,9 +1607,12 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if err: return err
         body = self._read_body()
         number = str(body.get('caller_id', '')).strip()
-        if not number or len(number) < 10:
-            return self._send_error('Invalid caller ID. Must be 10-digit North American number.')
-        success = set_caller_id(number)
+        digits = ''.join(c for c in number if c.isdigit())
+        if not digits or len(digits) < 10:
+            return self._send_error('Invalid caller ID. Must be at least 10 digits.')
+        if len(digits) == 10:
+            digits = '1' + digits
+        success = set_caller_id(digits)
         if success:
             return self._send_json({'ok': True, 'caller_id': get_caller_id()})
         return self._send_error('Failed to update caller ID')
