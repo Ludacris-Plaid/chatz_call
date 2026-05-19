@@ -2111,7 +2111,7 @@
 
 	    function handleCall() {
 	      var dest = S.destination;
-	      if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
+	      if (!dest || dest.length < 2) { toast('ENTER A VALID NUMBER'); return; }
 	      var token = localStorage.getItem('clawcall_token') || '';
 	      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '15555555555');
 
