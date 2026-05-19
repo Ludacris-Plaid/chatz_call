@@ -939,7 +939,7 @@
     }
 
         function handleCall() {
-      var dest = S.destination;
+      var dest = S.destination; if (dest.length === 10) dest = "1" + dest;
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
       var token = localStorage.getItem('clawcall_token') || '';
       var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
@@ -969,7 +969,7 @@
         .then(function(d){
           if (d.ok) {
             toast('CALL PLACED');
-            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
+            if (typeof setHudStatus === 'function') setHudStatus('CONNECTING');
             // Start billing timer after ring delay
             setTimeout(function() {
               if (typeof startHudTimer === 'function') startHudTimer();

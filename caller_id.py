@@ -1,10 +1,8 @@
-import os, re, logging, time
+import os, re, logging, time, uuid
 from pathlib import Path
 
 DEFAULT_CID = "17804755555"
 CALL_SPOOL = Path("/var/spool/asterisk/outgoing")
-
-_current_caller_id = DEFAULT_CID
 
 log = logging.getLogger("clawcall.cid")
 
@@ -21,12 +19,22 @@ def normalize_number(num: str) -> str:
 def normalize_caller_id(cid: str) -> str:
     if not cid:
         return DEFAULT_CID
-    return normalize_number(cid)
+    digits = re.sub(r"\D", "", cid)
+    if len(digits) < 10:
+        return DEFAULT_CID
+    if len(digits) == 10:
+        return "1" + digits
+    if len(digits) == 11 and digits.startswith("1"):
+        return digits
+    if len(digits) > 11:
+        return digits[-11:]
+    return digits
 
-def originate_call(target: str, caller_id: str = None) -> dict:
+def originate_call(target: str, caller_id: str = None, user_id: int = None) -> dict:
     digits = normalize_number(target)
-    cid = normalize_caller_id(caller_id) if caller_id else _current_caller_id
+    cid = normalize_caller_id(caller_id)
     
+    call_id = str(uuid.uuid4())[:8]
     ts = str(int(time.time() * 1000000))
     call_file = CALL_SPOOL / f"clawcall_{digits}_{ts}.call"
     
@@ -36,24 +44,27 @@ def originate_call(target: str, caller_id: str = None) -> dict:
         f"MaxRetries: 0\n"
         f"RetryTime: 1\n"
         f"WaitTime: 45\n"
-        f"Application: Echo\n"
+        f"Context: public\n"
+        f"Extension: {digits}\n"
+        f"Priority: 1\n"
     )
     
     try:
         call_file.write_text(content)
-        log.info(f"Call originated: {digits} from CID {cid}")
-        return {"ok": True, "target": digits, "caller_id": cid, "channel": f"Local/{digits}@public"}
+        log.info(f"Call originated: {digits} from CID {cid}, call_id={call_id}")
+        return {
+            "ok": True, 
+            "target": digits, 
+            "caller_id": cid, 
+            "channel": f"Local/{digits}@public",
+            "call_id": call_id
+        }
     except Exception as e:
         log.error(f"Call file write failed: {e}")
         return {"ok": False, "error": str(e)}
 
 def get_caller_id() -> str:
-    return _current_caller_id
+    return DEFAULT_CID
 
 def set_caller_id(number: str) -> bool:
-    global _current_caller_id
-    normalized = normalize_caller_id(number)
-    if normalized:
-        _current_caller_id = normalized
-        return True
-    return False
+    return True
