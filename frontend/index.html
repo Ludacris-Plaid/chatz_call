@@ -2055,7 +2055,7 @@
 	      try {
 	        ringbackCtx = new (window.AudioContext || window.webkitAudioContext)();
 	        ringbackGain = ringbackCtx.createGain();
-	        ringbackGain.gain.value = 0.25;
+	        ringbackGain.gain.value = 0.20;
 	        ringbackGain.connect(ringbackCtx.destination);
 	        ringbackOsc1 = ringbackCtx.createOscillator();
 	        ringbackOsc1.type = "sine";
@@ -2068,14 +2068,16 @@
 	        ringbackOsc1.start();
 	        ringbackOsc2.start();
 	        ringbackCtx.suspend();
-	        // Pulse: 1s on, 1s off — starts after 100ms for clean suspend
+	        // Pulse: 2s on, 4s off — standard NA ring cadence
 	        setTimeout(function() {
-	          var on = true;
-	          ringbackIntv = setInterval(function() {
-	            if (on) ringbackCtx.resume(); else ringbackCtx.suspend();
-	            on = !on;
-	          }, 1000);
-	          ringbackCtx.resume();
+	          function pulseOn() {
+	            ringbackCtx.resume();
+	            ringbackIntv = setTimeout(function() {
+	              ringbackCtx.suspend();
+	              ringbackIntv = setTimeout(pulseOn, 4000);
+	            }, 2000);
+	          }
+	          pulseOn();
 	        }, 100);
 	      } catch(e) { ringbackCtx = null; }
 	    }
