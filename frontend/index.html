@@ -1045,7 +1045,7 @@
           if (d.ok) {
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
-            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; S.isVip = !!(u.is_vip); $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
 
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
@@ -1359,6 +1359,7 @@
             // Immediately stamp status bar with new user — don't wait for async /api/me
             var newUsername = d.user ? d.user.username : u;
             $('#statusUser').textContent = newUsername;
+            S.isVip = !!(d.user && d.user.is_vip);
             var badge = $('#statusBadge');
             if (d.user && d.user.is_admin) {
               badge.textContent = 'ADMIN'; badge.className = 'status-badge admin'; badge.style.display = '';
@@ -1426,6 +1427,7 @@
       cid: '', destination: '',
       cnamCache: {}, scanningCID: null,
       isAdmin: localStorage.getItem('clawcall_is_admin') === 'true',
+      isVip: false,
       userBalance: 0, ratePerMin: 0.50,
       users: [], calls: [], transactions: []
     };
@@ -1937,12 +1939,13 @@
       // Pre-call token check
       var bal = S.userBalance || 0;
       var isAdmin = S.isAdmin || false;
-      if (!isAdmin && bal < 0.50) {
+      var isVip = S.isVip || false;
+      if (!isAdmin && !isVip && bal < 0.50) {
         toast('⚠ LOW BALANCE — ' + bal.toFixed(2) + ' tokens. Add tokens in WALLET tab.');
         showNoTokensBanner();
         return;
       }
-      if (!isAdmin && bal < 1.0) {
+      if (!isAdmin && !isVip && bal < 1.0) {
         toast('⚠ Balance: ' + bal.toFixed(2) + ' tokens. Call costs ~0.50/min.');
       }
 
