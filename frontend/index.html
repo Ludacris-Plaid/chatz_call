@@ -1936,201 +1936,24 @@
 
 	    function attachRemoteAudio(session) {
 	      function bindTracks() {
-	        var audio = document.getElementById('remoteAudio');
-	        var handler = session && session.sessionDescriptionHandler;
-	        var pc = handler && handler.peerConnection;
-	        if (!audio || !pc || typeof MediaStream === 'undefined') return;
-	        var stream = new MediaStream();
-	        pc.getReceivers().forEach(function(receiver) {
-	          if (receiver.track && receiver.track.kind === 'audio') { try { stream.addTrack(receiver.track); } catch(e) { console.warn('[SIP] addTrack race:', e.message); } }
-	        });
-	        if (stream.getTracks().length) {
-	          audio.srcObject = stream;
-	          audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem('clawcall_spk_vol') || '100', 10) || 100) / 100));
-	          audio.play().catch(function(e) { console.warn('[SIP] remote audio play blocked:', e); });
-	        }
-	      }
-	      if (session) session.on('trackAdded', bindTracks);
-	      setTimeout(bindTracks, 250);
-	      setTimeout(bindTracks, 1000);
-      setTimeout(function() {
-        var h = session && session.sessionDescriptionHandler;
-        var pc = h && h.peerConnection;
-        if (pc) {
-          pc.ontrack = function(evt) {
-            if (evt.track && evt.track.kind === "audio") {
-              var audio = document.getElementById("remoteAudio");
-              if (!audio) return;
-              var stream = evt.streams[0] || new MediaStream([evt.track]);
-              audio.srcObject = stream;
-              audio.play().catch(function(e) { console.warn("[SIP] ontrack play blocked:", e); });
+        try {
+          var audio = document.getElementById('remoteAudio');
+          var handler = session && session.sessionDescriptionHandler;
+          var pc = handler && handler.peerConnection;
+          if (!audio || !pc || typeof MediaStream === 'undefined') return;
+          var stream = new MediaStream();
+          pc.getReceivers().forEach(function(receiver) {
+            if (receiver.track && receiver.track.kind === 'audio') {
+              try { stream.addTrack(receiver.track); } catch(e) {}
             }
-          };
-        }
-      }, 100);
-	    }
-
-	    function loadSipCredentials(token) {
-	      if (sipCreds) return Promise.resolve(sipCreds);
-	      return fetch('/api/sip/credentials', { headers: { 'Authorization': 'Bearer ' + token } })
-	        .then(function(r) { return r.json(); })
-	        .then(function(d) {
-	          if (!d.ok) throw new Error(d.error || 'SIP credentials unavailable');
-	          sipCreds = d;
-	          return d;
-	        });
-	    }
-
-	    function ensureSipRegistered(token) {
-	      if (!window.SIP || !window.SIP.UA) {
-	        return Promise.reject(new Error('SIP library not loaded'));
-	      }
-	      if (sipUA && sipUA.transport && sipUA.transport.isConnected()) {
-	        return Promise.resolve(sipCreds);
-	      }
-	      if (sipRegisterPromise) return sipRegisterPromise;
-	      sipRegisterPromise = loadSipCredentials(token).then(function(c) {
-	        return new Promise(function(resolve, reject) {
-	          var settled = false;
-	          var iceServers = [
-	            { urls: 'stun:stun.l.google.com:19302' }
-	          ];
-	          sipUA = new SIP.UA({
-	            uri: 'sip:' + c.extension + '@' + c.domain,
-	            authorizationUser: c.extension,
-	            password: c.password,
-	            displayName: c.display_name || 'ClawCall',
-	            transportOptions: { wsServers: [c.wss_url] },
-	            register: false,
-	            sessionDescriptionHandlerFactoryOptions: {
-	              constraints: { audio: true, video: false },
-	              peerConnectionOptions: { rtcConfiguration: { iceServers: iceServers } }
-	            }
-	          });
-	          function finish(ok, value) {
-	            if (settled) return;
-	            settled = true;
-	            sipRegisterPromise = null;
-	            ok ? resolve(value) : reject(value);
-	          }
-	          sipUA.transport.on('connected', function() {
-            console.log('[SIP] transport connected');
-            finish(true, c);
           });
-          sipUA.on('transportError', function() {
-            finish(false, new Error('SIP websocket connection failed'));
-          });
-          // REGISTRATION SKIPPED
-	          setTimeout(function() {
-	            if (!settled && sipUA && sipUA.transport && sipUA.transport.isConnected()) finish(true, c);
-            else if (!settled) finish(false, new Error("SIP transport connection timed out"));
-          }, 5000);
-	        });
-	      });
-	      return sipRegisterPromise;
-	    }
-
-	    function placeBrowserSipCall(dest, cid, token) {
-	      return ensureSipRegistered(token).then(function(c) {
-	        var digits = apiDigits(dest);
-	        var headers = [];
-	        var cidDigits = apiDigits(cid);
-	        if (cidDigits) {
-	          headers.push('P-Asserted-Identity: <sip:' + cidDigits + '@' + c.domain + '>');
-	          headers.push('Remote-Party-ID: <sip:' + cidDigits + '@' + c.domain + '>;party=calling;screen=yes;privacy=off');
-	        }
-	        var session = sipUA.invite('sip:' + digits + '@' + c.domain, {
-	          extraHeaders: headers,
-	          sessionDescriptionHandlerOptions: {
-	            constraints: { audio: true, video: false }
-	          }
-	        });
-	        window.activeSIPSession = session;
-	        attachRemoteAudio(session);
-	        session.on('progress', function() {
-	          if (typeof setHudStatus === 'function') setHudStatus('RINGING');
-	        });
-	        session.on('accepted', function() {
-	          toast('CALL CONNECTED');
-	          if (typeof startHudTimer === 'function') startHudTimer();
-	          attachRemoteAudio(session);
-	        });
-	        session.on('failed', function(response, cause) {
-	          console.error('[SIP] call failed:', cause);
-	          toast(cause || 'CALL FAILED');
-	          if (typeof hideCallHud === 'function') hideCallHud();
-	        });
-	        session.on('terminated', function() {
-	          if (typeof window.hangupCall === 'function') window.hangupCall();
-	        });
-	        return session;
-	      });
-	    }
-
-	    function placeServerFallbackCall(dest, cid, token) {
-	      return fetch('/api/call', {
-	        method: 'POST',
-	        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
-	        body: JSON.stringify({destination: dest, caller_id: cid})
-	      })
-	        .then(function(r){ return r.json(); })
-	        .then(function(d){
-	          if (d.ok) {
-	            toast('CALL PLACED');
-	            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
-	            setTimeout(function() {
-	              if (typeof startHudTimer === 'function') startHudTimer();
-	            }, 4000);
-	          } else {
-	            toast(d.error || 'CALL FAILED');
-	            if (typeof hideCallHud === 'function') hideCallHud();
-	          }
-	        });
-	    }
-
-	    function handleCall() {
-	      var dest = S.destination;
-	      if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
-	      var token = localStorage.getItem('clawcall_token') || '';
-	      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '15555555555');
-
-      // Pre-call token check
-      var bal = S.userBalance || 0;
-      var isAdmin = S.isAdmin || false;
-      var isVip = S.isVip || false;
-      if (!isAdmin && !isVip && bal < 0.50) {
-        toast('⚠ LOW BALANCE — ' + bal.toFixed(2) + ' tokens. Add tokens in WALLET tab.');
-        showNoTokensBanner();
-        return;
+          if (stream.getTracks().length) {
+            audio.srcObject = stream;
+            audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem('clawcall_spk_vol') || '100', 10) || 100) / 100));
+            audio.play().catch(function(e) {});
+          }
+        } catch(e) { console.warn('[SIP] bindTracks error:', e.message); }
       }
-      if (!isAdmin && !isVip && bal < 1.0) {
-        toast('⚠ Balance: ' + bal.toFixed(2) + ' tokens. Call costs ~0.50/min.');
-      }
-
-	      toast('CALLING...');
-	      if (typeof showCallHud === 'function') showCallHud(dest, cid);
-	      if (typeof setHudStatus === 'function') setHudStatus('DIALING');
-
-	      placeBrowserSipCall(dest, cid, token)
-	        .catch(function(e) {
-	          console.error('[SIP] browser call failed, falling back:', e);
-	          if (typeof setHudStatus === 'function') setHudStatus('SERVER DIAL');
-	          return placeServerFallbackCall(dest, cid, token);
-	        })
-	        .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
-	    }
-
-    function showNoTokensBanner() {
-      var existing = document.querySelector('.no-tokens-banner');
-      if (existing) { existing.remove(); return; }
-      var banner = document.createElement('div');
-      banner.className = 'no-tokens-banner';
-      banner.innerHTML = '<div class="msg">NO CALLING TOKENS</div><div class="action">Tap TOKENS tab to purchase &rarr;</div>';
-      banner.addEventListener('click', function(){ banner.remove(); switchTab('wallet'); });
-      var dialerTab = document.getElementById('tab-dialer');
-      var keypad = dialerTab.querySelector('.keypad-wrap');
-      if (keypad) { keypad.parentNode.insertBefore(banner, keypad); }
-      setTimeout(function(){ if (banner.parentNode) banner.remove(); }, 5000);
     }
 
     // Single click handler — modern mobile with user-scalable=no has no 300ms delay.
