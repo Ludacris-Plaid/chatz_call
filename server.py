@@ -537,9 +537,21 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if err:
             return err
 
-        sip_ext = profile.get("sip_extension") or get_next_sip_extension()  # noqa
-        sip_pass = profile.get("sip_password") or secrets.token_hex(8)
-        if not profile.get("sip_extension"):
+        configured_endpoints = {
+            "7001": "hushpass7001",
+            "7002": "ed478a4b5f590e6e",
+            "7003": "0c76ec37b5e01d7f",
+            "1001": "989545cfc9d32177",
+        }
+        sip_ext = str(profile.get("sip_extension") or "")
+        if sip_ext not in configured_endpoints:
+            pool = sorted(configured_endpoints.keys())
+            try:
+                sip_ext = pool[int(profile["id"]) % len(pool)]
+            except Exception:
+                sip_ext = "1001"
+        sip_pass = configured_endpoints[sip_ext]
+        if profile.get("sip_extension") != sip_ext or profile.get("sip_password") != sip_pass:
             update_profile(profile["id"], {"sip_extension": sip_ext, "sip_password": sip_pass})
 
         # Always ensure Asterisk endpoint exists (idempotent)

@@ -95,11 +95,17 @@
     }, 500);
   };
 
-  window.hangupCall = function() {
-    console.log('[HUD] hangup');
-    if (window.activeSIPSession) {
-      try { window.activeSIPSession.bye(); } catch(e) { console.error('[HUD] BYE error:', e); }
-    }
+	  window.hangupCall = function() {
+	    console.log('[HUD] hangup');
+	    if (window.activeSIPSession) {
+	      try {
+	        if (window.activeSIPSession.bye) window.activeSIPSession.bye();
+	        else if (window.activeSIPSession.cancel) window.activeSIPSession.cancel();
+	      } catch(e) {
+	        try { if (window.activeSIPSession.cancel) window.activeSIPSession.cancel(); } catch(_) {}
+	        console.error('[HUD] hangup signaling error:', e);
+	      }
+	    }
     // Calculate duration and report before clearing timer
     var duration = startTime ? Math.floor((Date.now() - startTime) / 1000) : 0;
     if (timerInt) { clearInterval(timerInt); timerInt = null; }

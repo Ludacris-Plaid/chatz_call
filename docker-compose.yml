@@ -11,7 +11,10 @@ services:
     container_name: clawcall-asterisk
     restart: unless-stopped
     network_mode: host
+    environment:
+      - WEBSMSD_PORT=disabled
     volumes:
+      - ./asterisk:/etc/asterisk:ro
       - /var/spool/clawcall:/var/spool/asterisk/outgoing
     deploy:
       resources:
@@ -33,7 +36,7 @@ services:
       - PUBLIC_IP=18.223.24.42
       - SUPABASE_URL=https://kgnwqwghnosgieldiokc.supabase.co
       - SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnbndxd2dobm9zZ2llbGRpb2tjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODgyMTcwNywiZXhwIjoyMDk0Mzk3NzA3fQ.h5spGDu8JjTZY2qaZg3wtKaD5VjNj8Ihss669kVs2oc
-      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnbndxd2dobm9zZ2llbGRpb2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MjE3MDcsImV4cCI6MjA5NDM5NzcwN30.KgwVXGdjg_2GMfufdvbrRuaRB1HbWhtxRDttcyg6oJA
+      - SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtnbndxd2dobm9zZ2llbGRpb2tjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg4MjE3MDcsImV4cCI6MjA5NDM5NzcwN30.KgwVXGdjg_2GMfufnvbrRuaRB1HbWhtxRDttcyg6oJA
       - NOWPAYMENTS_API_KEY=9ED8ZNB-1ZNMGM6-J92MPHH-BA68DV7
       - NOWPAYMENTS_IPN_SECRET=5rrV57CTZPOaA8nLqDkHCZdrWEEXGLpK
       - SIPUP_USERNAME=10428
@@ -62,15 +65,11 @@ services:
     image: nginx:alpine
     container_name: clawcall-nginx
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    network_mode: host
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/certs:/etc/nginx/certs
       - ./frontend:/usr/share/nginx/html
-    networks:
-      - voip-net
     depends_on:
       - backend
 
@@ -82,6 +81,6 @@ services:
       - ./frontend:/var/www/certbot
     entrypoint: >-
       sh -c "trap exit TERM; while :; do
-        certbot renew --webroot -w /var/www/certbot --quiet;
-        sleep 12h & wait $$!;
+      certbot renew --webroot -w /var/www/certbot --quiet;
+      sleep 12h & wait $!;
       done"
