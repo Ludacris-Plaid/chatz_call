@@ -1,0 +1,32 @@
+[public]
+exten => s,1,NoOp(Connected leg)
+same => n,Echo()
+same => n,Hangup()
+exten => _+1NXXNXXXXXX,1,NoOp(Outbound call to ${EXTEN})
+same => n,Dial(PJSIP/sipup-endpoint/sip:${EXTEN}@sip.sipup.org)
+same => n,Hangup()
+exten => _1NXXNXXXXXX,1,NoOp(Outbound call to ${EXTEN})
+same => n,Dial(PJSIP/sipup-endpoint/sip:${EXTEN}@sip.sipup.org)
+same => n,Hangup()
+exten => _NXXNXXXXXX,1,NoOp(Outbound call to ${EXTEN})
+same => n,Dial(PJSIP/sipup-endpoint/sip:1${EXTEN}@sip.sipup.org)
+same => n,Hangup()
+exten => _NXXXXXX,1,NoOp(Outbound local to ${EXTEN})
+same => n,Dial(PJSIP/sipup-endpoint/sip:1780${EXTEN}@sip.sipup.org)
+same => n,Hangup()
+exten => 7001,1,Dial(PJSIP/7001)
+same => n,Hangup()
+exten => 9196,1,NoOp(EchoTest)
+same => n,Echo()
+same => n,Hangup()
+
+[outbound-calls]
+include => public
+
+[from-internal]
+include => public
+
+[test]
+exten => test,1,Answer()
+same => n,Wait(10)
+same => n,Hangup()
