@@ -436,7 +436,7 @@
     .top-dest { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; color: var(--green); }
     .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
   </style>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+<!-- QR codes now use QuickChart API (no JS library needed) -->
 <script src="sip.min.js"></script>
 </head>
 <body>
@@ -2473,7 +2473,8 @@
       qrEl.innerHTML = '';
       if (d.pay_address) {
         var qrText = d.pay_currency.toLowerCase() + ':' + d.pay_address + '?amount=' + d.pay_amount;
-        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: '#000000', colorLight: '#ffffff' }); } catch(e){}
+        var qrUrl = 'https://quickchart.io/qr?text=' + encodeURIComponent(qrText) + '&size=200&dark=22c55e&light=020617';
+        qrEl.innerHTML = '<img src="' + qrUrl + '" width="170" height="170" style="display:block;margin:0 auto" onerror="this.parentElement.innerHTML=\'<div style=padding:20px;text-align:center;color:var(--red)>QR FAILED</div>\'"/>';
         $('#paymentAddress').textContent = d.pay_address;
         var explorerUrl = d.pay_currency === 'BTC' 
           ? 'https://www.blockchain.com/explorer/addresses/btc/' + d.pay_address
@@ -2603,7 +2604,8 @@
       var qrEl = $("#vipQR"); qrEl.innerHTML = "";
       if (d.pay_address) {
         var qrText = d.pay_currency.toLowerCase() + ":" + d.pay_address + "?amount=" + d.pay_amount;
-        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: "#000000", colorLight: "#ffffff" }); } catch(e){}
+        var qrUrl = 'https://quickchart.io/qr?text=' + encodeURIComponent(qrText) + '&size=200&dark=f59e0b&light=020617';
+        qrEl.innerHTML = '<img src="' + qrUrl + '" width="170" height="170" style="display:block;margin:0 auto" onerror="this.parentElement.innerHTML=\'<div style=padding:20px;text-align:center;color:var(--red)>QR FAILED</div>\'"/>';
         $("#vipAddress").textContent = d.pay_address;
         var explorerUrl = d.pay_currency === "BTC" ? "https://www.blockchain.com/explorer/addresses/btc/" + d.pay_address : "https://blockchair.com/litecoin/address/" + d.pay_address;
         $("#vipExplorer").href = explorerUrl;
