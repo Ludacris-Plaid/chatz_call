@@ -1935,9 +1935,9 @@
 	    var sipRegisterPromise = null;
 
 	function attachRemoteAudio(session) {
-		console.log('[SIP] attachRemoteAudio: nuclear path');
+		console.log('[SIP] attachRemoteAudio: waiting for call accept');
 		var audio = document.getElementById('remoteAudio');
-		if (!audio) return;
+		if (!audio || !session) return;
 
 		function attachStream(stream) {
 			if (!stream || !stream.getAudioTracks().length) return false;
@@ -1947,36 +1947,48 @@
 			return true;
 		}
 
-		function wirePC(pc) {
-			if (!pc || pc._nuclear_wired) return;
-			pc._nuclear_wired = true;
-			console.log('[SIP] wiring track listener on PC');
-			pc.addEventListener('track', function(evt) {
-				console.log('[SIP] TRACK EVENT: kind=' + evt.track.kind + ' streams=' + evt.streams.length);
-				if (evt.streams[0]) attachStream(evt.streams[0]);
-			});
-		}
+		// Only wire PC after call is accepted (200 OK)
+		session.on('accepted', function() {
+			console.log('[SIP] call ACCEPTED - wiring remote audio');
+			var attempts = 0;
+			var pollAccepted = setInterval(function() {
+				attempts++;
+				try {
+					var h = session.sessionDescriptionHandler;
+					var pc = h && h.peerConnection;
+					if (!pc) return;
 
-		var attempts = 0;
-		var poll = setInterval(function() {
-			attempts++;
-			try {
-				var h = session && session.sessionDescriptionHandler;
-				var pc = h && h.peerConnection;
-				if (pc) {
-					wirePC(pc);
-					try {
-						var streams = pc.getRemoteStreams();
-						if (streams && streams.length) {
-							for (var s = 0; s < streams.length; s++) {
-								if (attachStream(streams[s])) break;
+					// Path 1: getRemoteStreams (most reliable for already-received tracks)
+					var streams = pc.getRemoteStreams();
+					if (streams && streams.length) {
+						for (var s = 0; s < streams.length; s++) {
+							if (streams[s].getAudioTracks().length > 0) {
+								attachStream(streams[s]);
+								clearInterval(pollAccepted);
+								return;
 							}
 						}
-					} catch(e2) {}
+					}
+
+					// Path 2: check receivers for live tracks
+					try {
+						var receivers = pc.getReceivers();
+						for (var r = 0; r < receivers.length; r++) {
+							var t = receivers[r].track;
+							if (t && t.kind === 'audio' && t.readyState === 'live') {
+								var ms = new MediaStream();
+								try { ms.addTrack(t); attachStream(ms); clearInterval(pollAccepted); return; } catch(ex) {}
+							}
+						}
+					} catch(ex2) {}
+				} catch(ex1) {}
+
+				if (attempts > 30) {
+					console.warn('[SIP] no remote audio found after 3s');
+					clearInterval(pollAccepted);
 				}
-			} catch(e1) {}
-			if (attempts > 50) clearInterval(poll);
-		}, 100);
+			}, 100);
+		});
 	}
 
 	    function loadSipCredentials(token) {
