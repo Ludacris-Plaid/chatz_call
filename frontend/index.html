@@ -1356,6 +1356,17 @@
             localStorage.setItem('clawcall_username', d.user ? d.user.username : u);
             localStorage.setItem('clawcall_is_admin', (d.user && d.user.is_admin) ? 'true' : 'false');
             S.isAdmin = d.user && d.user.is_admin;
+            // Immediately stamp status bar with new user — don't wait for async /api/me
+            var newUsername = d.user ? d.user.username : u;
+            $('#statusUser').textContent = newUsername;
+            var badge = $('#statusBadge');
+            if (d.user && d.user.is_admin) {
+              badge.textContent = 'ADMIN'; badge.className = 'status-badge admin'; badge.style.display = '';
+            } else if (d.user && d.user.is_vip) {
+              badge.textContent = 'VIP'; badge.className = 'status-badge vip'; badge.style.display = '';
+            } else {
+              badge.style.display = 'none';
+            }
             showApp();
             toast('Signed in as ' + (d.user ? d.user.username : u));
           } else {
