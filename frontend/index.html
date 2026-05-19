@@ -1935,49 +1935,51 @@
 	    var sipRegisterPromise = null;
 
 	function attachRemoteAudio(session) {
-		// Single-path ontrack: bypasses getReceivers() which crashes with DOMException
-		console.log('[SIP] attachRemoteAudio: setting up ontrack listener');
-		var audio = document.getElementById('remoteAudio');
-		if (!audio) { console.error('[SIP] FATAL: #remoteAudio missing from DOM'); return; }
-		audio.autoplay = true;
-		audio.playsinline = true;
-		audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem("clawcall_spk_vol") || "100", 10) || 100) / 100));
+		try {
+			console.log('[SIP] attachRemoteAudio: installing ontrack listener');
+			var audio = document.getElementById('remoteAudio');
 
-		function setupOntrack(pc) {
-			if (!pc || pc._clawcall_ontrack_set) return;
-			pc._clawcall_ontrack_set = true;
-			console.log('[SIP] ontrack listener installed on peerConnection');
-			pc.ontrack = function(evt) {
-				console.log('[SIP] ontrack FIRED kind=' + (evt.track ? evt.track.kind : 'none') + ' readyState=' + (evt.track ? evt.track.readyState : 'n/a'));
-				if (evt.track && evt.track.kind === 'audio') {
-					var a = document.getElementById('remoteAudio');
-					if (!a) return;
-					var stream = evt.streams[0];
-					if (!stream) {
-						stream = new MediaStream();
-						try { stream.addTrack(evt.track); } catch(ex) { console.warn('[SIP] addTrack:', ex.message); return; }
+			function setupOntrack(pc) {
+				if (!pc || pc._clawcall_ontrack_set) return;
+				pc._clawcall_ontrack_set = true;
+				console.log('[SIP] ontrack listener INSTALLED');
+				pc.ontrack = function(evt) {
+					console.log('[SIP] ontrack FIRED kind=' + (evt.track ? evt.track.kind : 'none') + ' readyState=' + (evt.track ? evt.track.readyState : 'n/a') + ' streams=' + evt.streams.length);
+					if (evt.track && evt.track.kind === 'audio') {
+						var a = document.getElementById('remoteAudio');
+						if (!a) return;
+						var stream = evt.streams[0];
+						if (!stream) {
+							stream = new MediaStream();
+							try { stream.addTrack(evt.track); } catch(ex) { console.warn('[SIP] addTrack fail:', ex.message); return; }
+						}
+						console.log('[SIP] attaching srcObject, audioTracks=' + stream.getAudioTracks().length);
+						a.srcObject = stream;
+						a.play().then(function() { console.log('[SIP] remote audio PLAYING'); }).catch(function(e) { console.warn('[SIP] play blocked:', e.message); });
 					}
-					console.log('[SIP] setting srcObject, track count=' + stream.getTracks().length);
-					a.srcObject = stream;
-					a.play().then(function() { console.log('[SIP] remote audio PLAYING'); }).catch(function(e) { console.warn('[SIP] play blocked:', e.message); });
-				}
-			};
+				};
+			}
+
+			// Immediate attempt
+			var h = session && session.sessionDescriptionHandler;
+			var pc = h && h.peerConnection;
+			if (pc) setupOntrack(pc);
+
+			// Poll for late PC creation
+			var attempts = 0;
+			var poll = setInterval(function() {
+				attempts++;
+				try {
+					var h2 = session && session.sessionDescriptionHandler;
+					var pc2 = h2 && h2.peerConnection;
+					if (pc2) setupOntrack(pc2);
+					if (pc2 || attempts > 30) clearInterval(poll);
+				} catch(e) { console.warn('[SIP] poll error:', e.message); clearInterval(poll); }
+			}, 100);
+
+		} catch(e) {
+			console.warn('[SIP] attachRemoteAudio error (non-fatal):', e.message);
 		}
-
-		// Try immediate setup
-		var h = session && session.sessionDescriptionHandler;
-		var pc = h && h.peerConnection;
-		if (pc) { setupOntrack(pc); }
-
-		// Fallback poll: SDH may create PC lazily
-		var attempts = 0;
-		var poll = setInterval(function() {
-			attempts++;
-			var h2 = session && session.sessionDescriptionHandler;
-			var pc2 = h2 && h2.peerConnection;
-			if (pc2) setupOntrack(pc2);
-			if (pc2 || attempts > 20) { clearInterval(poll); }
-		}, 100);
 	}
 
 	    function loadSipCredentials(token) {
