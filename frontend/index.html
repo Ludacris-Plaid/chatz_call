@@ -1942,7 +1942,7 @@
 	        if (!audio || !pc || typeof MediaStream === 'undefined') return;
 	        var stream = new MediaStream();
 	        pc.getReceivers().forEach(function(receiver) {
-	          if (receiver.track && receiver.track.kind === 'audio') { try { stream.addTrack(receiver.track); } catch(e) { console.warn('[SIP] addTrack race:', e.message); } }
+	          if (receiver.track && receiver.track.kind === 'audio') stream.addTrack(receiver.track);
 	        });
 	        if (stream.getTracks().length) {
 	          audio.srcObject = stream;
@@ -1953,21 +1953,6 @@
 	      if (session) session.on('trackAdded', bindTracks);
 	      setTimeout(bindTracks, 250);
 	      setTimeout(bindTracks, 1000);
-      setTimeout(function() {
-        var h = session && session.sessionDescriptionHandler;
-        var pc = h && h.peerConnection;
-        if (pc) {
-          pc.ontrack = function(evt) {
-            if (evt.track && evt.track.kind === "audio") {
-              var audio = document.getElementById("remoteAudio");
-              if (!audio) return;
-              var stream = evt.streams[0] || new MediaStream([evt.track]);
-              audio.srcObject = stream;
-              audio.play().catch(function(e) { console.warn("[SIP] ontrack play blocked:", e); });
-            }
-          };
-        }
-      }, 100);
 	    }
 
 	    function loadSipCredentials(token) {
