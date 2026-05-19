@@ -1647,14 +1647,6 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         
         result = originate_call(target, caller_id)
         
-        # Log the call (cost = 0, actual billing via /api/calls/report)
-        try:
-            log_call(profile['id'], caller_id or 'unknown', digits, 0, 
-                    0,
-                    'initiated' if result['ok'] else 'failed')
-        except Exception:
-            pass
-        
         if result['ok']:
             resp = dict(result)
             resp['cost'] = 0  # Billed per-minute via /api/calls/report when call ends
