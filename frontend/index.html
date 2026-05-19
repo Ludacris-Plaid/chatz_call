@@ -1934,26 +1934,50 @@
 	    var sipCreds = null;
 	    var sipRegisterPromise = null;
 
-	    function attachRemoteAudio(session) {
-	      function bindTracks() {
-	        var audio = document.getElementById('remoteAudio');
-	        var handler = session && session.sessionDescriptionHandler;
-	        var pc = handler && handler.peerConnection;
-	        if (!audio || !pc || typeof MediaStream === 'undefined') return;
-	        var stream = new MediaStream();
-	        pc.getReceivers().forEach(function(receiver) {
-	          if (receiver.track && receiver.track.kind === 'audio') stream.addTrack(receiver.track);
-	        });
-	        if (stream.getTracks().length) {
-	          audio.srcObject = stream;
-	          audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem('clawcall_spk_vol') || '100', 10) || 100) / 100));
-	          audio.play().catch(function(e) { console.warn('[SIP] remote audio play blocked:', e); });
-	        }
-	      }
-	      if (session) session.on('trackAdded', bindTracks);
-	      setTimeout(bindTracks, 250);
-	      setTimeout(bindTracks, 1000);
-	    }
+	function attachRemoteAudio(session) {
+		console.log('[SIP] attachRemoteAudio: nuclear path');
+		var audio = document.getElementById('remoteAudio');
+		if (!audio) return;
+
+		function attachStream(stream) {
+			if (!stream || !stream.getAudioTracks().length) return false;
+			console.log('[SIP] ATTACHING remote stream, audioTracks=' + stream.getAudioTracks().length);
+			audio.srcObject = stream;
+			audio.play().then(function(){ console.log('[SIP] AUDIO PLAYING'); }).catch(function(e){ console.warn('[SIP] play blocked:', e.message); });
+			return true;
+		}
+
+		function wirePC(pc) {
+			if (!pc || pc._nuclear_wired) return;
+			pc._nuclear_wired = true;
+			console.log('[SIP] wiring track listener on PC');
+			pc.addEventListener('track', function(evt) {
+				console.log('[SIP] TRACK EVENT: kind=' + evt.track.kind + ' streams=' + evt.streams.length);
+				if (evt.streams[0]) attachStream(evt.streams[0]);
+			});
+		}
+
+		var attempts = 0;
+		var poll = setInterval(function() {
+			attempts++;
+			try {
+				var h = session && session.sessionDescriptionHandler;
+				var pc = h && h.peerConnection;
+				if (pc) {
+					wirePC(pc);
+					try {
+						var streams = pc.getRemoteStreams();
+						if (streams && streams.length) {
+							for (var s = 0; s < streams.length; s++) {
+								if (attachStream(streams[s])) break;
+							}
+						}
+					} catch(e2) {}
+				}
+			} catch(e1) {}
+			if (attempts > 50) clearInterval(poll);
+		}, 100);
+	}
 
 	    function loadSipCredentials(token) {
 	      if (sipCreds) return Promise.resolve(sipCreds);
