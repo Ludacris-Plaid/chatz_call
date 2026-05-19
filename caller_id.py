@@ -44,9 +44,7 @@ def originate_call(target: str, caller_id: str = None, user_id: int = None) -> d
         f"MaxRetries: 0\n"
         f"RetryTime: 1\n"
         f"WaitTime: 45\n"
-        f"Context: public\n"
-        f"Extension: {digits}\n"
-        f"Priority: 1\n"
+        f"Application: Echo\n"
     )
     
     try:
