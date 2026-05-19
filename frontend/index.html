@@ -2021,7 +2021,7 @@
 	            authorizationUser: c.extension,
 	            password: c.password,
 	            displayName: c.display_name || 'ClawCall',
-	            transportOptions: { wsServers: [c.wss_url] },
+	            transportOptions: { wsServers: [c.wss_url], connectionTimeout: 10 },
 	            register: false,
 	            sessionDescriptionHandlerFactoryOptions: {
 	              constraints: { audio: true, video: false },
@@ -2045,10 +2045,45 @@
 	          setTimeout(function() {
 	            if (!settled && sipUA && sipUA.transport && sipUA.transport.isConnected()) finish(true, c);
             else if (!settled) finish(false, new Error("SIP transport connection timed out"));
-          }, 5000);
+          }, 15000);
 	        });
 	      });
 	      return sipRegisterPromise;
+	    }
+
+	    // Local ringback tone generator
+	    var ringbackCtx = null, ringbackOsc1 = null, ringbackOsc2 = null, ringbackGain = null, ringbackIntv = null;
+	    function startRingback() {
+	      try {
+	        ringbackCtx = new (window.AudioContext || window.webkitAudioContext)();
+	        ringbackGain = ringbackCtx.createGain();
+	        ringbackGain.gain.value = 0.15;
+	        ringbackGain.connect(ringbackCtx.destination);
+	        ringbackOsc1 = ringbackCtx.createOscillator();
+	        ringbackOsc1.type = "sine";
+	        ringbackOsc1.frequency.value = 440;
+	        ringbackOsc1.connect(ringbackGain);
+	        ringbackOsc2 = ringbackCtx.createOscillator();
+	        ringbackOsc2.type = "sine";
+	        ringbackOsc2.frequency.value = 480;
+	        ringbackOsc2.connect(ringbackGain);
+	        ringbackOsc1.start();
+	        ringbackOsc2.start();
+	        ringbackCtx.suspend();
+	        var on = true;
+	        ringbackIntv = setInterval(function() {
+	          if (on) ringbackCtx.resume(); else ringbackCtx.suspend();
+	          on = !on;
+	        }, 1000);
+	      } catch(e) { ringbackCtx = null; }
+	    }
+	    function stopRingback() {
+	      try {
+	        if (ringbackIntv) { clearInterval(ringbackIntv); ringbackIntv = null; }
+	        if (ringbackOsc1) { try { ringbackOsc1.stop(); } catch(e){} ringbackOsc1 = null; }
+	        if (ringbackOsc2) { try { ringbackOsc2.stop(); } catch(e){} ringbackOsc2 = null; }
+	        if (ringbackCtx) { try { ringbackCtx.close(); } catch(e){} ringbackCtx = null; }
+	      } catch(e) {}
 	    }
 
 	    function placeBrowserSipCall(dest, cid, token) {
@@ -2151,7 +2186,7 @@
       var dialerTab = document.getElementById('tab-dialer');
       var keypad = dialerTab.querySelector('.keypad-wrap');
       if (keypad) { keypad.parentNode.insertBefore(banner, keypad); }
-      setTimeout(function(){ if (banner.parentNode) banner.remove(); }, 5000);
+      setTimeout(function(){ if (banner.parentNode) banner.remove(); }, 15000);
     }
 
     // Single click handler — modern mobile with user-scalable=no has no 300ms delay.
