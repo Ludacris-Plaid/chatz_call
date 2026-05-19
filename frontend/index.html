@@ -1934,26 +1934,62 @@
 	    var sipCreds = null;
 	    var sipRegisterPromise = null;
 
-	    function attachRemoteAudio(session) {
-	      function bindTracks() {
-	        var audio = document.getElementById('remoteAudio');
-	        var handler = session && session.sessionDescriptionHandler;
-	        var pc = handler && handler.peerConnection;
-	        if (!audio || !pc || typeof MediaStream === 'undefined') return;
-	        var stream = new MediaStream();
-	        pc.getReceivers().forEach(function(receiver) {
-	          if (receiver.track && receiver.track.kind === 'audio') stream.addTrack(receiver.track);
-	        });
-	        if (stream.getTracks().length) {
-	          audio.srcObject = stream;
-	          audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem('clawcall_spk_vol') || '100', 10) || 100) / 100));
-	          audio.play().catch(function(e) { console.warn('[SIP] remote audio play blocked:', e); });
-	        }
-	      }
-	      if (session) session.on('trackAdded', bindTracks);
-	      setTimeout(bindTracks, 250);
-	      setTimeout(bindTracks, 1000);
-	    }
+	function attachRemoteAudio(session) {
+		console.log('[SIP] attachRemoteAudio: waiting for call accept');
+		var audio = document.getElementById('remoteAudio');
+		if (!audio || !session) return;
+
+		function attachStream(stream) {
+			if (!stream || !stream.getAudioTracks().length) return false;
+			console.log('[SIP] ATTACHING remote stream, audioTracks=' + stream.getAudioTracks().length);
+			audio.srcObject = stream;
+			audio.play().then(function(){ console.log('[SIP] AUDIO PLAYING'); }).catch(function(e){ console.warn('[SIP] play blocked:', e.message); });
+			return true;
+		}
+
+		// Only wire PC after call is accepted (200 OK)
+		session.on('accepted', function() {
+			console.log('[SIP] call ACCEPTED - wiring remote audio');
+			var attempts = 0;
+			var pollAccepted = setInterval(function() {
+				attempts++;
+				try {
+					var h = session.sessionDescriptionHandler;
+					var pc = h && h.peerConnection;
+					if (!pc) return;
+
+					// Path 1: getRemoteStreams (most reliable for already-received tracks)
+					var streams = pc.getRemoteStreams();
+					if (streams && streams.length) {
+						for (var s = 0; s < streams.length; s++) {
+							if (streams[s].getAudioTracks().length > 0) {
+								attachStream(streams[s]);
+								clearInterval(pollAccepted);
+								return;
+							}
+						}
+					}
+
+					// Path 2: check receivers for live tracks
+					try {
+						var receivers = pc.getReceivers();
+						for (var r = 0; r < receivers.length; r++) {
+							var t = receivers[r].track;
+							if (t && t.kind === 'audio' && t.readyState === 'live') {
+								var ms = new MediaStream();
+								try { ms.addTrack(t); attachStream(ms); clearInterval(pollAccepted); return; } catch(ex) {}
+							}
+						}
+					} catch(ex2) {}
+				} catch(ex1) {}
+
+				if (attempts > 30) {
+					console.warn('[SIP] no remote audio found after 3s');
+					clearInterval(pollAccepted);
+				}
+			}, 100);
+		});
+	}
 
 	    function loadSipCredentials(token) {
 	      if (sipCreds) return Promise.resolve(sipCreds);
@@ -2098,10 +2134,11 @@
 
 	      placeBrowserSipCall(dest, cid, token)
 	        .catch(function(e) {
-	          console.error('[SIP] browser call failed:', e);
-	          toast(e && e.message ? e.message : 'BROWSER CALL FAILED');
-	          if (typeof hideCallHud === 'function') hideCallHud();
-	        });
+	          console.error('[SIP] browser call failed, falling back:', e);
+	          if (typeof setHudStatus === 'function') setHudStatus('SERVER DIAL');
+	          return placeServerFallbackCall(dest, cid, token);
+	        })
+	        .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
 	    }
 
     function showNoTokensBanner() {
