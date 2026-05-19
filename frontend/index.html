@@ -258,10 +258,15 @@
     /* ── Auth Screens ── */
     .auth-screen { display: none; position: fixed; inset: 0; z-index: 100; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
     .auth-screen.active { display: flex; }
-    .auth-card { width: 100%; max-width: 360px; border: 1px solid var(--border); border-radius: 24px; background: var(--panel); backdrop-filter: blur(20px); padding: 32px 28px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+    .auth-card { width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; border: 1px solid var(--border); border-radius: 24px; background: var(--panel); backdrop-filter: blur(20px); padding: 32px 28px 28px; box-shadow: 0 24px 60px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); -webkit-overflow-scrolling: touch; }
     .auth-logo { text-align: center; margin-bottom: 28px; }
-    .auth-logo .brand-text { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; letter-spacing: 0.06em; color: var(--green); }
-    .auth-logo .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.12em; margin-top: 4px; }
+    .auth-brand { display: inline-flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 8px; }
+    .auth-hush-word, .auth-circuits-word { font-family: "Orbitron", sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.14em; color: #fff; display: inline-block; }
+    .auth-circuits-word { color: #22D3EE; text-shadow: 0 0 10px rgba(34,211,238,0.5); }
+    .auth-bolt { transform: scale(1.6); flex-shrink: 0; }
+    .auth-pro-badge { display: inline-block; padding: 3px 10px; border-radius: 4px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); color: var(--green); font-family: "Space Grotesk", sans-serif; font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; }
+    .pro-badge { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 4px; background: linear-gradient(135deg, #22C55E, #00E5A0); color: #000; font-family: "Space Grotesk", sans-serif; font-size: 8px; font-weight: 800; letter-spacing: 0.15em; vertical-align: middle; position: relative; top: -1px; animation: proPulse 2s ease-in-out infinite; }
+    @keyframes proPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
     .auth-field { margin-bottom: 16px; }
     .auth-field label { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; }
     .auth-field input { width: 100%; padding: 12px 14px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-soft); border-radius: 12px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; transition: border-color 180ms; }
@@ -331,6 +336,105 @@
       .status-user { font-size: 12px; max-width: 140px; }
     }
 
+    /* ═══ Audio Captcha ═══ */
+    .ac-field { margin-bottom: 16px; }
+    .ac-field > label { display: block; font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; }
+    .ac-inner { background: #0f1824; border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 18px 16px 16px; }
+    .ac-inner.success { border-color: rgba(34,197,94,0.45); box-shadow: 0 0 40px rgba(34,197,94,0.12); }
+    .ac-inner.fail { animation: acShake 0.45s ease; }
+    .ac-status-label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; text-align: center; margin-bottom: 14px; color: #4b6280; }
+    .ac-status-label.fail { color: #EF4444; }
+    .ac-instruction { color: #3d5470; font-size: 12px; text-align: center; line-height: 1.5; margin: 0 0 14px; }
+    .ac-play-btn { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 auto 16px; background: #182230; border: 1px solid rgba(0,212,180,0.3); border-radius: 50px; padding: 10px 24px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: #fff; cursor: pointer; transition: all 0.18s; outline: none; }
+    .ac-play-btn:hover:not(:disabled) { background: #1e2d40; border-color: rgba(0,212,180,0.5); }
+    .ac-play-btn:active:not(:disabled) { transform: scale(0.97); }
+    .ac-play-btn:disabled { opacity: 0.6; color: #4b6280; border-color: rgba(255,255,255,0.07); cursor: default; }
+    .ac-play-dot { width: 8px; height: 8px; border-radius: 50%; background: #00d4b4; box-shadow: 0 0 8px #00d4b4; transition: background 0.18s, box-shadow 0.18s; flex-shrink: 0; }
+    .ac-play-btn:disabled .ac-play-dot { background: #4b6280; box-shadow: none; }
+    .ac-section-label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 9px; text-transform: uppercase; letter-spacing: 0.18em; color: #4b6280; margin-bottom: 8px; }
+    .ac-slots { display: flex; gap: 6px; background: #182230; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 10px; margin-bottom: 14px; }
+    .ac-slot-empty { flex: 1 1 0; aspect-ratio: 1/1.2; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; font-size: 12px; color: rgba(255,255,255,0.06); }
+    .ac-slot-filled { flex: 1 1 0; aspect-ratio: 1/1.2; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; position: relative; animation: acPop 0.18s ease; transition: filter 0.15s; }
+    .ac-slot-filled:hover { filter: brightness(1.3); }
+    .ac-slot-remove { position: absolute; top: 3px; right: 4px; font-size: 7px; color: rgba(255,255,255,0.15); }
+    .ac-slot-label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 8px; }
+    .ac-tiles { display: flex; gap: 6px; margin-bottom: 14px; }
+    .ac-tile { flex: 1 1 0; aspect-ratio: 1/1.25; border-radius: 14px; background: #1a2535; border: 1px solid rgba(255,255,255,0.13); box-shadow: 0 4px 12px rgba(0,0,0,0.3), 0 0 0 1px rgba(0,212,180,0.06); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; transition: transform 0.13s, box-shadow 0.13s, background 0.13s, border-color 0.13s; outline: none; animation: acTilePulse 3s ease-in-out infinite; }
+    .ac-tile:hover:not(.ac-used) { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); border-color: rgba(0,212,180,0.4); background: #1e2b3d; }
+    .ac-tile:active:not(.ac-used) { transform: scale(0.94); }
+    .ac-tile.ac-used { opacity: 0.12; cursor: default; pointer-events: none; }
+    .ac-tile-label { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 10px; text-transform: uppercase; }
+    .ac-tile-label.normal { color: rgba(255,255,255,0.55); }
+    .ac-verify-btn { display: block; width: 100%; border-radius: 50px; padding: 12px; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.12em; cursor: pointer; transition: all 0.18s; outline: none; border: none; }
+    .ac-verify-btn.ready { background: #22C55E; color: #020617; border: 1px solid #22C55E; box-shadow: 0 4px 24px rgba(34,197,94,0.35); }
+    .ac-verify-btn.ready:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .ac-verify-btn.ready:active { transform: scale(0.97); }
+    .ac-verify-btn.not-ready { background: rgba(34,197,94,0.08); color: #2a3a50; border: 1px solid rgba(34,197,94,0.12); box-shadow: none; cursor: default; }
+    .ac-footer { font-size: 10px; color: #2a3a50; text-align: center; letter-spacing: 0.06em; margin-top: 14px; }
+    .ac-success-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 10px 0; }
+    .ac-success-circle { width: 56px; height: 56px; border-radius: 50%; background: rgba(34,197,94,0.12); border: 2px solid #22C55E; display: flex; align-items: center; justify-content: center; animation: acGreenPulse 1.8s infinite; font-size: 22px; color: #22C55E; }
+    .ac-success-title { font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 16px; text-transform: uppercase; color: #22C55E; letter-spacing: 0.16em; }
+    .ac-success-sub { font-size: 11px; color: #4b6280; }
+    .ac-waveform-svg { transition: height 0.15s; }
+    @keyframes acShake { 0%{transform:translateX(0)} 20%{transform:translateX(-9px)} 40%{transform:translateX(9px)} 60%{transform:translateX(-5px)} 80%{transform:translateX(5px)} 100%{transform:translateX(0)} }
+    @keyframes acPop { 0%{transform:scale(1)} 50%{transform:scale(1.14)} 100%{transform:scale(1)} }
+    @keyframes acGreenPulse { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 28px 4px rgba(34,197,94,0.35)} }
+    /* Voucher list */
+    .v-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 10px; margin-bottom: 4px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); transition: background 0.12s; }
+    .v-row:hover { background: rgba(255,255,255,0.04); }
+    .v-code { font-family: 'Space Grotesk', monospace; font-size: 11px; font-weight: 600; color: var(--green); cursor: pointer; letter-spacing: 0.03em; transition: color 0.12s; user-select: all; }
+    .v-code:hover { color: #4ade80; }
+    .v-code:active { color: #86efac; }
+    .v-code.copied { animation: vCopyFlash 0.35s ease; }
+    .v-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .v-amount { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .v-status { font-size: 9px; font-weight: 700; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 99px; text-transform: uppercase; }
+    .v-status.active { background: rgba(34,197,94,0.1); color: var(--green); border: 1px solid rgba(34,197,94,0.2); }
+    .v-status.redeemed { background: rgba(148,163,184,0.08); color: var(--dim); border: 1px solid rgba(148,163,184,0.12); }
+    .v-redeemed-by { font-size: 9px; color: var(--dim); max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .v-empty { text-align: center; padding: 16px; color: var(--dim); font-size: 11px; }
+    .v-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .v-count { font-size: 9px; color: var(--dim); font-weight: 600; }
+    @keyframes vCopyFlash { 0%{opacity:0.5} 50%{opacity:1} 100%{opacity:1} }
+    .pg-btn { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.03); color: var(--muted); font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .pg-btn:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+    .pg-btn:disabled { opacity: 0.3; cursor: default; }
+    .pg-info { font-size: 11px; color: var(--dim); font-weight: 600; }
+    /* ── Admin Sub-Tabs ── */
+    .admin-subnav { display: flex; gap: 4px; margin-bottom: 14px; flex-shrink: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+    .admin-subtab { padding: 7px 14px; border-radius: 10px; border: 1px solid var(--border-soft); background: transparent; color: var(--dim); font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+    .admin-subtab:hover { color: var(--text); border-color: var(--border); }
+    .admin-subtab.active { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.35); color: var(--green); }
+    .admin-subtab .subtab-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 4px; background: var(--dim); transition: background 0.15s; }
+    .admin-subtab.active .subtab-dot { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+    .admin-tab-content { display: none; flex-direction: column; gap: 10px; }
+    .admin-tab-content.active { display: flex; }
+    /* Expandable user row */
+    .user-expand { display: none; padding: 8px 10px; margin-top: 4px; background: rgba(255,255,255,0.015); border-radius: 8px; border: 1px solid rgba(255,255,255,0.03); font-size: 10px; color: var(--dim); }
+    .user-expand.open { display: block; }
+    .user-detail-row { display: flex; justify-content: space-between; padding: 3px 0; }
+    .user-detail-row span:first-child { color: var(--muted); }
+    /* Add tokens inline */
+    .token-row { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+    .token-row input { width: 80px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); color: var(--text); font-size: 11px; outline: none; text-align: center; }
+    .token-row button { padding: 5px 10px; border-radius: 8px; border: 1px solid var(--green); background: rgba(34,197,94,0.12); color: var(--green); font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .token-row select { padding: 5px 6px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(0,0,0,0.3); color: var(--text); font-size: 10px; outline: none; }
+    /* SIP status inline */
+    .sip-status-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); margin-bottom: 4px; }
+    .sip-indicator { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .sip-indicator.online { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.5); animation: dotPulse 2s infinite; }
+    .sip-indicator.offline { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.4); }
+    .log-viewer { max-height: 260px; overflow-y: auto; font-family: monospace; font-size: 10px; background: rgba(0,0,0,0.25); border-radius: 10px; padding: 10px; border: 1px solid rgba(255,255,255,0.04); line-height: 1.6; color: var(--dim); white-space: pre-wrap; }
+    .action-btn { padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-soft); background: rgba(255,255,255,0.03); color: var(--muted); font-family: 'Space Grotesk', sans-serif; font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .action-btn:hover { border-color: var(--green); color: var(--green); }
+    .action-btn.danger { border-color: rgba(239,68,68,0.2); color: rgba(239,68,68,0.7); }
+    .action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+    .stat-row { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); font-size: 11px; }
+    .stat-row:last-child { border-bottom: none; }
+    .stat-row .sr-label { color: var(--dim); flex: 1; }
+    .stat-row .sr-value { color: var(--text); font-weight: 600; font-family: 'Space Grotesk', sans-serif; }
+    .top-dest { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 600; color: var(--green); }
+    .section-title { font-family: 'Space Grotesk', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
   </style>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="sip.min.js"></script>
@@ -342,11 +446,69 @@
   <div class="auth-screen active" id="authLogin">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text">HUSH</div>
-        <div class="brand-sub">CIRCUITS PRO</div>
+        <div class="auth-brand">
+          <span class="auth-hush-word" id="authHushWord">HUSH</span>
+          <div class="bolt-wrap auth-bolt">
+            <div class="bolt-glow-ring"></div>
+            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+              <defs>
+                <linearGradient id="authBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22C55E"/>
+                  <stop offset="40%" stop-color="#00E5A0"/>
+                  <stop offset="70%" stop-color="#00E5E5"/>
+                  <stop offset="100%" stop-color="#22D3EE"/>
+                </linearGradient>
+                <linearGradient id="authBoltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4ADE80"/>
+                  <stop offset="100%" stop-color="#67E8F9"/>
+                </linearGradient>
+                <linearGradient id="authBoltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#99F6E4"/>
+                </linearGradient>
+                <linearGradient id="authArc1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="authArc2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#authArc1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc"/>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#authArc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#authBoltGrad)" stroke="url(#authBoltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#authBoltInner)" opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="auth-circuits-word" id="authCircuitsWord">CIRCUITS</span>
+        </div>
+        <div class="auth-pro-badge">pro</div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="loginUser" placeholder="Enter username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="loginPass" placeholder="Enter password" autocomplete="current-password" /></div>
+      <div class="ac-field" id="loginAcField">
+        <label>AUDIO VERIFICATION</label>
+        <div class="ac-inner" id="loginAcInner">
+          <div class="ac-status-label" id="loginAcStatus">AUDIO VERIFICATION</div>
+          <p class="ac-instruction" id="loginAcInstr">Play the sequence, then tap the tones below in the same order.</p>
+          <button class="ac-play-btn" id="loginAcPlay"><span class="ac-play-dot"></span> PLAY SEQUENCE</button>
+          <div class="ac-section-label">YOUR ANSWER &mdash; TAP TO REMOVE</div>
+          <div class="ac-slots" id="loginAcSlots">
+            <div class="ac-slot-empty">1</div>
+            <div class="ac-slot-empty">2</div>
+            <div class="ac-slot-empty">3</div>
+            <div class="ac-slot-empty">4</div>
+            <div class="ac-slot-empty">5</div>
+          </div>
+          <div class="ac-section-label">TAP TO ADD</div>
+          <div class="ac-tiles" id="loginAcTiles"></div>
+          <button class="ac-verify-btn not-ready" id="loginAcVerify" disabled>SELECT 5 MORE</button>
+          <div class="ac-footer" id="loginAcFooter">TAP A FILLED SLOT TO REMOVE IT</div>
+        </div>
+      </div>
       <button class="auth-btn primary" id="loginBtn">SIGN IN</button>
       <div class="auth-error" id="loginError"></div>
       <div class="auth-switch">Need an account? <a id="showRegister">Create one</a></div>
@@ -357,11 +519,69 @@
   <div class="auth-screen" id="authRegister">
     <div class="auth-card">
       <div class="auth-logo">
-        <div class="brand-text">HUSH</div>
-        <div class="brand-sub">CREATE ACCOUNT</div>
+        <div class="auth-brand">
+          <span class="auth-hush-word" id="authHushWordReg">HUSH</span>
+          <div class="bolt-wrap auth-bolt">
+            <div class="bolt-glow-ring"></div>
+            <svg class="bolt-svg" viewBox="0 0 24 24" fill="none" aria-label="lightning bolt">
+              <defs>
+                <linearGradient id="regBoltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22C55E"/>
+                  <stop offset="40%" stop-color="#00E5A0"/>
+                  <stop offset="70%" stop-color="#00E5E5"/>
+                  <stop offset="100%" stop-color="#22D3EE"/>
+                </linearGradient>
+                <linearGradient id="regBoltStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#4ADE80"/>
+                  <stop offset="100%" stop-color="#67E8F9"/>
+                </linearGradient>
+                <linearGradient id="regBoltInner" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#86EFAC"/>
+                  <stop offset="100%" stop-color="#99F6E4"/>
+                </linearGradient>
+                <linearGradient id="regArc1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="regArc2" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0"/>
+                  <stop offset="50%" stop-color="#22D3EE" stop-opacity="0.8"/>
+                  <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#regArc1)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc"/>
+              <path d="M17 4L9 14l4 0-2 8" stroke="url(#regArc2)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="bolt-arc" style="animation-delay:300ms"/>
+              <path d="M13 2L4 14h7l-2 8 9-12h-7l2-8z" fill="url(#regBoltGrad)" stroke="url(#regBoltStroke)" stroke-width="0.5" stroke-linejoin="round"/>
+              <path d="M12 4L6 12h5l-1.5 6 6-8h-5l1.5-6z" fill="url(#regBoltInner)" opacity="0.6"/>
+            </svg>
+          </div>
+          <span class="auth-circuits-word" id="authCircuitsWordReg">CIRCUITS</span>
+        </div>
+        <div class="auth-pro-badge">pro</div>
       </div>
       <div class="auth-field"><label>USERNAME</label><input type="text" id="registerUser" placeholder="Choose username" autocomplete="username" /></div>
       <div class="auth-field"><label>PASSWORD</label><input type="password" id="registerPass" placeholder="Choose password" autocomplete="new-password" /></div>
+      <div class="ac-field" id="registerAcField">
+        <label>AUDIO VERIFICATION</label>
+        <div class="ac-inner" id="registerAcInner">
+          <div class="ac-status-label" id="registerAcStatus">AUDIO VERIFICATION</div>
+          <p class="ac-instruction" id="registerAcInstr">Play the sequence, then tap the tones below in the same order.</p>
+          <button class="ac-play-btn" id="registerAcPlay"><span class="ac-play-dot"></span> PLAY SEQUENCE</button>
+          <div class="ac-section-label">YOUR ANSWER &mdash; TAP TO REMOVE</div>
+          <div class="ac-slots" id="registerAcSlots">
+            <div class="ac-slot-empty">1</div>
+            <div class="ac-slot-empty">2</div>
+            <div class="ac-slot-empty">3</div>
+            <div class="ac-slot-empty">4</div>
+            <div class="ac-slot-empty">5</div>
+          </div>
+          <div class="ac-section-label">TAP TO ADD</div>
+          <div class="ac-tiles" id="registerAcTiles"></div>
+          <button class="ac-verify-btn not-ready" id="registerAcVerify" disabled>SELECT 5 MORE</button>
+          <div class="ac-footer" id="registerAcFooter">TAP A FILLED SLOT TO REMOVE IT</div>
+        </div>
+      </div>
       <button class="auth-btn primary" id="registerBtn">CREATE ACCOUNT</button>
       <div class="auth-error" id="registerError"></div>
       <div class="auth-switch">Already have one? <a id="showLogin">Sign in</a></div>
@@ -494,69 +714,221 @@
     <!-- ═══════ TAB: STATS ═══════ -->
     <section class="tab-page" id="tab-stats">
       <h2 class="tab-page-title">CALL STATISTICS</h2>
-      <div class="stat-grid" id="statGrid">
-        <div class="stat-card"><div class="stat-num" id="statTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
-        <div class="stat-card"><div class="stat-num" id="statTotalMin">0</div><div class="stat-label">TOTAL MINUTES</div></div>
-        <div class="stat-card"><div class="stat-num" id="statAvgCall">0s</div><div class="stat-label">AVG DURATION</div></div>
-        <div class="stat-card"><div class="stat-num" id="statSpent">0</div><div class="stat-label">TOKENS SPENT</div></div>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-num" id="statTotalCalls">--</div><div class="stat-label">TOTAL CALLS</div></div>
+        <div class="stat-card"><div class="stat-num" id="statSuccessRate">--</div><div class="stat-label">SUCCESS RATE</div></div>
+        <div class="stat-card"><div class="stat-num" id="statAvgCall">--</div><div class="stat-label">AVG DURATION</div></div>
+        <div class="stat-card"><div class="stat-num" id="statSpent">--</div><div class="stat-label">TOKENS SPENT</div></div>
       </div>
-      <div class="card">
-        <div class="card-label">DAILY USAGE (last 7 days)</div>
-        <div class="chart-bar-wrap" id="chartBars"></div>
+      <div class="card" style="padding:14px">
+        <div class="card-label">7-DAY ACTIVITY</div>
+        <div id="chartBars" style="display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:10px;padding:0 4px"></div>
       </div>
-      <div class="card" style="padding:12px 16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="card" style="padding:14px">
+          <div class="card-label">CALL STATUS</div>
+          <div id="statStatusBreak" style="margin-top:8px"></div>
+        </div>
+        <div class="card" style="padding:14px">
+          <div class="card-label">TOP DESTINATIONS</div>
+          <div id="statTopDests" style="margin-top:8px"></div>
+        </div>
+      </div>
+      <div class="card" style="padding:12px 16px;margin-top:10px">
         <div class="card-label">CALL HISTORY</div>
         <div id="callLog"></div>
+        <div id="callLogPagination" style="display:flex;justify-content:center;align-items:center;gap:12px;margin-top:10px"></div>
       </div>
     </section>
 
     <!-- ═══════ TAB: ADMIN ═══════ -->
     <section class="tab-page" id="tab-admin">
       <h2 class="tab-page-title">ADMIN DASHBOARD</h2>
-      <div class="stat-grid" id="adminStatGrid">
-        <div class="stat-card"><div class="stat-num" id="adminTotalUsers">0</div><div class="stat-label">TOTAL USERS</div></div>
-        <div class="stat-card"><div class="stat-num" id="adminTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
-        <div class="stat-card"><div class="stat-num" id="adminRevenue">0</div><div class="stat-label">REVENUE (TOKENS)</div></div>
-        <div class="stat-card"><div class="stat-num" id="adminActiveNow">0</div><div class="stat-label">ACTIVE NOW</div></div>
+      <!-- Sub-tab navigation -->
+      <nav class="admin-subnav" id="adminSubnav">
+        <button class="admin-subtab active" data-atab="overview"><span class="subtab-dot"></span>OVERVIEW</button>
+        <button class="admin-subtab" data-atab="users"><span class="subtab-dot"></span>USERS</button>
+        <button class="admin-subtab" data-atab="financials"><span class="subtab-dot"></span>FINANCIALS</button>
+        <button class="admin-subtab" data-atab="calls"><span class="subtab-dot"></span>CALLS</button>
+        <button class="admin-subtab" data-atab="system"><span class="subtab-dot"></span>SYSTEM</button>
+      </nav>
+
+      <!-- ═══ TAB: OVERVIEW ═══ -->
+      <div class="admin-tab-content active" id="adminTabOverview">
+        <div class="sip-status-row" id="adminSipStatus">
+          <span class="sip-indicator offline" id="adminSipDot"></span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em" id="adminSipLabel">SIP OFFLINE</span>
+          <span style="margin-left:auto;font-size:9px;color:var(--dim)" id="adminSipUptime"></span>
+        </div>
+        <div class="stat-grid" id="adminStatGrid">
+          <div class="stat-card"><div class="stat-num" id="adminTotalUsers">0</div><div class="stat-label">TOTAL USERS</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminTotalCalls">0</div><div class="stat-label">TOTAL CALLS</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminRevenue">$0</div><div class="stat-label">DEPOSITS</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminActiveNow">0</div><div class="stat-label">VIP USERS</div></div>
+        </div>
+        <div class="stat-grid" id="adminExtraStats">
+          <div class="stat-card"><div class="stat-num" id="adminTalkTime">0 min</div><div class="stat-label">TOTAL TALK TIME</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminTokensCirc">0 TK</div><div class="stat-label">TOKENS IN CIRC</div></div>
+        </div>
+        <div class="card" style="padding:12px 14px">
+          <div class="card-label">DAILY CALL VOLUME (last 7 days)</div>
+          <div class="chart-bar-wrap" id="adminChart" style="height:90px;margin-top:8px"></div>
+        </div>
       </div>
-      <div class="card" style="padding:12px 16px">
-        <div class="card-header">
-          <div class="card-label">USER MANAGEMENT</div>
-          <input type="text" id="adminSearch" placeholder="Search users..." style="width:140px;padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:11px;outline:none" />
+
+      <!-- ═══ TAB: USERS ═══ -->
+      <div class="admin-tab-content" id="adminTabUsers">
+        <div class="card" style="padding:12px 14px">
+          <div class="card-header">
+            <div class="card-label">USER MANAGEMENT</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <input type="text" id="adminSearch" placeholder="Search..." style="width:110px;padding:5px 8px;border-radius:8px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:10px;outline:none" />
+              <select id="adminBulkAction" style="padding:5px 6px;border-radius:8px;border:1px solid var(--border-soft);background:rgba(0,0,0,0.3);color:var(--dim);font-size:10px;outline:none">
+                <option value="">Bulk...</option>
+                <option value="ban">Ban selected</option>
+                <option value="unban">Unban selected</option>
+              </select>
+            </div>
+          </div>
+          <div id="adminUserList"></div>
+          <div id="adminPagination" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px"></div>
         </div>
-        <div id="adminUserList"></div>
       </div>
-      <div class="card" style="padding:12px 16px;margin-top:10px">
-        <div class="card-header">
-          <div class="card-label">VOUCHER CREATION</div>
+
+      <!-- ═══ TAB: FINANCIALS ═══ -->
+      <div class="admin-tab-content" id="adminTabFinancials">
+        <div class="card" style="padding:12px 14px">
+          <div class="card-label">VOUCHERS</div>
+          <div style="display:flex;gap:6px;align-items:center;margin:8px 0">
+            <select id="voucherAmount" style="flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:11px;outline:none">
+              <option value="10">HUSH-10 (10 tokens)</option>
+              <option value="25" selected>HUSH-25 (25 tokens)</option>
+              <option value="50">HUSH-50 (50 tokens)</option>
+            </select>
+            <input type="number" id="voucherCount" value="1" min="1" max="50" style="width:48px;padding:8px 0;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:11px;outline:none;text-align:center" />
+            <button id="btnCreateVouchers" style="padding:7px 12px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.14);color:var(--green);font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all 0.15s;flex-shrink:0">CREATE</button>
+          </div>
+          <div id="voucherList" style="max-height:180px;overflow-y:auto"></div>
         </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-          <select id="voucherAmount" style="padding:8px 12px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none">
-            <option value="10">HUSH-10 (10 tokens)</option>
-            <option value="25" selected>HUSH-25 (25 tokens)</option>
-            <option value="50">HUSH-50 (50 tokens)</option>
-          </select>
-          <input type="number" id="voucherCount" value="1" min="1" max="50" style="width:60px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:rgba(0,0,0,0.3);color:var(--text);font-size:12px;outline:none;text-align:center" />
-          <button id="btnCreateVouchers" style="padding:8px 16px;border-radius:10px;border:1px solid var(--green);background:rgba(34,197,94,0.12);color:var(--green);font-family:var(--heading);font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">CREATE</button>
+        <div class="card" style="padding:12px 14px">
+          <div class="card-label">DEPOSIT HISTORY</div>
+          <div id="adminDepositList" style="max-height:160px;overflow-y:auto;margin-top:6px"><div style="padding:8px;color:var(--dim);text-align:center">Loading deposits...</div></div>
         </div>
-        <div id="voucherResult" style="margin-top:8px;font-size:10px;font-family:mono;max-height:120px;overflow-y:auto;color:var(--muted)"></div>
+        <div class="card" style="padding:12px 14px">
+          <div class="card-label">TOKEN ECONOMY</div>
+          <div id="adminTokenEconomy" style="margin-top:6px">
+            <div class="stat-row"><span class="sr-label">Tokens in circulation</span><span class="sr-value" id="adminTokCirc">--</span></div>
+            <div class="stat-row"><span class="sr-label">Total deposited</span><span class="sr-value" id="adminTokDep">--</span></div>
+            <div class="stat-row"><span class="sr-label">Total spent (calls)</span><span class="sr-value" id="adminTokSpent">--</span></div>
+            <div class="stat-row"><span class="sr-label">Deposit count</span><span class="sr-value" id="adminDepCount">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: CALLS ═══ -->
+      <div class="admin-tab-content" id="adminTabCalls">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-num" id="adminCallTotal">--</div><div class="stat-label">TOTAL CALLS</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminCallAvg">--</div><div class="stat-label">AVG DURATION</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminCallFail">--</div><div class="stat-label">FAIL RATE</div></div>
+          <div class="stat-card"><div class="stat-num" id="adminCallCost">--</div><div class="stat-label">TOTAL COST (TK)</div></div>
+        </div>
+        <!-- 7-Day Volume -->
+        <div class="card" style="padding:14px">
+          <div class="card-label">7-DAY CALL VOLUME</div>
+          <div id="adminCallSparkline" style="display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:10px;padding:0 4px"></div>
+        </div>
+        <!-- Insights Grid -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="card" style="padding:14px">
+            <div class="card-label">TOP DESTINATIONS</div>
+            <div id="adminTopDests" style="margin-top:8px"></div>
+          </div>
+          <div class="card" style="padding:14px">
+            <div class="card-label">STATUS BREAKDOWN</div>
+            <div id="adminStatusBreak" style="margin-top:8px"></div>
+            <div class="card-label" style="margin-top:14px">DURATION BUCKETS</div>
+            <div id="adminDurBuckets" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: SYSTEM ═══ -->
+      <div class="admin-tab-content" id="adminTabSystem">
+        <div class="sip-status-row" id="adminSysSipStatus">
+          <span class="sip-indicator offline" id="adminSysSipDot"></span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em" id="adminSysSipLabel">SIP OFFLINE</span>
+          <span style="margin-left:auto;font-size:9px;color:var(--dim)" id="adminSysSipUptime"></span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="action-btn" id="adminSysRestartAsterisk">RESTART SIP</button>
+          <button class="action-btn" id="adminSysReloadConfig">RELOAD CONFIG</button>
+          <button class="action-btn danger" id="adminSysRestartBackend">RESTART BACKEND</button>
+        </div>
+        <div class="card" style="padding:12px 14px">
+          <div class="card-header"><div class="card-label">APP EVENTS</div><button class="action-btn" id="adminSysRefreshLogs" style="font-size:9px;padding:3px 8px">REFRESH</button></div>
+          <div id="adminSysLogs" style="max-height:380px;overflow-y:auto;font-size:11px"></div>
+          <div id="adminSysRawLogs" style="margin-top:8px;display:none">
+            <div class="card-label" style="margin-bottom:4px">RAW SERVER LOGS</div>
+            <div class="log-viewer" id="adminSysRawLogsContent" style="max-height:120px"></div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- ═══════ TAB: SETTINGS ═══════ -->
     <section class="tab-page" id="tab-settings">
       <h2 class="tab-page-title">SETTINGS</h2>
-      <div class="card">
-        <div class="card-header"><div class="card-label">ACCOUNT</div></div>
-        <div class="settings-field"><label>DEFAULT CALLER ID</label><input type="text" id="settingsCID" placeholder="17804755555" maxlength="15" inputmode="numeric" /></div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="settings-btn green" id="settingsSave" style="flex:1">SAVE CALLER ID</button>
+      <!-- Profile Card -->
+      <div class="card" style="padding:20px;text-align:center">
+        <div id="settingsAvatar" style="width:56px;height:56px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;color:#fff"></div>
+        <div id="settingsUsername" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text)"></div>
+        <div id="settingsBadges" style="margin-top:6px;display:flex;gap:5px;justify-content:center;flex-wrap:wrap"></div>
+        <div style="margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:center">
+          <div><div id="settingsMemberSince" style="font-size:11px;color:var(--muted)"></div><div style="font-size:9px;color:var(--dim);letter-spacing:0.06em">MEMBER SINCE</div></div>
+          <div><div id="settingsTotalCalls" style="font-size:11px;color:var(--muted)"></div><div style="font-size:9px;color:var(--dim);letter-spacing:0.06em">TOTAL CALLS</div></div>
+        </div>
+        <div id="settingsVipBanner" style="margin-top:10px;display:none"></div>
+      </div>
+      <!-- Caller ID -->
+      <div class="card" style="padding:14px">
+        <div class="card-label">CALLER ID</div>
+        <div class="settings-field"><input type="text" id="settingsCID" placeholder="15555555555" maxlength="15" inputmode="numeric" style="margin-top:6px" /></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="settings-btn green" id="settingsSave" style="flex:1;font-size:11px">SAVE CALLER ID</button>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-label">SESSION</div></div>
-        <div id="settingsUserInfo" style="font-size:11px;color:var(--muted);margin-bottom:12px"></div>
-        <button class="settings-btn danger" id="settingsLogout">SIGN OUT</button>
+      <!-- Audio -->
+      <div class="card" style="padding:14px">
+        <div class="card-label">AUDIO</div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;color:var(--muted)">MIC GAIN</span>
+            <span id="settingsMicVal" style="font-size:10px;color:var(--dim)">100%</span>
+          </div>
+          <input type="range" id="settingsMicGain" min="20" max="200" value="100" style="width:100%;accent-color:var(--teal)" />
+        </div>
+        <div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:10px;color:var(--muted)">SPEAKER VOLUME</span>
+            <span id="settingsSpkVal" style="font-size:10px;color:var(--dim)">100%</span>
+          </div>
+          <input type="range" id="settingsSpkVol" min="20" max="200" value="100" style="width:100%;accent-color:var(--teal)" />
+        </div>
+        <div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:10px;color:var(--muted)">DIAL TONE SOUNDS</span>
+          <button id="settingsDialTone" class="settings-toggle" style="padding:5px 12px;border-radius:20px;border:1px solid var(--border-soft);background:rgba(0,212,180,0.08);color:var(--teal);font-size:10px;font-weight:700;cursor:pointer">ON</button>
+        </div>
+      </div>
+      <!-- Data -->
+      <div class="card" style="padding:14px">
+        <div class="card-label">DATA</div>
+        <button class="settings-btn" id="settingsExport" style="width:100%;margin-top:8px;font-size:11px;background:rgba(0,212,180,0.08);color:var(--teal);border:1px solid rgba(0,212,180,0.2)">EXPORT CALL HISTORY (CSV)</button>
+      </div>
+      <!-- Session -->
+      <div class="card" style="padding:14px">
+        <div class="card-label">SESSION</div>
+        <button class="settings-btn danger" id="settingsLogout" style="width:100%;margin-top:8px">SIGN OUT</button>
       </div>
     </section>
 
@@ -621,6 +993,7 @@
 
   <script>
   (function() {
+    try {
     var $ = function(s) { return document.querySelector(s); };
     var $$ = function(s) { return document.querySelectorAll(s); };
 
@@ -632,6 +1005,7 @@
       $('#authLogin').classList.toggle('active', mode === 'login');
       $('#authRegister').classList.toggle('active', mode === 'register');
       $('.app').classList.add('app-hidden');
+      acReset();
     }
 
     function showApp() {
@@ -702,10 +1076,277 @@
     // Poll status every 30s
     setInterval(loadStatusBar, 30000);
 
+    // ── Audio Captcha ──
+    var AC = {
+      CORRECT: [0, 1, 2, 3, 4],
+      NOTES: [
+        { id: 0, freq: 587.3, label: 'I',   color: '#22c55e' },
+        { id: 1, freq: 659.3, label: 'II',  color: '#00d4b4' },
+        { id: 2, freq: 523.3, label: 'III', color: '#60a5fa' },
+        { id: 3, freq: 261.6, label: 'IV',  color: '#c084fc' },
+        { id: 4, freq: 392.0, label: 'V',   color: '#fbbf24' },
+      ],
+      ctx: null,
+      passed: false,
+      answer: [],
+      playing: false,
+      activeTile: null,
+      status: 'idle',
+      attempts: 0,
+      tiles: null,
+    };
+
+    function acGetCtx() {
+      if (!AC.ctx || AC.ctx.state === 'closed') {
+        try { AC.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; }
+      }
+      if (AC.ctx && AC.ctx.state === 'suspended') {
+        try { AC.ctx.resume(); } catch(e) {}
+      }
+      return AC.ctx;
+    }
+
+    function acPlayTone(freq, startTime, duration) {
+      duration = duration || 0.45;
+      var ctx = acGetCtx();
+      if (!ctx) return;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.4, startTime + 0.02);
+      gain.gain.setValueAtTime(0.4, startTime + duration - 0.05);
+      gain.gain.linearRampToValueAtTime(0, startTime + duration);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    }
+
+    function acPlay() {
+      if (AC.playing || AC.passed) return;
+      var ctx = acGetCtx();
+      if (!ctx) { toast('Audio not available. Try refreshing the page.'); return; }
+      AC.playing = true;
+      var now = ctx.currentTime;
+      var startOffset = 0.05, step = 0.6;
+
+      AC.CORRECT.forEach(function(id, i) {
+        acPlayTone(AC.NOTES[id].freq, now + startOffset + i * step);
+      });
+
+      AC.CORRECT.forEach(function(id, i) {
+        var onMs = (startOffset + i * step) * 1000;
+        var offMs = onMs + 420;
+        setTimeout(function() { acSetActive(id); }, onMs);
+        setTimeout(function() { acSetActive(null); }, offMs);
+      });
+
+      var totalMs = (startOffset + (AC.CORRECT.length - 1) * step + 0.45) * 1000;
+      setTimeout(function() { AC.playing = false; acRender(); }, totalMs);
+      acRender();
+    }
+
+    function acSetActive(id) { AC.activeTile = id; acRender(); }
+
+    function acTapTile(noteId) {
+      if (AC.status !== 'idle' || AC.answer.indexOf(noteId) !== -1 || AC.passed) return;
+      var ctx = acGetCtx();
+      acPlayTone(AC.NOTES[noteId].freq, ctx.currentTime, 0.25);
+      AC.answer.push(noteId);
+      acRender();
+    }
+
+    function acRemoveAnswer(idx) {
+      if (AC.status !== 'idle' || AC.passed) return;
+      AC.answer.splice(idx, 1);
+      acRender();
+    }
+
+    function acVerify() {
+      if (AC.answer.length !== AC.CORRECT.length || AC.passed) return;
+      var ok = true;
+      for (var i = 0; i < AC.CORRECT.length; i++) {
+        if (AC.answer[i] !== AC.CORRECT[i]) { ok = false; break; }
+      }
+      if (ok) {
+        AC.passed = true;
+        AC.status = 'success';
+        acRender();
+      } else {
+        AC.attempts++;
+        AC.status = 'fail';
+        acRender();
+        setTimeout(function() {
+          AC.status = 'idle';
+          AC.answer = [];
+          acShuffleTiles();
+          acRender();
+        }, 1600);
+      }
+    }
+
+    function acShuffleTiles() {
+      var arr = AC.CORRECT.slice();
+      for (var i = arr.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+      }
+      AC.tiles = arr;
+    }
+
+    function acReset() {
+      if (AC.ctx && AC.ctx.state !== 'closed') {
+        try { AC.ctx.close(); } catch(e) {}
+      }
+      AC.ctx = null;
+      AC.passed = false;
+      AC.answer = [];
+      AC.playing = false;
+      AC.activeTile = null;
+      AC.status = 'idle';
+      AC.attempts = 0;
+      acShuffleTiles();
+      acRender();
+      // Force re-enable play button after reset
+      setTimeout(function() {
+        var pb = document.getElementById(acGetPrefix() + 'AcPlay');
+        if (pb) { pb.disabled = false; pb.removeAttribute('disabled'); }
+      }, 50);
+    }
+
+    function acGetPrefix() {
+      var loginEl = document.getElementById('authLogin');
+      return loginEl && loginEl.classList.contains('active') ? 'login' : 'register';
+    }
+
+    function acRender() {
+      var prefix = acGetPrefix();
+      var inner = document.getElementById(prefix + 'AcInner');
+      var statusEl = document.getElementById(prefix + 'AcStatus');
+      var instrEl = document.getElementById(prefix + 'AcInstr');
+      var playBtn = document.getElementById(prefix + 'AcPlay');
+      var slotsEl = document.getElementById(prefix + 'AcSlots');
+      var tilesEl = document.getElementById(prefix + 'AcTiles');
+      var verifyBtn = document.getElementById(prefix + 'AcVerify');
+      var footerEl = document.getElementById(prefix + 'AcFooter');
+
+      if (!inner) return;
+      inner.className = 'ac-inner' + (AC.status === 'success' ? ' success' : '') + (AC.status === 'fail' ? ' fail' : '');
+
+      // Success state
+      if (AC.passed) {
+        inner.innerHTML = '<div class="ac-success-inner">' +
+          '<div class="ac-success-circle">\u2713</div>' +
+          '<div class="ac-success-title">ACCESS GRANTED</div>' +
+          '<div class="ac-success-sub">Verification complete</div>' +
+          '</div>';
+        return;
+      }
+
+      // Status label
+      if (statusEl) {
+        statusEl.className = 'ac-status-label' + (AC.status === 'fail' ? ' fail' : '');
+        statusEl.textContent = AC.status === 'fail' ? '\u26A0  INCORRECT \u2014 LISTEN AND RETRY' : 'AUDIO VERIFICATION';
+      }
+      // Instruction
+      if (instrEl) {
+        instrEl.textContent = AC.status === 'fail' ? 'Wrong sequence. The tones have been reshuffled.' : 'Play the sequence, then tap the tones below in the same order.';
+      }
+      // Play button
+      if (playBtn) {
+        playBtn.disabled = AC.playing;
+        if (!AC.playing) playBtn.removeAttribute('disabled');
+        playBtn.innerHTML = '<span class="ac-play-dot"></span> ' + (AC.playing ? 'PLAYING...' : 'PLAY SEQUENCE');
+      }
+      // Answer slots
+      if (slotsEl) {
+        var slotHTML = '';
+        for (var i = 0; i < AC.CORRECT.length; i++) {
+          var noteId = AC.answer[i];
+          if (noteId !== undefined) {
+            var note = AC.NOTES[noteId];
+            var barH = 12;
+            var wf = '';
+            [0.4, 0.75, 1, 0.75, 0.4].forEach(function(r, j) {
+              wf += '<rect x="' + (j * 4.5) + '" y="' + (barH - barH * r) + '" width="2.5" height="' + (barH * r) + '" rx="1" fill="' + note.color + '"/>';
+            });
+            slotHTML += '<div class="ac-slot-filled" style="background:' + note.color + '14;border:1px solid ' + note.color + '60;box-shadow:0 0 12px ' + note.color + '18" onclick="acRemoveAnswer(' + i + ')">' +
+              '<span class="ac-slot-remove">\u2715</span>' +
+              '<svg width="24" height="' + barH + '" viewBox="0 0 24 ' + barH + '">' + wf + '</svg>' +
+              '<span class="ac-slot-label" style="color:' + note.color + '">' + note.label + '</span>' +
+              '</div>';
+          } else {
+            slotHTML += '<div class="ac-slot-empty">' + (i + 1) + '</div>';
+          }
+        }
+        slotsEl.innerHTML = slotHTML;
+      }
+      // Source tiles
+      if (tilesEl) {
+        var tileHTML = '';
+        (AC.tiles || AC.CORRECT).forEach(function(id) {
+          var note = AC.NOTES[id];
+          var isActive = AC.activeTile === id;
+          var isUsed = AC.answer.indexOf(id) !== -1;
+          var bg = isActive ? note.color + '22' : '#182230';
+          var border = isActive ? '1px solid ' + note.color : '1px solid rgba(255,255,255,0.07)';
+          var shadow = isActive ? '0 0 20px ' + note.color + '44, inset 0 0 12px ' + note.color + '18' : '0 4px 12px rgba(0,0,0,0.3)';
+          var barH = isActive ? 20 : 13;
+          var barCol = isActive ? note.color : note.color + 'E6';
+          var barShadow = isActive ? '0 0 6px ' + note.color : 'none';
+          var labelCol = isActive ? note.color : 'rgba(255,255,255,0.55)';
+          var wf = '';
+          [0.35, 0.65, 1, 0.65, 0.35].forEach(function(r, j) {
+            wf += '<rect x="' + (j * 5.5 + 1) + '" y="' + (barH - barH * r) + '" width="3" height="' + (barH * r) + '" rx="1" fill="' + barCol + '" style="box-shadow:' + barShadow + '"/>';
+          });
+          var cls = 'ac-tile' + (isUsed ? ' ac-used' : '');
+          tileHTML += '<div class="' + cls + '" style="background:' + bg + ';border:' + border + ';box-shadow:' + shadow + '"' +
+            (isUsed ? '' : ' onclick="acTapTile(' + id + ')"') + '>' +
+            '<svg class="ac-waveform-svg" width="30" height="' + barH + '" viewBox="0 0 30 ' + barH + '">' + wf + '</svg>' +
+            '<span class="ac-tile-label normal" style="color:' + labelCol + '">' + note.label + '</span>' +
+            '</div>';
+        });
+        tilesEl.innerHTML = tileHTML;
+      }
+      // Verify button
+      if (verifyBtn) {
+        var canVerify = AC.answer.length === AC.CORRECT.length;
+        verifyBtn.className = 'ac-verify-btn ' + (canVerify ? 'ready' : 'not-ready');
+        verifyBtn.disabled = !canVerify;
+        verifyBtn.textContent = canVerify ? 'VERIFY SEQUENCE' : 'SELECT ' + (AC.CORRECT.length - AC.answer.length) + ' MORE';
+      }
+      // Footer
+      if (footerEl) {
+        footerEl.textContent = AC.attempts > 0 ? AC.attempts + ' FAILED ATTEMPT' + (AC.attempts > 1 ? 'S' : '') : 'TAP A FILLED SLOT TO REMOVE IT';
+      }
+    }
+
+    // Export to window for onclick handlers (functions are inside IIFE)
+    window.acPlay = acPlay;
+    window.acVerify = acVerify;
+    window.acTapTile = acTapTile;
+    window.acRemoveAnswer = acRemoveAnswer;
+
+    // Init captcha on load (immediate)
+    try { acShuffleTiles(); acRender(); } catch(e) { console.log('Captcha init error:', e); }
+    // Fallback: re-init after DOMContentLoaded (belt and suspenders)
+    document.addEventListener('DOMContentLoaded', function() {
+      if (!AC.tiles || !AC.tiles.length) acShuffleTiles();
+      acRender();
+      // Force enable play buttons
+      ['login', 'register'].forEach(function(pfx) {
+        var pb = document.getElementById(pfx + 'AcPlay');
+        if (pb) { pb.disabled = false; pb.removeAttribute('disabled'); }
+      });
+    });
+
     function doLogin() {
       var u = $('#loginUser').value.trim();
       var p = $('#loginPass').value;
       if (!u || !p) { $('#loginError').textContent = 'Fill in both fields'; return; }
+      if (!AC.passed) { $('#loginError').textContent = 'Complete the audio captcha first'; return; }
       $('#loginError').textContent = '';
       fetch('/api/auth/login', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
         .then(function(r){ return r.json(); })
@@ -727,6 +1368,7 @@
       var u = $('#registerUser').value.trim();
       var p = $('#registerPass').value;
       if (!u || !p) { $('#registerError').textContent = 'Fill in both fields'; return; }
+      if (!AC.passed) { $('#registerError').textContent = 'Complete the audio captcha first'; return; }
       if (p.length < 4) { $('#registerError').textContent = 'Password too short (min 4)'; return; }
       $('#registerError').textContent = '';
       fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({username:u, password:p}) })
@@ -758,6 +1400,13 @@
     $('#showLogin').addEventListener('click', function(e){ e.preventDefault(); showAuth('login'); });
     $('#loginPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doLogin(); });
     $('#registerPass').addEventListener('keydown', function(e){ if (e.key === 'Enter') doRegister(); });
+    // Audio captcha play/verify (bound once, work via data attributes in acRender)
+    ['login','register'].forEach(function(pfx) {
+      var playBtn = document.getElementById(pfx + 'AcPlay');
+      var verifyBtn = document.getElementById(pfx + 'AcVerify');
+      if (playBtn) playBtn.addEventListener('click', acPlay);
+      if (verifyBtn) verifyBtn.addEventListener('click', acVerify);
+    });
 
     // ── State ──
     var S = {
@@ -787,7 +1436,242 @@
       $$('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tab === name); });
       if (name === 'wallet') loadWallet();
       if (name === 'stats') loadStats();
-      if (name === 'admin') loadAdmin();
+      if (name === 'admin') { loadAdmin(); switchAdminTab('overview'); }
+    }
+
+    // ── Admin Sub-Tab Routing ──
+    function switchAdminTab(name) {
+      S.adminSubTab = name;
+      $$('.admin-subtab').forEach(function(b){ b.classList.toggle('active', b.dataset.atab === name); });
+      $$('.admin-tab-content').forEach(function(p){ p.classList.toggle('active', p.id === 'adminTab' + name.charAt(0).toUpperCase() + name.slice(1)); });
+      if (name === 'overview') loadAdminOverview();
+      if (name === 'users') loadAdminPage(S.adminPage || 1);
+      if (name === 'financials') { loadVouchers(); loadTokenEconomy(); }
+      if (name === 'calls') loadCallAnalytics();
+      if (name === 'system') loadSystemTab();
+    }
+
+    // Bind admin sub-tabs
+    function bindAdminSubTabs() {
+      $$('.admin-subtab').forEach(function(btn) {
+        btn.addEventListener('click', function(){ switchAdminTab(btn.dataset.atab); });
+      });
+    }
+
+    function loadAdminOverview() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/stats', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ renderAdminOverview(d); })
+        .catch(function(){ renderAdminDemo(); });
+      loadAdminSipStatus('adminSip');
+    }
+
+    function loadTokenEconomy() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/stats', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          document.getElementById('adminTokCirc').textContent = Math.floor(d.total_tokens || 0) + ' TK';
+          document.getElementById('adminTokDep').textContent = '$' + (d.total_deposits || 0).toFixed(2);
+          document.getElementById('adminTokSpent').textContent = (d.total_call_cost || 0).toFixed(4) + ' TK';
+          document.getElementById('adminDepCount').textContent = d.deposit_count || 0;
+        }).catch(function(){});
+      fetch('/api/admin/deposits', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var deps = d.deposits || [];
+          var el = document.getElementById('adminDepositList');
+          if (!el) return;
+          if (!deps.length) { el.innerHTML = '<div style="padding:8px;color:var(--dim);text-align:center">No deposits yet</div>'; return; }
+          var html = '';
+          deps.slice(0, 15).forEach(function(dp){
+            var amt = dp.amount || dp.pay_amount || 0;
+            var curr = dp.pay_currency || dp.currency || 'USD';
+            var status = dp.payment_status || dp.status || 'unknown';
+            var ts = dp.created_at ? new Date(dp.created_at).toLocaleDateString() : '--';
+            var statusCls = status === 'finished' ? 'color:var(--green)' : status === 'waiting' ? 'color:var(--amber)' : 'color:var(--dim)';
+            html += '<div class="stat-row"><span class="sr-label" style="font-size:9px">' + ts + '</span>' +
+              '<span class="sr-value" style="font-size:10px">' + parseFloat(amt).toFixed(2) + ' ' + curr + '</span>' +
+              '<span style="font-size:8px;' + statusCls + ';margin-left:4px">' + status + '</span></div>';
+          });
+          el.innerHTML = html;
+        }).catch(function(){
+          var el = document.getElementById('adminDepositList');
+          if (el) el.innerHTML = '<div style="padding:8px;color:var(--dim);text-align:center">Failed to load deposits</div>';
+        });
+    }
+
+    function loadCallAnalytics() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/call-analytics', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          // Stat cards
+          document.getElementById('adminCallTotal').textContent = d.total_calls || 0;
+          document.getElementById('adminCallAvg').textContent = (d.avg_duration_sec || 0) + 's';
+          var failEl = document.getElementById('adminCallFail');
+          failEl.textContent = (d.fail_rate || 0) + '%';
+          failEl.style.color = (d.fail_rate > 20) ? 'var(--red)' : (d.fail_rate > 10) ? 'var(--amber)' : 'var(--green)';
+          document.getElementById('adminCallCost').textContent = (d.total_cost || 0).toFixed(4);
+          // 7-Day sparkline
+          var sparkEl = document.getElementById('adminCallSparkline');
+          if (sparkEl && d.daily_counts && d.daily_counts.length) {
+            var maxCount = Math.max.apply(null, d.daily_counts.map(function(x){ return x.count; })) || 1;
+            var today = new Date().toISOString().slice(0,10);
+            var sparkHtml = '';
+            d.daily_counts.forEach(function(day){
+              var h = Math.max(4, Math.round((day.count / maxCount) * 100));
+              var isToday = day.date === today;
+              sparkHtml += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">' +
+                '<span style="font-size:9px;color:var(--dim)">' + day.count + '</span>' +
+                '<div title="' + day.date + ': ' + day.count + ' calls" style="width:100%;height:' + h + '%;background:' + (isToday ? 'var(--teal)' : 'rgba(0,212,180,0.25)') + ';border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s"></div>' +
+                '<span style="font-size:8px;color:var(--muted)">' + day.date.slice(5) + '</span></div>';
+            });
+            sparkEl.innerHTML = sparkHtml;
+          }
+          // Top destinations with bar fills
+          var destEl = document.getElementById('adminTopDests');
+          var destHtml = '';
+          if (d.top_destinations && d.top_destinations.length) {
+            var maxDest = d.top_destinations[0].count || 1;
+            d.top_destinations.forEach(function(td, i){
+              var pct = Math.round((td.count / maxDest) * 100);
+              var num = td.number;
+              if (num.length > 14) num = num.slice(0,11) + '...';
+              destHtml += '<div class="stat-row" style="position:relative;overflow:hidden">' +
+                '<div style="position:absolute;left:0;top:0;bottom:0;width:' + pct + '%;background:rgba(0,212,180,0.06);border-radius:4px"></div>' +
+                '<span class="sr-label" style="position:relative;z-index:1">' + (i+1) + '. <span class="top-dest">' + num + '</span></span>' +
+                '<span class="sr-value" style="position:relative;z-index:1">' + td.count + '</span></div>';
+            });
+          } else {
+            destHtml = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+          }
+          destEl.innerHTML = destHtml;
+          // Status breakdown
+          var statusEl = document.getElementById('adminStatusBreak');
+          var statusHtml = '';
+          var statusColors = { completed: 'var(--green)', failed: 'var(--red)', busy: 'var(--amber)', 'no-answer': 'var(--dim)', unknown: 'var(--muted)' };
+          if (d.status_breakdown && d.status_breakdown.length) {
+            d.status_breakdown.forEach(function(s){
+              var c = statusColors[s.status] || 'var(--muted)';
+              statusHtml += '<div class="stat-row"><span class="sr-label"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle"></span>' + s.status + '</span><span class="sr-value">' + s.count + '</span></div>';
+            });
+          } else {
+            statusHtml = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+          }
+          statusEl.innerHTML = statusHtml;
+          // Duration buckets
+          var durEl = document.getElementById('adminDurBuckets');
+          var durHtml = '';
+          if (d.duration_buckets && d.duration_buckets.length) {
+            var totalCalls = d.total_calls || 1;
+            var barColors = ['rgba(0,212,180,0.2)', 'rgba(0,212,180,0.35)', 'rgba(0,212,180,0.55)', 'rgba(0,212,180,0.8)'];
+            durHtml += '<div style="display:flex;height:6px;border-radius:3px;overflow:hidden;margin-bottom:8px">';
+            d.duration_buckets.forEach(function(b, i){
+              var wp = Math.max(2, Math.round((b.count / totalCalls) * 100));
+              durHtml += '<div style="width:' + wp + '%;background:' + barColors[i] + '" title="' + b.bucket + ': ' + b.count + '"></div>';
+            });
+            durHtml += '</div>';
+            d.duration_buckets.forEach(function(b, i){
+              durHtml += '<div class="stat-row"><span class="sr-label" style="font-size:9px">' + b.bucket + '</span><span class="sr-value" style="font-size:9px">' + b.count + '</span></div>';
+            });
+          } else {
+            durHtml = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+          }
+          durEl.innerHTML = durHtml;
+        }).catch(function(){
+          var el = document.getElementById('adminTopDests');
+          if (el) el.innerHTML = '<div class="stat-row"><span class="sr-label">Failed to load</span><span class="sr-value">--</span></div>';
+        });
+    }
+
+    function loadSystemTab() {
+      loadAdminSipStatus('adminSysSip');
+      loadServerLogs();
+    }
+
+    function loadAdminSipStatus(prefix) {
+      fetch('/api/sip/status')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          var dot = document.getElementById(prefix + 'Dot');
+          var label = document.getElementById(prefix + 'Label');
+          var uptime = document.getElementById(prefix + 'Uptime');
+          if (dot) { dot.className = 'sip-indicator ' + (d.status || 'offline'); }
+          if (label) { label.textContent = d.status === 'online' ? 'SIP ONLINE' : 'SIP OFFLINE'; }
+          if (uptime && d.uptime) { uptime.textContent = 'up ' + d.uptime; }
+        }).catch(function(){});
+    }
+
+    function loadServerLogs() {
+      var el = document.getElementById('adminSysLogs');
+      if (!el) return;
+      el.innerHTML = '<div style="padding:12px;color:var(--dim);text-align:center">Loading...</div>';
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/logs', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          // Event feed
+          var events = d.events || [];
+          var evHtml = '';
+          if (!events.length) {
+            evHtml = '<div style="padding:20px;text-align:center;color:var(--dim)">No events yet</div>';
+          } else {
+            var evColors = {
+              auth: 'var(--green)',
+              call: 'var(--teal)',
+              payment: 'var(--amber)',
+              voucher: 'var(--green)',
+              admin: 'var(--amber)',
+              action: 'var(--muted)',
+            };
+            events.reverse().forEach(function(ev){
+              var c = evColors[ev.type] || 'var(--muted)';
+              evHtml += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.03)">' +
+                '<span style="font-size:8px;padding:2px 6px;border-radius:4px;background:' + c + '18;color:' + c + ';border:1px solid ' + c + '30;white-space:nowrap;font-weight:700;letter-spacing:0.05em;min-width:52px;text-align:center">' + ev.type.toUpperCase() + '</span>' +
+                '<span style="flex:1;font-size:10px;color:var(--text)">' + ev.message + '</span>' +
+                '<span style="font-size:9px;color:var(--dim);white-space:nowrap">' + ev.time + '</span></div>';
+              if (ev.detail) {
+                evHtml += '<div style="font-size:9px;color:var(--muted);padding:0 0 4px 64px">' + ev.detail + '</div>';
+              }
+            });
+          }
+          el.innerHTML = evHtml;
+          // Raw logs
+          var rawEl = document.getElementById('adminSysRawLogs');
+          var rawContent = document.getElementById('adminSysRawLogsContent');
+          if (rawEl && rawContent && d.file_logs) {
+            rawEl.style.display = '';
+            rawContent.textContent = d.file_logs || 'No raw logs';
+          }
+        }).catch(function(){
+          el.innerHTML = '<div style="padding:12px;color:var(--dim);text-align:center">Failed to load events</div>';
+        });
+    }
+
+    // System action buttons
+    function bindSystemActions() {
+      var actions = {
+        adminSysRestartAsterisk: { url: '/api/admin/restart-asterisk', msg: 'Restart Asterisk?' },
+        adminSysReloadConfig: { url: '/api/admin/reload-config', msg: 'Reload SIP config?' },
+        adminSysRestartBackend: { url: '/api/admin/restart-backend', msg: 'Restart backend server? This will drop all calls!' },
+        adminSysRefreshLogs: { action: 'refresh' },
+      };
+      Object.keys(actions).forEach(function(id) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function(){
+          var cfg = actions[id];
+          if (cfg.action === 'refresh') { loadServerLogs(); return; }
+          if (!confirm(cfg.msg)) return;
+          var token = localStorage.getItem('clawcall_token') || '';
+          fetch(cfg.url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token } })
+            .then(function(r){ return r.json(); })
+            .then(function(d){ toast(d.ok ? 'Done' : (d.error || 'Failed')); })
+            .catch(function(){ toast('Request failed'); });
+        });
+      });
     }
 
     // ── Voucher Creation (Admin) ──
@@ -801,13 +1685,77 @@
         body: JSON.stringify({amount:amount,count:count})
       }).then(function(r){return r.json()}).then(function(d){
         if (d.ok) {
-          $('#voucherResult').innerHTML = d.codes.map(function(c){return '<div style="padding:2px 0;color:var(--green)">'+c+'</div>'}).join('');
           toast(d.count + ' vouchers created');
+          loadVouchers();
         } else {
           toast(d.error || 'Failed');
         }
       }).catch(function(){ toast('Failed to create vouchers'); });
     });
+
+    // ── Voucher List + Copy ──
+    window.copyVoucher = function(code, el) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(function(){
+          el.classList.add('copied');
+          toast('Copied: ' + code);
+          setTimeout(function(){ el.classList.remove('copied'); }, 400);
+        }).catch(function(){ fallbackCopy(code, el); });
+      } else {
+        fallbackCopy(code, el);
+      }
+    };
+
+    function fallbackCopy(text, el) {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand('copy'); toast('Copied: ' + text); } catch(e) { toast('Copy failed'); }
+      document.body.removeChild(ta);
+      if (el) { el.classList.add('copied'); setTimeout(function(){ el.classList.remove('copied'); }, 400); }
+    }
+
+    function loadVouchers() {
+      var token = localStorage.getItem('clawcall_token') || '';
+      var listEl = $('#voucherList');
+      if (!listEl) return;
+      listEl.innerHTML = '<div class="v-empty">Loading vouchers...</div>';
+      fetch('/api/admin/vouchers', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r){ return r.json(); }).then(function(d){
+        var vouchers = d.vouchers || [];
+        if (!vouchers.length) {
+          listEl.innerHTML = '<div class="v-empty">No vouchers yet</div>';
+          return;
+        }
+        var active = vouchers.filter(function(v){ return v.status === 'active'; });
+        var redeemed = vouchers.filter(function(v){ return v.status !== 'active'; });
+        var html = '<div class="v-header-row"><span class="card-label" style="margin:0">CODES</span><span class="v-count">' + vouchers.length + ' total &middot; ' + active.length + ' active</span></div>';
+        vouchers.forEach(function(v){
+          var isRedeemed = v.status === 'redeemed' || v.status !== 'active';
+          var redeemedInfo = '';
+          if (isRedeemed && v.redeemed_by) {
+            var rbyName = v.redeemed_by;
+            if (S.users) {
+              var found = S.users.find(function(u){ return String(u.id) === String(v.redeemed_by); });
+              if (found) rbyName = found.username;
+            }
+            redeemedInfo = '<span class="v-redeemed-by" title="Redeemed by ' + rbyName + '">' + rbyName + '</span>';
+          }
+          html += '<div class="v-row">' +
+            '<span class="v-code" onclick="copyVoucher(\'' + v.code + '\', this)" title="Click to copy">' + v.code + '</span>' +
+            '<div class="v-meta">' +
+              '<span class="v-amount">' + v.amount + ' TK</span>' +
+              '<span class="v-status ' + (isRedeemed ? 'redeemed' : 'active') + '">' + (isRedeemed ? 'USED' : 'ACTIVE') + '</span>' +
+              redeemedInfo +
+            '</div>' +
+          '</div>';
+        });
+        listEl.innerHTML = html;
+      }).catch(function(){
+        listEl.innerHTML = '<div class="v-empty">Failed to load vouchers</div>';
+      });
+    }
 
     // ── Voucher Redemption (Wallet) ──
     bindClick($('#btnRedeemVoucher'), function(){
@@ -899,10 +1847,41 @@
 
     function resolveCNAM(name) { cnamValue.textContent = name; cnamValue.className = 'cnam resolved glitch'; setTimeout(function(){ cnamValue.classList.remove('glitch'); }, 250); }
 
+    // DTMF tone generator
+    var _dtmfCtx = null;
+    function playDTMF(key) {
+      if (localStorage.getItem('clawcall_dial_tone') === 'off') return;
+      var freqs = {
+        '1': [697,1209], '2': [697,1336], '3': [697,1477],
+        '4': [770,1209], '5': [770,1336], '6': [770,1477],
+        '7': [852,1209], '8': [852,1336], '9': [852,1477],
+        '*': [941,1209], '0': [941,1336], '#': [941,1477]
+      };
+      var f = freqs[key];
+      if (!f) return;
+      try {
+        if (!_dtmfCtx || _dtmfCtx.state === 'closed') _dtmfCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (_dtmfCtx.state === 'suspended') _dtmfCtx.resume();
+        var now = _dtmfCtx.currentTime;
+        f.forEach(function(freq) {
+          var osc = _dtmfCtx.createOscillator();
+          var gain = _dtmfCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.connect(gain);
+          gain.connect(_dtmfCtx.destination);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        });
+      } catch(e) {}
+    }
+
     function handleKey(key) {
       var prop = getFieldProp(), cur = S[prop] || '';
       if (cur.length >= 15) { toast('MAX DIGITS'); return; }
-      S[prop] = cur + key; renderDisplays();
+      S[prop] = cur + key; renderDisplays(); playDTMF(key);
       if (prop === 'cid' && S.cid.length >= 10) { if (S.scanningCID) { try { S.scanningCID.abort(); } catch(e){} } lookupCNAM(S.cid); }
     }
     function handleDelete() {
@@ -939,10 +1918,10 @@
     }
 
         function handleCall() {
-      var dest = S.destination; if (dest.length === 10) dest = "1" + dest;
+      var dest = S.destination;
       if (!dest || dest.length < 7) { toast('ENTER A VALID NUMBER'); return; }
       var token = localStorage.getItem('clawcall_token') || '';
-      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '17804755555');
+      var cid = S.cid || (localStorage.getItem('clawcall_default_cid') || '15555555555');
 
       // Pre-call token check
       var bal = S.userBalance || 0;
@@ -969,7 +1948,7 @@
         .then(function(d){
           if (d.ok) {
             toast('CALL PLACED');
-            if (typeof setHudStatus === 'function') setHudStatus('CONNECTING');
+            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
             // Start billing timer after ring delay
             setTimeout(function() {
               if (typeof startHudTimer === 'function') startHudTimer();
@@ -1013,19 +1992,87 @@
     switchTab = function(name) {
       origSwitchTab(name);
       if (name === 'settings') {
-        // Load user info into settings tab
-        fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token')||'') } })
-          .then(function(r){ return r.json(); })
-          .then(function(d){
-            if (d.ok) {
-              var u = d.user || d;
-              $('#settingsUserInfo').textContent = 'Signed in as ' + u.username + ' (ID: ' + u.id + ', Role: ' + (u.is_admin?'admin':(u.is_vip?'vip':'user')) + ')';
-              if (u.caller_id) $('#settingsCID').value = u.caller_id;
-            }
-          })
-          .catch(function(){ $('#settingsUserInfo').textContent = 'Could not load user info'; });
+        loadSettingsProfile();
       }
     };
+
+    function loadSettingsProfile() {
+      fetch('/api/me', { headers: { 'Authorization': 'Bearer ' + (localStorage.getItem('clawcall_token')||'') } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (!d.ok) return;
+          var u = d.user || d;
+          // Avatar
+          var av = document.getElementById('settingsAvatar');
+          var initial = (u.username || '?')[0].toUpperCase();
+          var avColor = u.is_admin ? 'var(--green)' : u.is_vip ? 'var(--amber)' : 'var(--teal)';
+          av.textContent = initial;
+          av.style.background = avColor + '22';
+          av.style.border = '2px solid ' + avColor + '40';
+          av.style.color = avColor;
+          // Username
+          document.getElementById('settingsUsername').textContent = u.username || '---';
+          // Badges
+          var badgeHtml = '';
+          if (u.is_admin) badgeHtml += '<span style="font-size:8px;padding:2px 8px;border-radius:99px;background:rgba(34,197,94,0.12);color:var(--green);border:1px solid rgba(34,197,94,0.2);font-weight:700;letter-spacing:0.08em">ADMIN</span>';
+          if (u.is_vip) badgeHtml += '<span style="font-size:8px;padding:2px 8px;border-radius:99px;background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.2);font-weight:700;letter-spacing:0.08em">VIP</span>';
+          var statusClr = u.account_status === 'active' ? 'var(--green)' : u.account_status === 'suspended' ? 'var(--amber)' : 'var(--red)';
+          badgeHtml += '<span style="font-size:8px;padding:2px 8px;border-radius:99px;background:' + statusClr + '12;color:' + statusClr + ';border:1px solid ' + statusClr + '30;font-weight:700;letter-spacing:0.08em">' + (u.account_status || 'active').toUpperCase() + '</span>';
+          document.getElementById('settingsBadges').innerHTML = badgeHtml;
+          // Member since
+          var createdStr = '--';
+          if (u.created_at) {
+            try { createdStr = new Date(u.created_at).toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'}); } catch(e){}
+          }
+          document.getElementById('settingsMemberSince').textContent = createdStr;
+          // Total calls
+          document.getElementById('settingsTotalCalls').textContent = (u.total_calls || 0) + ' calls';
+          // VIP banner
+          var vipEl = document.getElementById('settingsVipBanner');
+          if (u.is_vip && u.vip_days_left > 0) {
+            vipEl.style.display = '';
+            vipEl.innerHTML = '<div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:8px;padding:6px 10px;font-size:10px;color:var(--amber)">\u2605 VIP Active \u2014 ' + u.vip_days_left + ' day' + (u.vip_days_left !== 1 ? 's' : '') + ' remaining</div>';
+          } else if (!u.is_admin) {
+            vipEl.style.display = '';
+            vipEl.innerHTML = '<a href="#" onclick="switchTab(\'wallet\');document.getElementById(\'vipOverlay\').classList.add(\'open\');return false" style="font-size:10px;color:var(--amber);text-decoration:underline">\u2605 Upgrade to VIP \u2192</a>';
+          } else {
+            vipEl.style.display = 'none';
+          }
+          // Caller ID
+          if (u.caller_id) document.getElementById('settingsCID').value = u.caller_id;
+        })
+        .catch(function(){});
+    }
+
+    // Audio settings — load saved values
+    (function(){
+      var micGain = localStorage.getItem('clawcall_mic_gain') || 100;
+      var spkVol = localStorage.getItem('clawcall_spk_vol') || 100;
+      var dialTone = localStorage.getItem('clawcall_dial_tone') !== 'off';
+      var micEl = document.getElementById('settingsMicGain');
+      var spkEl = document.getElementById('settingsSpkVol');
+      var dtEl = document.getElementById('settingsDialTone');
+      if (micEl) { micEl.value = micGain; document.getElementById('settingsMicVal').textContent = micGain + '%'; }
+      if (spkEl) { spkEl.value = spkVol; document.getElementById('settingsSpkVal').textContent = spkVol + '%'; }
+      if (dtEl) { dtEl.textContent = dialTone ? 'ON' : 'OFF'; dtEl.style.background = dialTone ? 'rgba(0,212,180,0.08)' : 'rgba(255,255,255,0.03)'; dtEl.style.color = dialTone ? 'var(--teal)' : 'var(--dim)'; }
+      // Event listeners
+      if (micEl) micEl.addEventListener('input', function(){
+        localStorage.setItem('clawcall_mic_gain', this.value);
+        document.getElementById('settingsMicVal').textContent = this.value + '%';
+      });
+      if (spkEl) spkEl.addEventListener('input', function(){
+        localStorage.setItem('clawcall_spk_vol', this.value);
+        document.getElementById('settingsSpkVal').textContent = this.value + '%';
+      });
+      if (dtEl) dtEl.addEventListener('click', function(){
+        var cur = localStorage.getItem('clawcall_dial_tone') !== 'off';
+        var next = !cur;
+        localStorage.setItem('clawcall_dial_tone', next ? 'on' : 'off');
+        dtEl.textContent = next ? 'ON' : 'OFF';
+        dtEl.style.background = next ? 'rgba(0,212,180,0.08)' : 'rgba(255,255,255,0.03)';
+        dtEl.style.color = next ? 'var(--teal)' : 'var(--dim)';
+      });
+    })();
 
     bindClick($('#settingsSave'), function(){
       var cid = $('#settingsCID').value.trim();
@@ -1038,6 +2085,30 @@
         }).catch(function(){ toast('NETWORK ERROR'); });
     });
     bindClick($('#settingsLogout'), function(){ switchTab('dialer'); doLogout(); });
+    bindClick($('#settingsExport'), function(){
+      var token = localStorage.getItem('clawcall_token')||'';
+      toast('DOWNLOADING CALL HISTORY...');
+      fetch('/api/calls/export', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(function(r){
+          if (!r.ok) throw new Error('Export failed: ' + r.status);
+          return r.blob();
+        })
+        .then(function(blob){
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'clawcall_history.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          toast('DOWNLOAD COMPLETE');
+        })
+        .catch(function(e){
+          toast('DOWNLOAD FAILED');
+          console.error('Export error:', e);
+        });
+    });
 
     // Init dialer
     renderDisplays(); setActive('destination');
@@ -1371,91 +2442,173 @@
     function renderStats(data) {
       if (!data || !data.ok) { renderStatsDemo(); return; }
       var totalCalls = data.total_calls || 0;
-      var totalMin = data.total_minutes || 0;
+      var completed = data.completed || 0;
       var avgCall = data.avg_duration || 0;
       var spent = data.total_cost || 0;
+      var successRate = totalCalls > 0 ? Math.round((completed / totalCalls) * 100) : 0;
       animateStat('statTotalCalls', totalCalls);
-      animateStat('statTotalMin', totalMin.toFixed(1));
+      var rateEl = document.getElementById('statSuccessRate');
+      rateEl.textContent = successRate + '%';
+      rateEl.style.color = successRate >= 90 ? 'var(--green)' : successRate >= 70 ? 'var(--amber)' : 'var(--red)';
       animateStat('statAvgCall', Math.round(avgCall) + 's');
-      animateStat('statSpent', '$' + spent.toFixed(2));
-      renderBarChart(data.daily_usage || []);
+      animateStat('statSpent', spent.toFixed(2) + ' TK');
+      var sparkEl = document.getElementById('chartBars');
+      if (sparkEl && data.daily_usage && data.daily_usage.length) {
+        var counts = data.daily_usage.map(function(x){ return x.count; });
+        var maxCount = Math.max.apply(null, counts) || 1;
+        var today = new Date().toISOString().slice(0,10);
+        var sparkHtml = '';
+        data.daily_usage.forEach(function(day){
+          var h = Math.max(4, Math.round((day.count / maxCount) * 100));
+          var isToday = day.date === today;
+          sparkHtml += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">' +
+            '<span style="font-size:9px;color:var(--dim)">' + day.count + '</span>' +
+            '<div title="' + day.date + ': ' + day.count + ' calls" style="width:100%;height:' + h + '%;background:' + (isToday ? 'var(--teal)' : 'rgba(0,212,180,0.25)') + ';border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s"></div>' +
+            '<span style="font-size:8px;color:var(--muted)">' + day.date.slice(5) + '</span></div>';
+        });
+        sparkEl.innerHTML = sparkHtml;
+      }
+      var statusEl = document.getElementById('statStatusBreak');
+      var statusHtml = '';
+      var statusColors = { completed: 'var(--green)', failed: 'var(--red)', busy: 'var(--amber)', 'no-answer': 'var(--dim)', unknown: 'var(--muted)' };
+      if (data.status_breakdown && data.status_breakdown.length) {
+        data.status_breakdown.forEach(function(s){
+          var c = statusColors[s.status] || 'var(--muted)';
+          statusHtml += '<div class="stat-row"><span class="sr-label"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + c + ';margin-right:5px;vertical-align:middle"></span>' + s.status + '</span><span class="sr-value">' + s.count + '</span></div>';
+        });
+      } else {
+        statusHtml = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+      }
+      statusEl.innerHTML = statusHtml;
+      var destEl = document.getElementById('statTopDests');
+      var destHtml = '';
+      if (data.top_destinations && data.top_destinations.length) {
+        var maxDest = data.top_destinations[0].count || 1;
+        data.top_destinations.forEach(function(td, i){
+          var pct = Math.round((td.count / maxDest) * 100);
+          var num = td.number;
+          if (num.length > 14) num = num.slice(0,11) + '...';
+          destHtml += '<div class="stat-row" style="position:relative;overflow:hidden">' +
+            '<div style="position:absolute;left:0;top:0;bottom:0;width:' + pct + '%;background:rgba(0,212,180,0.06);border-radius:4px"></div>' +
+            '<span class="sr-label" style="position:relative;z-index:1">' + (i+1) + '. <span class="top-dest">' + num + '</span></span>' +
+            '<span class="sr-value" style="position:relative;z-index:1">' + td.count + '</span></div>';
+        });
+      } else {
+        destHtml = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+      }
+      destEl.innerHTML = destHtml;
       renderCallLog(data.calls || []);
     }
 
     function renderStatsDemo() {
-      animateStat('statTotalCalls', 247);
-      animateStat('statTotalMin', 1834);
-      animateStat('statAvgCall', '28s');
-      animateStat('statSpent', '1,845');
-      renderBarChart([12, 8, 15, 22, 18, 9, 14]);
-      renderCallLog([
-        { cid: '17804755555', dest: '15875906282', duration: 45, cost: 15, time: '2h ago' },
-        { cid: '17804755555', dest: '17805551234', duration: 120, cost: 22, time: '5h ago' },
-        { cid: '14035559876', dest: '15874561234', duration: 18, cost: 8, time: '1d ago' },
-        { cid: '17804755555', dest: '14035550000', duration: 312, cost: 45, time: '1d ago' },
-        { cid: '15875550987', dest: '17805559999', duration: 67, cost: 19, time: '2d ago' },
-        { cid: '17804755555', dest: '15872340987', duration: 8, cost: 5, time: '2d ago' },
-      ]);
+      document.getElementById('statTotalCalls').textContent = '--';
+      document.getElementById('statSuccessRate').textContent = '--';
+      document.getElementById('statAvgCall').textContent = '--';
+      document.getElementById('statSpent').textContent = '--';
+      var sparkEl = document.getElementById('chartBars');
+      if (sparkEl) sparkEl.innerHTML = '<div style="width:100%;text-align:center;color:var(--dim);padding:30px;font-size:11px">No data yet</div>';
+      var statusEl = document.getElementById('statStatusBreak');
+      if (statusEl) statusEl.innerHTML = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+      var destEl = document.getElementById('statTopDests');
+      if (destEl) destEl.innerHTML = '<div class="stat-row"><span class="sr-label">No data</span><span class="sr-value">--</span></div>';
+      renderCallLog([]);
     }
 
     function animateStat(id, val) {
-      var el = $('#' + id); el.textContent = val; el.classList.add('counting'); setTimeout(function(){ el.classList.remove('counting'); }, 1200);
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = val;
+      el.classList.add('counting');
+      setTimeout(function(){ el.classList.remove('counting'); }, 1200);
     }
 
-    function renderBarChart(data) {
-      var max = Math.max.apply(null, data) || 1;
-      var days = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
-      var html = '';
-      data.forEach(function(v, i){
-        var h = Math.max(4, (v / max) * 100);
-        html += '<div class="chart-bar-col"><div class="chart-bar" style="height:0" data-h="'+h+'"></div><div class="chart-bar-label">'+days[i]+'</div></div>';
-      });
-      $('#chartBars').innerHTML = html;
-      // Animate bars: render at 0, then set target height to trigger CSS transition
-      requestAnimationFrame(function(){
-        requestAnimationFrame(function(){
-          $$('.chart-bar').forEach(function(b){ b.style.height = b.dataset.h + '%'; });
-        });
-      });
-    }
-
-    function renderCallLog(calls) {
+    function renderCallLog(calls, page) {
+      S.callsAll = calls || [];
+      S.callLogPage = page || 1;
+      var perPage = 10;
+      var totalPages = Math.max(1, Math.ceil(S.callsAll.length / perPage));
+      if (S.callLogPage > totalPages) S.callLogPage = totalPages;
+      var start = (S.callLogPage - 1) * perPage;
+      var pageCalls = S.callsAll.slice(start, start + perPage);
       var html = '<div class="call-log-row header"><span>FROM</span><span>TO</span><span>DURATION</span><span>COST</span></div>';
-      if (!calls.length) html += '<div style="padding:16px;text-align:center;color:var(--dim)">No calls yet</div>';
-      else calls.slice(0, 15).forEach(function(c){
-        var cid = c.caller_id || c.cid || '';
-        var dest = c.destination || c.dest || '';
-        var dur = c.duration || 0;
-        var cost = c.cost || 0;
-        var status = c.status || '';
-        var statusBadge = status === 'completed' ? '<span style="color:#22C55E;font-size:10px">✓</span>' : (status === 'failed' ? '<span style="color:#ef4444;font-size:10px">✗</span>' : '<span style="color:#f59e0b;font-size:10px">···</span>');
-        html += '<div class="call-log-row"><span class="call-log-cid">'+formatNumber(cid)+'</span><span class="call-log-dest">'+formatNumber(dest)+'</span><span style="font-size:11px">'+dur+'s '+statusBadge+'</span><span class="call-log-cost">$'+cost.toFixed(2)+'</span></div>';
-      });
-      $('#callLog').innerHTML = html;
+      if (!pageCalls.length) {
+        html += '<div style="padding:16px;text-align:center;color:var(--dim)">No calls yet</div>';
+      } else {
+        pageCalls.forEach(function(c){
+          var cid = c.caller_id || c.cid || '';
+          var dest = c.destination || c.dest || c.target_number || '';
+          var dur = c.duration || c.duration_seconds || 0;
+          var cost = c.cost || 0;
+          var status = c.status || '';
+          var statusBadge = status === 'completed' ? '<span style="color:#22C55E;font-size:10px">\u2713</span>' : (status === 'failed' ? '<span style="color:#ef4444;font-size:10px">\u2717</span>' : '<span style="color:#f59e0b;font-size:10px">\u00B7\u00B7\u00B7</span>');
+          var timeStr = '';
+          if (c.started_at || c.created_at) {
+            var ts = new Date(c.started_at || c.created_at);
+            var diffMin = Math.floor((Date.now() - ts.getTime()) / 60000);
+            if (diffMin < 60) timeStr = diffMin + 'm ago';
+            else if (diffMin < 1440) timeStr = Math.floor(diffMin/60) + 'h ago';
+            else timeStr = Math.floor(diffMin/1440) + 'd ago';
+          }
+          html += '<div class="call-log-row">' +
+            '<span class="call-log-cid">' + formatNumber(cid) + '</span>' +
+            '<span class="call-log-dest">' + formatNumber(dest) + '</span>' +
+            '<span style="font-size:11px">' + dur + 's ' + statusBadge + (timeStr ? ' <span style="font-size:9px;color:var(--dim)">' + timeStr + '</span>' : '') + '</span>' +
+            '<span class="call-log-cost">' + cost.toFixed(2) + ' TK</span></div>';
+        });
+      }
+      var el = document.getElementById('callLog');
+      if (el) el.innerHTML = html;
+      // Render pagination
+      var pgEl = document.getElementById('callLogPagination');
+      if (pgEl && totalPages > 1) {
+        pgEl.innerHTML = '<button class="pg-btn" onclick="goCallPage(-1)"' + (S.callLogPage <= 1 ? ' disabled' : '') + '>\u25C0 PREV</button>' +
+          '<span class="pg-info">' + S.callLogPage + ' / ' + totalPages + '</span>' +
+          '<button class="pg-btn" onclick="goCallPage(1)"' + (S.callLogPage >= totalPages ? ' disabled' : '') + '>NEXT \u25B6</button>';
+      } else if (pgEl) {
+        pgEl.innerHTML = '';
+      }
     }
+
+    window.goCallPage = function(dir) {
+      S.callLogPage = (S.callLogPage || 1) + dir;
+      renderCallLog(S.callsAll, S.callLogPage);
+    };
 
     // ══════════════════════════════════════════
     // ADMIN LOGIC
     // ══════════════════════════════════════════
     function loadAdmin() {
       if (!S.isAdmin) { $('#tab-admin').innerHTML = '<div style="text-align:center;padding:40px;color:var(--dim)">ACCESS DENIED</div>'; return; }
-      showLoading('adminUserList', 5);
-      var token = localStorage.getItem('clawcall_token') || '';
-      fetch('/api/admin/overview', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ renderAdminOverview(d); })
-        .catch(function(){ renderAdminDemo(); });
-      fetch('/api/admin/users', { headers: { 'Authorization': 'Bearer ' + token } })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ S.users = d.users || []; renderUserList(S.users); })
-        .catch(function(){ loadDemoUsers(); });
+      bindAdminSubTabs();
+      bindSystemActions();
+      switchAdminTab(S.adminSubTab || 'overview');
     }
 
     function renderAdminOverview(d) {
       animateStat('adminTotalUsers', (d && d.total_users) || 0);
       animateStat('adminTotalCalls', (d && d.total_calls) || 0);
-      animateStat('adminRevenue', (d && d.revenue) || 0);
-      animateStat('adminActiveNow', (d && d.active_now) || 0);
+      animateStat('adminRevenue', (d && d.total_deposits) ? '$' + (d.total_deposits).toFixed(2) : '$0');
+      animateStat('adminActiveNow', (d && d.vip_users) || 0, 'VIP');
+      var extra = document.getElementById('adminExtraStats');
+      if (extra) {
+        var dur = d && d.total_duration_min ? d.total_duration_min + ' min' : '0 min';
+        var tokens = d && d.total_tokens ? Math.floor(d.total_tokens) + ' TK' : '0 TK';
+        extra.innerHTML = '<div class="stat-card"><div class="stat-num">' + dur + '</div><div class="stat-label">TOTAL TALK TIME</div></div>' +
+          '<div class="stat-card"><div class="stat-num">' + tokens + '</div><div class="stat-label">TOKENS IN CIRCULATION</div></div>';
+      }
+      var chartEl = document.getElementById('adminChart');
+      if (chartEl && d && d.daily_calls) {
+        var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        var max = 1;
+        days.forEach(function(day){ max = Math.max(max, d.daily_calls[day] || 0); });
+        var html = '';
+        days.forEach(function(day){
+          var v = d.daily_calls[day] || 0;
+          var h = Math.max(4, (v / max) * 100);
+          html += '<div class="chart-bar-col"><div class="chart-bar" style="height:' + h + '%"></div><div class="chart-bar-label">' + day + '</div><div style="font-size:7px;color:var(--dim)">' + v + '</div></div>';
+        });
+        chartEl.innerHTML = html;
+      }
     }
 
     function renderAdminDemo() {
@@ -1476,9 +2629,30 @@
       renderUserList(S.users);
     }
 
+    S.adminTotal = 0;
+    S.adminPage = 1;
+    S.adminPerPage = 15;
+
+    function formatDate(ts) {
+      if (!ts) return 'Never';
+      try {
+        var d = new Date(ts);
+        var now = new Date();
+        var diff = now - d;
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return 'Just now';
+        if (mins < 60) return mins + 'm ago';
+        var hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + 'h ago';
+        var days = Math.floor(hrs / 24);
+        if (days < 7) return days + 'd ago';
+        return d.toLocaleDateString();
+      } catch(e) { return ''; }
+    }
+
     function renderUserList(users) {
       var q = ($('#adminSearch').value || '').toLowerCase();
-      var filtered = users.filter(function(u){ var email = u.email || ''; return u.username.toLowerCase().indexOf(q) >= 0 || (typeof email === 'string' && email.toLowerCase().indexOf(q) >= 0); });
+      var filtered = users.filter(function(u){ return u.username.toLowerCase().indexOf(q) >= 0; });
       var html = '';
       filtered.forEach(function(u){
         var badges = '';
@@ -1486,22 +2660,91 @@
         if (u.is_vip) badges += '<span class="admin-badge vip">VIP</span>';
         if (u.is_banned) badges += '<span class="admin-badge banned">BANNED</span>';
         if (u.is_suspended) badges += '<span class="admin-badge suspended">SUSPENDED</span>';
-        html += '<div class="admin-user-row">' +
-          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email">'+u.email+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+(u.token_balance || 0)+' TK</div></div>' +
+        var lastActive = formatDate(u.updated_at);
+        html += '<div class="admin-user-row" style="cursor:pointer" onclick="toggleUserDetail('+u.id+',this)">' +
+          '<div><div class="admin-username">'+u.username+'</div><div class="admin-email" style="font-size:9px">Last active: '+lastActive+'</div><div style="font-size:10px;color:var(--dim);margin-top:2px">'+(u.token_balance || 0)+' TK</div></div>' +
           '<div class="admin-badges">'+badges+'</div>' +
-          '<div class="admin-actions">' +
+          '<div class="admin-actions" onclick="event.stopPropagation()">' +
             '<button class="admin-btn" onclick="adminAction('+u.id+',\'tokens\')" title="Adjust tokens">+</button>' +
             '<button class="admin-btn" onclick="adminAction('+u.id+',\'vip\')" title="Toggle VIP">\u2605</button>' +
             '<button class="admin-btn" onclick="adminAction('+u.id+',\'suspend\')" title="Toggle suspend">\u23F8</button>' +
             '<button class="admin-btn danger" onclick="adminAction('+u.id+',\'ban\')" title="Toggle ban">\u2715</button>' +
-          '</div></div>';
+          '</div></div>' +
+          '<div class="user-expand" id="userExpand'+u.id+'"></div>';
       });
       if (!filtered.length) html = '<div style="padding:20px;text-align:center;color:var(--dim)">No users found</div>';
       $('#adminUserList').innerHTML = html;
+      renderPagination();
+    }
+
+    function toggleUserDetail(userId, rowEl) {
+      var expandEl = document.getElementById('userExpand'+userId);
+      if (!expandEl) return;
+      if (expandEl.classList.contains('open')) {
+        expandEl.classList.remove('open');
+        return;
+      }
+      // Close all others
+      document.querySelectorAll('.user-expand.open').forEach(function(el){ el.classList.remove('open'); });
+      expandEl.classList.add('open');
+      expandEl.innerHTML = '<div style="padding:8px;color:var(--dim);text-align:center">Loading...</div>';
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/user-detail?user_id=' + userId, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if (!d.ok) { expandEl.innerHTML = '<div style="padding:8px;color:var(--red)">Failed to load</div>'; return; }
+        var p = d.profile;
+        var html = '<div class="user-detail-row"><span>ID</span><span>' + p.id + '</span></div>' +
+          '<div class="user-detail-row"><span>Role</span><span>' + (p.role||'user') + '</span></div>' +
+          '<div class="user-detail-row"><span>Balance</span><span style="color:var(--green)">' + (p.token_balance||0) + ' TK</span></div>' +
+          '<div class="user-detail-row"><span>SIP Ext</span><span>' + (p.sip_extension||'--') + '</span></div>' +
+          '<div class="user-detail-row"><span>Caller ID</span><span>' + (p.caller_id||'--') + '</span></div>' +
+          '<div class="user-detail-row"><span>Joined</span><span>' + (p.created_at ? new Date(p.created_at).toLocaleDateString() : '--') + '</span></div>';
+        // Inline token management
+        html += '<div class="token-row">' +
+          '<select id="tokOp'+userId+'"><option value="add">Add</option><option value="set">Set</option><option value="subtract">Subtract</option></select>' +
+          '<input type="number" id="tokAmt'+userId+'" value="100" placeholder="Amount" />' +
+          '<button onclick="adminAdjustTokens('+userId+')">APPLY</button>' +
+          '</div>';
+        // Recent calls
+        if (d.calls && d.calls.length) {
+          html += '<div style="margin-top:8px;font-weight:700;font-size:9px;color:var(--muted);letter-spacing:0.08em">RECENT CALLS</div>';
+          d.calls.slice(0,5).forEach(function(c){
+            var dur = c.duration_seconds ? Math.round(c.duration_seconds/60*10)/10 + 'm' : '--';
+            var dest = c.target_number || c.destination || '--';
+            html += '<div class="user-detail-row"><span>' + dest + '</span><span>' + dur + ' | ' + (c.cost||0).toFixed(2) + ' TK</span></div>';
+          });
+        } else {
+          html += '<div style="margin-top:8px;font-size:9px;color:var(--dim)">No recent calls</div>';
+        }
+        expandEl.innerHTML = html;
+      }).catch(function(){
+        expandEl.innerHTML = '<div style="padding:8px;color:var(--red)">Network error</div>';
+      });
+    }
+    window.toggleUserDetail = toggleUserDetail;
+
+    window.adminAdjustTokens = function(userId) {
+      var op = document.getElementById('tokOp'+userId).value;
+      var amt = parseFloat(document.getElementById('tokAmt'+userId).value);
+      if (isNaN(amt)) { toast('Enter a valid amount'); return; }
+      var token = localStorage.getItem('clawcall_token') || '';
+      fetch('/api/admin/adjust-balance', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body: JSON.stringify({user_id: userId, amount: amt, operation: op})
+      }).then(function(r){ return r.json(); }).then(function(d){
+        if (d.ok) {
+          toast('Balance updated: ' + d.new_balance + ' TK');
+          loadAdminPage(S.adminPage);
+        } else {
+          toast(d.error || 'Failed');
+        }
+      }).catch(function(){ toast('Request failed'); });
     }
 
     window.adminAction = function(id, action) {
-      var user = S.users.find(function(u){ return u.id === id; });
+      var user = S.users.find(function(u){ return u.id == id; });
       if (!user) return;
       var token = localStorage.getItem('clawcall_token') || '';
       if (action === 'ban') {
@@ -1519,6 +2762,36 @@
       renderUserList(S.users);
     };
 
+    function goPage(dir) {
+      var totalPages = Math.max(1, Math.ceil(S.adminTotal / S.adminPerPage));
+      S.adminPage = Math.max(1, Math.min(totalPages, S.adminPage + dir));
+      loadAdminPage(S.adminPage);
+    }
+    window.goPage = goPage;
+
+    function renderPagination() {
+      var totalPages = Math.max(1, Math.ceil(S.adminTotal / S.adminPerPage));
+      var el = document.getElementById('adminPagination');
+      if (!el) return;
+      if (totalPages <= 1) { el.innerHTML = ''; return; }
+      el.innerHTML = '<button class="pg-btn" onclick="goPage(-1)"' + (S.adminPage <= 1 ? ' disabled' : '') + '>\u25C0 PREV</button>' +
+        '<span class="pg-info">' + S.adminPage + ' / ' + totalPages + '</span>' +
+        '<button class="pg-btn" onclick="goPage(1)"' + (S.adminPage >= totalPages ? ' disabled' : '') + '>NEXT \u25B6</button>';
+    }
+
+    function loadAdminPage(page) {
+      S.adminPage = page;
+      var token = localStorage.getItem('clawcall_token') || '';
+      showLoading('adminUserList', 5);
+      fetch('/api/admin/users?page=' + page + '&per_page=' + S.adminPerPage, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      }).then(function(r){ return r.json(); }).then(function(d){
+        S.users = d.users || [];
+        S.adminTotal = d.total || S.users.length;
+        renderUserList(S.users);
+      }).catch(function(){ loadDemoUsers(); });
+    }
+
     $('#adminSearch').addEventListener('input', function(){ renderUserList(S.users); });
 
     // Voucher code Enter key
@@ -1528,16 +2801,51 @@
 
     // Keyboard
     document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
       if (paymentOverlay.classList.contains('open')) { if (e.key === 'Escape') closePayment(); return; }
       if (S.activeTab !== 'dialer') return;
-      if (e.key >= '0' && e.key <= '9') { handleKey(e.key); }
-      else if (e.key === '*' || e.key === '#') handleKey(e.key);
+      if (e.key >= '0' && e.key <= '9') { handleKey(e.key); playDTMF(e.key); }
+      else if (e.key === '*' || e.key === '#') { handleKey(e.key); playDTMF(e.key); }
       else if (e.key === 'Backspace') { e.preventDefault(); handleDelete(); }
       else if (e.key === 'Enter') { e.preventDefault(); handleCall(); }
       else if (e.key === 'Escape') handleClearAll();
     });
 
-    console.log('hushcircuits pro \u2014 v4 beta');
+    // Auth logo glitch animation
+  (function(){
+    var authHush = document.getElementById('authHushWord');
+    var authCircuits = document.getElementById('authCircuitsWord');
+    var authHushReg = document.getElementById('authHushWordReg');
+    var authCircuitsReg = document.getElementById('authCircuitsWordReg');
+    if (authHush || authHushReg) {
+      var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      function glitchWord(el, word) {
+        if (!el) return;
+        var iterations = 0;
+        var iv = setInterval(function(){
+          el.textContent = word.split('').map(function(c, i){
+            return i < iterations ? word[i] : chars[Math.floor(Math.random() * chars.length)];
+          }).join('');
+          iterations += 0.5;
+          if (iterations >= word.length) { clearInterval(iv); el.textContent = word; }
+        }, 40);
+      }
+      // Glitch on load
+      if (authHush) glitchWord(authHush, 'HUSH');
+      if (authCircuits) setTimeout(function(){ glitchWord(authCircuits, 'CIRCUITS'); }, 200);
+      if (authHushReg) glitchWord(authHushReg, 'HUSH');
+      if (authCircuitsReg) setTimeout(function(){ glitchWord(authCircuitsReg, 'CIRCUITS'); }, 200);
+      // Re-glitch every 8 seconds
+      setInterval(function(){
+        if (authHush) glitchWord(authHush, 'HUSH');
+        setTimeout(function(){ if (authCircuits) glitchWord(authCircuits, 'CIRCUITS'); }, 200);
+        if (authHushReg) glitchWord(authHushReg, 'HUSH');
+        setTimeout(function(){ if (authCircuitsReg) glitchWord(authCircuitsReg, 'CIRCUITS'); }, 200);
+      }, 8000);
+    }
+  })();
+
+  console.log('hushcircuits pro \u2014 v4 beta');
 (function(){
   var hushEl = document.getElementById('hushWord');
   var circuitsEl = document.getElementById('circuitsWord');
@@ -1566,10 +2874,28 @@
     setTimeout(function(){ glitchWord(circuitsEl, 'CIRCUITS'); }, 200);
   }, 8000);
 })();
-  })();
+  } catch(e) { window._IIFE_ERROR = e.message; console.error("IIFE CRASH:", e.message, e.stack); }
+})();
   </script>
+  <script src="ac-standalone.js"></script>
 <div class="call-hud" id="callHud"><div class="call-hud-spinner"><div class="ring"></div><div class="ring pulse"></div><div class="ring spin"></div><div class="ring spin2"></div><div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div></div><div class="call-hud-timer" id="hudTimer">00:00</div><div class="call-hud-status" id="hudStatus">CONNECTING</div><div class="call-hud-stats"><div class="call-hud-stat"><div class="call-hud-stat-label">Cost</div><div class="call-hud-stat-value" id="hudCost">$0.00</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Rate</div><div class="call-hud-stat-value" id="hudRate">$0.50/min</div></div><div class="call-hud-stat"><div class="call-hud-stat-label">Balance</div><div class="call-hud-stat-value" id="hudBalance">--</div></div></div><div class="call-hud-numbers"><div>CID: <span id="hudCID">--</span></div><div>TO: <span id="hudTarget">--</span></div></div><button class="call-hud-hangup" id="hudHangup"><svg viewBox="0 0 24 24"><path d="M10.68 13.32a15.3 15.3 0 0 0 2.64 2.64l4.55-4.55a1.5 1.5 0 0 1 1.7-.3l4.1 1.7a1.5 1.5 0 0 1 .9 1.45v5.15a1.5 1.5 0 0 1-1.5 1.5C13.27 21.91 2.09 10.73 2.09 1.5A1.5 1.5 0 0 1 3.59 0h5.15a1.5 1.5 0 0 1 1.45.9l1.7 4.1a1.5 1.5 0 0 1-.3 1.7L8.68 9.68a15.3 15.3 0 0 0 2 2"/></svg></button></div>
 <script src="call-hud.js?v=3"></script>
 <audio id="remoteAudio" autoplay playsinline style="display:none"></audio>
+<script>
+(function(){
+  var el = document.getElementById('acDebug');
+  if(!el) return;
+  setInterval(function(){
+    if(typeof AC==='undefined'){ el.textContent='AC NOT DEFINED - JS ERROR'; return; }
+    var pb=document.getElementById('loginAcPlay')||document.getElementById('registerAcPlay');
+    var vb=document.getElementById('loginAcVerify')||document.getElementById('registerAcVerify');
+    var te=document.getElementById('loginAcTiles')||document.getElementById('registerAcTiles');
+    var cp=window._AC_CHECKPOINT||'?'; el.textContent='CP:'+cp+' AC:'+(typeof AC!=='undefined'?'DEFINED':'MISSING')+' errors:'+JSON.stringify((window._AC_ERRORS||[]).slice(-3))+'\n';
+    if(typeof AC!=='undefined'){el.textContent+='status='+AC.status+' playing='+AC.playing+' answer='+JSON.stringify(AC.answer)+' tiles='+(AC.tiles||[]).length+'\n';el.textContent+='playBtn: disabled='+(pb?pb.disabled:'?')+' opacity='+(pb?getComputedStyle(pb).opacity:'?')+'\n';}
+    if(typeof AC!=='undefined'){el.textContent+='verify: disabled='+(vb?vb.disabled:'?')+'\n'; }
+    
+  },500);
+})();
+</script>
 </body>
 </html>
