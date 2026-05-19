@@ -1045,7 +1045,7 @@
           if (d.ok) {
             var u = d.user || d;
             $('#statusUser').textContent = u.username || '---';
-            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; S.isVip = !!(u.is_vip); $("#statusTokens").textContent = isAdmin ? "∞" : Math.floor(bal) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
+            var bal = parseFloat(u.token_balance || 0); var isAdmin = u.is_admin || u.role === "admin"; S.userBalance = bal; S.isAdmin = isAdmin; S.isVip = !!(u.is_vip); $("#statusTokens").textContent = isAdmin ? "∞" : bal.toFixed(2) + " TK"; if (isAdmin) $("#statusTokens").classList.add("infinite");
 
             var badge = $('#statusBadge');
             if (u.is_admin || u.role === 'admin') {
@@ -1924,7 +1924,7 @@
           if (d.ok) {
             console.log('[Call] Reported: ' + status + ' ' + duration + 's, billed=$' + (d.billed_tokens||0));
             if (d.user && d.user.token_balance !== undefined) {
-              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusTokens').textContent = Math.floor(S.userBalance) + ' TK';
+              S.userBalance = parseFloat(d.user.token_balance); if (!S.isAdmin) $('#statusTokens').textContent = S.userBalance.toFixed(2) + ' TK';
             }
           }
 	        }).catch(function(e){ console.error('[Call] Report failed:', e); });
@@ -1935,58 +1935,56 @@
 	    var sipRegisterPromise = null;
 
 	function attachRemoteAudio(session) {
-		console.log('[SIP] attachRemoteAudio: waiting for call accept');
+		console.log('[SIP] attachRemoteAudio: wiring audio (accepted only)');
 		var audio = document.getElementById('remoteAudio');
 		if (!audio || !session) return;
+		var _attached = false;
 
 		function attachStream(stream) {
-			if (!stream || !stream.getAudioTracks().length) return false;
+			if (_attached || !stream || !stream.getAudioTracks().length) return false;
+			_attached = true;
 			console.log('[SIP] ATTACHING remote stream, audioTracks=' + stream.getAudioTracks().length);
 			audio.srcObject = stream;
+			audio.volume = Math.max(0.2, Math.min(2, (parseInt(localStorage.getItem('clawcall_spk_vol') || '100', 10) || 100) / 100));
 			audio.play().then(function(){ console.log('[SIP] AUDIO PLAYING'); }).catch(function(e){ console.warn('[SIP] play blocked:', e.message); });
 			return true;
 		}
 
-		// Only wire PC after call is accepted (200 OK)
+		function tryAttach() {
+			try {
+				var h = session.sessionDescriptionHandler;
+				var pc = h && h.peerConnection;
+				if (!pc) return false;
+
+				var streams = pc.getRemoteStreams();
+				if (streams && streams.length) {
+					for (var s = 0; s < streams.length; s++) {
+						if (streams[s].getAudioTracks().length > 0) {
+							if (attachStream(streams[s])) return true;
+						}
+					}
+				}
+				try {
+					var receivers = pc.getReceivers();
+					for (var r = 0; r < receivers.length; r++) {
+						var t = receivers[r].track;
+						if (t && t.kind === 'audio' && t.readyState === 'live') {
+							var ms = new MediaStream();
+							try { ms.addTrack(t); if (attachStream(ms)) return true; } catch(ex) {}
+						}
+					}
+				} catch(ex2) {}
+			} catch(ex1) {}
+			return false;
+		}
+
+		// Wire on accepted (200 OK) — ICE is connected, RTP flows
 		session.on('accepted', function() {
 			console.log('[SIP] call ACCEPTED - wiring remote audio');
 			var attempts = 0;
 			var pollAccepted = setInterval(function() {
 				attempts++;
-				try {
-					var h = session.sessionDescriptionHandler;
-					var pc = h && h.peerConnection;
-					if (!pc) return;
-
-					// Path 1: getRemoteStreams (most reliable for already-received tracks)
-					var streams = pc.getRemoteStreams();
-					if (streams && streams.length) {
-						for (var s = 0; s < streams.length; s++) {
-							if (streams[s].getAudioTracks().length > 0) {
-								attachStream(streams[s]);
-								clearInterval(pollAccepted);
-								return;
-							}
-						}
-					}
-
-					// Path 2: check receivers for live tracks
-					try {
-						var receivers = pc.getReceivers();
-						for (var r = 0; r < receivers.length; r++) {
-							var t = receivers[r].track;
-							if (t && t.kind === 'audio' && t.readyState === 'live') {
-								var ms = new MediaStream();
-								try { ms.addTrack(t); attachStream(ms); clearInterval(pollAccepted); return; } catch(ex) {}
-							}
-						}
-					} catch(ex2) {}
-				} catch(ex1) {}
-
-				if (attempts > 30) {
-					console.warn('[SIP] no remote audio found after 3s');
-					clearInterval(pollAccepted);
-				}
+				if (tryAttach() || attempts > 30) clearInterval(pollAccepted);
 			}, 100);
 		});
 	}
@@ -2057,7 +2055,7 @@
 	      try {
 	        ringbackCtx = new (window.AudioContext || window.webkitAudioContext)();
 	        ringbackGain = ringbackCtx.createGain();
-	        ringbackGain.gain.value = 0.15;
+	        ringbackGain.gain.value = 0.25;
 	        ringbackGain.connect(ringbackCtx.destination);
 	        ringbackOsc1 = ringbackCtx.createOscillator();
 	        ringbackOsc1.type = "sine";
@@ -2070,11 +2068,15 @@
 	        ringbackOsc1.start();
 	        ringbackOsc2.start();
 	        ringbackCtx.suspend();
-	        var on = true;
-	        ringbackIntv = setInterval(function() {
-	          if (on) ringbackCtx.resume(); else ringbackCtx.suspend();
-	          on = !on;
-	        }, 1000);
+	        // Pulse: 1s on, 1s off — starts after 100ms for clean suspend
+	        setTimeout(function() {
+	          var on = true;
+	          ringbackIntv = setInterval(function() {
+	            if (on) ringbackCtx.resume(); else ringbackCtx.suspend();
+	            on = !on;
+	          }, 1000);
+	          ringbackCtx.resume();
+	        }, 100);
 	      } catch(e) { ringbackCtx = null; }
 	    }
 	    function stopRingback() {
@@ -2085,6 +2087,8 @@
 	        if (ringbackCtx) { try { ringbackCtx.close(); } catch(e){} ringbackCtx = null; }
 	      } catch(e) {}
 	    }
+	    window.startRingback = startRingback;
+	    window.stopRingback = stopRingback;
 
 	    function placeBrowserSipCall(dest, cid, token) {
 	      return ensureSipRegistered(token).then(function(c) {
@@ -2103,20 +2107,25 @@
 	        });
 	        window.activeSIPSession = session;
 	        attachRemoteAudio(session);
+	        // Ringback starts IMMEDIATELY on dial
+	        if (typeof startRingback === 'function') startRingback();
 	        session.on('progress', function() {
-	          if (typeof setHudStatus === 'function') setHudStatus('RINGING');
+	          if (typeof setHudStatus === 'function') setHudStatus('CONNECTING');
 	        });
 	        session.on('accepted', function() {
+	          if (typeof stopRingback === 'function') stopRingback();
 	          toast('CALL CONNECTED');
 	          if (typeof startHudTimer === 'function') startHudTimer();
 	          attachRemoteAudio(session);
 	        });
 	        session.on('failed', function(response, cause) {
+	          if (typeof stopRingback === 'function') stopRingback();
 	          console.error('[SIP] call failed:', cause);
 	          toast(cause || 'CALL FAILED');
 	          if (typeof hideCallHud === 'function') hideCallHud();
 	        });
 	        session.on('terminated', function() {
+	          if (typeof stopRingback === 'function') stopRingback();
 	          if (typeof window.hangupCall === 'function') window.hangupCall();
 	        });
 	        return session;
@@ -2133,7 +2142,7 @@
 	        .then(function(d){
 	          if (d.ok) {
 	            toast('CALL PLACED');
-	            if (typeof setHudStatus === 'function') setHudStatus('RINGING');
+	            if (typeof setHudStatus === 'function') setHudStatus('CONNECTING');
 	            setTimeout(function() {
 	              if (typeof startHudTimer === 'function') startHudTimer();
 	            }, 4000);
@@ -2355,7 +2364,7 @@
       var pct = Math.min(100, (bal / maxTokens) * 100);
       var circ = 326.7, offset = circ - (pct / 100) * circ;
       $('#balanceArc').setAttribute('stroke-dashoffset', offset);
-      $('#balanceAmount').textContent = Math.floor(bal).toLocaleString();
+      $('#balanceAmount').textContent = bal.toFixed(2);
       var talkMin = Math.floor(bal / 0.50);
       var talkStr = talkMin >= 60 ? '~ ' + Math.floor(talkMin/60) + 'h ' + (talkMin%60) + 'm talk time' : '~ ' + talkMin + ' min talk time';
       if (bal <= 0) talkStr = 'No talk time — deposit tokens';
@@ -2462,7 +2471,7 @@
       qrEl.innerHTML = '';
       if (d.pay_address) {
         var qrText = d.pay_currency.toLowerCase() + ':' + d.pay_address + '?amount=' + d.pay_amount;
-        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: '#22c55e', colorLight: '#020617' }); } catch(e){}
+        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: '#000000', colorLight: '#ffffff' }); } catch(e){}
         $('#paymentAddress').textContent = d.pay_address;
         var explorerUrl = d.pay_currency === 'BTC' 
           ? 'https://www.blockchain.com/explorer/addresses/btc/' + d.pay_address
@@ -2592,7 +2601,7 @@
       var qrEl = $("#vipQR"); qrEl.innerHTML = "";
       if (d.pay_address) {
         var qrText = d.pay_currency.toLowerCase() + ":" + d.pay_address + "?amount=" + d.pay_amount;
-        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: "#f59e0b", colorLight: "#020617" }); } catch(e){}
+        try { new QRCode(qrEl, { text: qrText, width: 170, height: 170, colorDark: "#000000", colorLight: "#ffffff" }); } catch(e){}
         $("#vipAddress").textContent = d.pay_address;
         var explorerUrl = d.pay_currency === "BTC" ? "https://www.blockchain.com/explorer/addresses/btc/" + d.pay_address : "https://blockchair.com/litecoin/address/" + d.pay_address;
         $("#vipExplorer").href = explorerUrl;

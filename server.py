@@ -1611,7 +1611,7 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             "daily_usage": daily_usage,
             "status_breakdown": status_breakdown,
             "top_destinations": [{"number": d, "count": c} for d, c in top_dests],
-            "calls": [dict(c) for c in calls[-20:]],
+            "calls": [dict(c) for c in calls[:20]],
         })
 
     def _handle_set_caller_id(self):

@@ -96,6 +96,7 @@
   };
 
 	  window.hangupCall = function() {
+	    if (typeof stopRingback === 'function') stopRingback();
 	    console.log('[HUD] hangup');
 	    if (window.activeSIPSession) {
 	      try {

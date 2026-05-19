@@ -537,7 +537,7 @@ function showPaymentModal(payment) {
   new QRCode(els.qrContainer, {
     text: qrData,
     width: 200, height: 200,
-    colorDark: "#22c55e", colorLight: "#020617",
+    colorDark: "#000000", colorLight: "#ffffff",
   });
 
   els.modalAddress.textContent = payment.pay_address || "";
