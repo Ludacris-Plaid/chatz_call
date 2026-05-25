@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Indications Media — Premium Web Design, Edmonton AB</title>
+  <meta name="description" content="Indications Media is a premium web design agency based in Edmonton, Alberta. We build extraordinary websites for trades, food, retail, and professional service businesses.">
+  <meta name="author" content="Indications Media">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Doto:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/system.css">
+</head>
+<body data-theme="dark">
+
+  <!-- Fixed noise overlay -->
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- ========== NAVIGATION ========== -->
+  <header class="site-header">
+    <nav class="primary-nav" role="navigation" aria-label="Main navigation">
+      <div class="nav-inner">
+        <a href="#hero" class="nav-brand" aria-label="Indications Media home">
+          <span class="bracket">[</span>
+          <span class="brand-name">INDICATIONS MEDIA</span>
+          <span class="bracket">]</span>
+        </a>
+        <ul class="nav-list">
+          <li><a href="#work" class="nav-link"><span class="bracket">[</span> WORK <span class="bracket">]</span></a></li>
+          <li><a href="#process" class="nav-link"><span class="bracket">[</span> PROCESS <span class="bracket">]</span></a></li>
+          <li><a href="#contact" class="nav-link"><span class="bracket">[</span> CONTACT <span class="bracket">]</span></a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ========== HERO ========== -->
+    <section id="hero" class="hero-section" data-animate="fade-in">
+      <div class="dot-grid" aria-hidden="true"></div>
+      <div class="hero-layout">
+        <div class="hero-left" data-animate="slide-up" data-stagger="1">
+          <h1 class="hero-headline">
+            WE BUILD<br>
+            WHAT YOU'RE<br>
+            <span class="hero-emphasis">MISSING</span>
+          </h1>
+          <div class="hero-accent" aria-hidden="true"></div>
+        </div>
+        <div class="hero-right" data-animate="slide-up" data-stagger="2">
+          <p class="hero-stat">12+ years in the Edmonton market</p>
+          <p class="hero-tagline">Your website is your most valuable asset. We treat it that way — crafting bespoke digital experiences that earn trust, drive inquiries, and reflect the quality of your work.</p>
+          <a href="#work" class="hero-cta">
+            <span class="cta-label">See our work</span>
+            <span class="cta-arrow">&rarr;</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== WORK ========== -->
+    <section id="work" class="work-section" data-animate="fade-in">
+      <div class="section-header">
+        <h2 class="section-title mono"><span class="bracket">[</span> SELECTED WORK <span class="bracket">]</span></h2>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="filter-bar" data-animate="slide-up" data-stagger="1">
+        <button class="filter-chip active" data-filter="all">All</button>
+        <button class="filter-chip" data-filter="trades">Trades</button>
+        <button class="filter-chip" data-filter="food">Food</button>
+        <button class="filter-chip" data-filter="retail">Retail</button>
+        <button class="filter-chip" data-filter="professional">Professional</button>
+        <button class="filter-chip" data-filter="arts">Arts &amp; Culture</button>
+      </div>
+
+      <!-- Project grid -->
+      <div class="project-grid" data-animate="stagger-in" data-stagger-children>
+        <article class="project-card" data-category="professional" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/meridian-law/800/600" alt="Meridian Law Group website — professional legal services" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Meridian Law Group</h3>
+            <p class="project-category mono">Professional</p>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="food" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/tablero-restaurant/800/600" alt="Tablero Restaurant website — modern dining" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Tablero Restaurant</h3>
+            <p class="project-category mono">Food</p>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="trades" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/ironclad-contracting/800/600" alt="Ironclad Contracting website — skilled trades" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Ironclad Contracting</h3>
+            <p class="project-category mono">Trades</p>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="retail" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/northland-goods/800/600" alt="Northland Goods website — retail storefront" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Northland Goods</h3>
+            <p class="project-category mono">Retail</p>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="arts" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/transit-gallery/800/600" alt="Transit Gallery website — contemporary art space" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Transit Gallery</h3>
+            <p class="project-category mono">Arts &amp; Culture</p>
+          </div>
+        </article>
+
+        <article class="project-card" data-category="professional" tabindex="0">
+          <div class="project-image">
+            <img src="https://picsum.photos/seed/capstone-accounting/800/600" alt="Capstone Accounting website — financial services" loading="lazy" width="800" height="600">
+          </div>
+          <div class="project-overlay">
+            <h3 class="project-name">Capstone Accounting</h3>
+            <p class="project-category mono">Professional</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========== PHILOSOPHY ========== -->
+    <section id="philosophy" class="philosophy-section" data-animate="fade-in">
+      <div class="philosophy-layout">
+        <div class="philosophy-statement" data-animate="slide-right" data-stagger="1">
+          <h2 class="philosophy-headline">
+            THE WEB<br>
+            SHOULD BE<br>
+            EXTRAORDINARY
+          </h2>
+          <div class="philosophy-accent-line" aria-hidden="true"></div>
+        </div>
+        <div class="philosophy-body" data-animate="slide-left" data-stagger="2">
+          <p class="philosophy-copy">
+            We are a small, focused studio based in Edmonton, Alberta. We do not build templates. We do not ship generic themes. Every site we produce is conceived, designed, and developed from scratch — purpose-built for the business it represents and the people it serves.
+          </p>
+          <p class="philosophy-copy">
+            Our practice is grounded in craft over speed. We believe a website earns its keep through clarity, character, and conviction. That means saying no to trends, no to bloated frameworks, and no to anything that does not serve the visitor's intent.
+          </p>
+          <p class="philosophy-copy">
+            We work with businesses that care about how they are perceived — owners who understand that the difference between a good site and a great one is the difference between a look and a lasting impression.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== PROCESS ========== -->
+    <section id="process" class="process-section" data-animate="fade-in">
+      <div class="section-header">
+        <h2 class="section-title mono"><span class="bracket">[</span> HOW WE WORK <span class="bracket">]</span></h2>
+      </div>
+
+      <div class="process-steps" data-animate="stagger-in" data-stagger-children>
+        <article class="process-step">
+          <div class="step-number" aria-hidden="true">01</div>
+          <div class="step-content">
+            <h3 class="step-label mono">DISCOVERY</h3>
+            <p class="step-description">We begin by understanding your business, your market, and your customers. Through structured interviews and competitive analysis, we identify what sets you apart and what your audience needs most from your site. This research becomes the foundation of every decision that follows.</p>
+          </div>
+        </article>
+
+        <article class="process-step">
+          <div class="step-number" aria-hidden="true">02</div>
+          <div class="step-content">
+            <h3 class="step-label mono">DESIGN</h3>
+            <p class="step-description">Working from the research phase, we produce a tailored visual direction — typography, palette, layout patterns, and interaction design. Each decision is intentional. We present options, discuss trade-offs, and refine until the design feels inevitable, not arbitrary.</p>
+          </div>
+        </article>
+
+        <article class="process-step">
+          <div class="step-number" aria-hidden="true">03</div>
+          <div class="step-content">
+            <h3 class="step-label mono">BUILD</h3>
+            <p class="step-description">We hand-code your site using modern, semantic HTML5, CSS custom properties, and performant JavaScript. No page builders. No drag-and-drop. The result is a fast, accessible, responsive site that scores well on every technical benchmark that matters.</p>
+          </div>
+        </article>
+
+        <article class="process-step">
+          <div class="step-number" aria-hidden="true">04</div>
+          <div class="step-content">
+            <h3 class="step-label mono">LAUNCH &amp; SUPPORT</h3>
+            <p class="step-description">Before launch, we run a complete quality assurance pass — cross-browser testing, performance profiling, accessibility audit, and content review. After launch, you receive ongoing maintenance and priority support. Your site stays current, secure, and fast.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ========== CONTACT ========== -->
+    <section id="contact" class="contact-section" data-animate="fade-in">
+      <div class="section-header">
+        <h2 class="section-title mono"><span class="bracket">[</span> START A PROJECT <span class="bracket">]</span></h2>
+      </div>
+
+      <div class="contact-layout">
+        <div class="contact-form-wrapper" data-animate="slide-up" data-stagger="1">
+          <form class="contact-form" action="#" method="POST" novalidate>
+            <div class="form-field">
+              <label for="name" class="form-label mono">NAME</label>
+              <input type="text" id="name" name="name" class="form-input" placeholder="Your full name" required>
+            </div>
+            <div class="form-field">
+              <label for="email" class="form-label mono">EMAIL</label>
+              <input type="email" id="email" name="email" class="form-input" placeholder="you@yourcompany.com" required>
+            </div>
+            <div class="form-field">
+              <label for="message" class="form-label mono">MESSAGE</label>
+              <textarea id="message" name="message" class="form-input form-textarea" rows="5" placeholder="Tell us about your project, timeline, and budget." required></textarea>
+            </div>
+            <button type="submit" class="submit-btn">Send inquiry &rarr;</button>
+          </form>
+        </div>
+
+        <aside class="contact-info" data-animate="slide-up" data-stagger="2">
+          <div class="contact-detail">
+            <h3 class="contact-info-label mono">LOCATION</h3>
+            <p class="contact-info-value">Edmonton, Alberta, Canada</p>
+          </div>
+          <div class="contact-detail">
+            <h3 class="contact-info-label mono">EMAIL</h3>
+            <p class="contact-info-value"><a href="mailto:hello@indicationsmedia.com">hello@indicationsmedia.com</a></p>
+          </div>
+          <div class="contact-detail">
+            <h3 class="contact-info-label mono">AVAILABILITY</h3>
+            <p class="contact-info-value">Accepting select projects for Q3 2026 and beyond.</p>
+          </div>
+          <div class="contact-detail">
+            <h3 class="contact-info-label mono">INITIAL CALL</h3>
+            <p class="contact-info-value">Free 30-minute discovery call for qualified projects.</p>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <span class="bracket">[</span>
+        <span class="footer-name">INDICATIONS MEDIA</span>
+        <span class="bracket">]</span>
+      </div>
+      <div class="footer-location">Edmonton AB</div>
+      <div class="footer-legal">
+        <span class="footer-copy">&copy; 2026 Indications Media</span>
+        <span class="footer-separator" aria-hidden="true">|</span>
+        <a href="#" class="footer-link">Privacy Policy</a>
+        <span class="footer-separator" aria-hidden="true">|</span>
+        <a href="#" class="footer-link">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/components.js"></script>
+  <button class="back-to-top" aria-label="Back to top" title="Back to top">&uarr;</button>
+</body>
+</html>
