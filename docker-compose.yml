@@ -14,7 +14,7 @@ services:
     environment:
       - WEBSMSD_PORT=disabled
     volumes:
-      - ./asterisk:/etc/asterisk:ro
+      - ./asterisk:/etc/asterisk:rw
       - /var/spool/clawcall:/var/spool/asterisk/outgoing
     deploy:
       resources:
@@ -56,6 +56,7 @@ services:
       - ./supabase_data.py:/app/supabase_data.py
       - ./supabase_voucher.py:/app/supabase_voucher.py
       - ./frontend:/app/frontend
+      - ./asterisk:/asterisk-config
       - /var/spool/clawcall:/var/spool/asterisk/outgoing
     networks:
       - voip-net

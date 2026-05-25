@@ -147,68 +147,67 @@ def cors_headers():
 #  HTTP REQUEST HANDLER
 # ═══════════════════════════════════════════════════════════════════
 def create_pjsip_endpoint(extension, password):
-    """Endpoints are baked into the Asterisk container pjsip.conf.
-    This is a no-op stub — backend no longer manages endpoint config."""
-    log.info(f"Endpoint {extension} assumed to exist (container-managed)")
-    return True
+    """Create PJSIP WebRTC endpoint in pjsip.conf + reload via AMI.
+    Idempotent — skips if auth block already exists.
+    Writes to /asterisk-config/pjsip.conf (shared volume with Asterisk container)."""
+    conf_path = "/asterisk-config/pjsip.conf"
+    
+    # Guard: check if already exists
+    try:
+        with open(conf_path) as f:
+            if f"[auth{extension}]" in f.read():
+                log.info(f"PJSIP endpoint {extension} already exists, skipping")
+                return True
+    except FileNotFoundError:
+        pass
+    
+    # Build config block — inherits from [webrtc-template] macro
+    block = f"""
+; Extension {extension} — auto-created by backend
+[auth{extension}]
+type=auth
+auth_type=userpass
+password={password}
+username={extension}
+realm=asterisk
 
-#def create_pjsip_endpoint(extension, password):
-#    """Create PJSIP WebRTC endpoint via config file + AMI reload.
-#    Idempotent — skips if auth block already exists."""
-#    conf_path = "/etc/asterisk/pjsip_wss.conf"
-#    
-#    # Guard: check if already exists
-#    try:
-#        with open(conf_path) as f:
-#            if f"[auth{extension}]" in f.read():
-#                log.info(f"PJSIP endpoint {extension} already exists, skipping")
-#                return True
-#    except FileNotFoundError:
-#        pass
-#    
-#    # Build config block
-#    block = f"""
-#; Extension {extension} — auto-created by backend
-#[auth{extension}]
-#type=auth
-#auth_type=userpass
-#password={password}
-#username={extension}
-#
-#[{extension}-aor]
-#type=aor
-#max_contacts=3
-#
-#[{extension}](webrtc-template)
-#auth=auth{extension}
-#aors={extension}-aor
-#"""
-#    
-#    try:
-#        with open(conf_path, "a") as f:
-#            f.write(block)
-#        log.info(f"Wrote PJSIP endpoint {extension} to {conf_path}")
-#    except Exception as e:
-#        log.error(f"Failed to write PJSIP config for {extension}: {e}")
-#        return False
-#    
-#    # Reload via AMI
-#    try:
-#        sock = socket.socket()
-#        sock.settimeout(5)
-#        sock.connect((AMI_HOST, AMI_PORT))
-#        sock.recv(1024)  # banner
-#        sock.send(f"Action: Login\r\nUsername: {AMI_USER}\r\nSecret: {AMI_SECRET}\r\n\r\n".encode())
-#        time.sleep(0.2)
-#        sock.recv(1024)  # login response
-#        sock.send(b"Action: Command\r\nCommand: module reload res_pjsip.so\r\n\r\n")
-#        time.sleep(0.5)
-#        sock.recv(4096)
-#        sock.close()
-#        log.info(f"AMI: reloaded PJSIP after creating endpoint {extension}")
-#    except Exception as e:
-#        log.warning(f"AMI reload failed (endpoint {extension} written but not reloaded): {e}")
+[{extension}-aor]
+type=aor
+max_contacts=3
+
+[{extension}](webrtc-template)
+auth=auth{extension}
+aors={extension}-aor
+"""
+    
+    try:
+        with open(conf_path, "a") as f:
+            f.write(block)
+        log.info(f"Wrote PJSIP endpoint {extension} to {conf_path}")
+    except Exception as e:
+        log.error(f"Failed to write PJSIP config for {extension}: {e}")
+        return False
+    
+    # Reload via AMI
+    try:
+        sock = socket.socket()
+        sock.settimeout(5)
+        sock.connect((AMI_HOST, AMI_PORT))
+        sock.recv(1024)  # banner
+        cr = chr(13) + chr(10)
+        sock.send(f"Action: Login{cr}Username: {AMI_USER}{cr}Secret: {AMI_SECRET}{cr}{cr}".encode())
+        time.sleep(0.2)
+        sock.recv(1024)  # login response
+        sock.send(f"Action: Command{cr}Command: module reload res_pjsip.so{cr}{cr}".encode())
+        time.sleep(0.5)
+        sock.recv(4096)
+        sock.close()
+        log.info(f"AMI: reloaded PJSIP after creating endpoint {extension}")
+    except Exception as e:
+        log.warning(f"AMI reload failed (endpoint {extension} written but not reloaded): {e}")
         # Don't fail — endpoint is written, will load on next restart
+    
+    return True
     
     return True
 
@@ -537,28 +536,22 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if err:
             return err
 
-        configured_endpoints = {
-            "7001": "hushpass7001",
-            "7002": "ed478a4b5f590e6e",
-            "7003": "0c76ec37b5e01d7f",
-            "1001": "989545cfc9d32177",
-        }
+        # Each user gets a UNIQUE extension — assigned on first request, persisted in Supabase
         sip_ext = str(profile.get("sip_extension") or "")
-        if sip_ext not in configured_endpoints:
-            pool = sorted(configured_endpoints.keys())
-            try:
-                sip_ext = pool[int(profile["id"]) % len(pool)]
-            except Exception:
-                sip_ext = "1001"
-        sip_pass = configured_endpoints[sip_ext]
-        if profile.get("sip_extension") != sip_ext or profile.get("sip_password") != sip_pass:
+        sip_pass = str(profile.get("sip_password") or "")
+        
+        if not sip_ext or sip_ext == "None" or not sip_pass or sip_pass == "None":
+            sip_ext = get_next_sip_extension()
+            sip_pass = secrets.token_hex(8)
             update_profile(profile["id"], {"sip_extension": sip_ext, "sip_password": sip_pass})
-
-        # Always ensure Asterisk endpoint exists (idempotent)
+            log.info(f"Assigned new SIP extension {sip_ext} to user {profile['username']}")
+        
+        # Always ensure Asterisk endpoint exists (idempotent — skips if already present)
         try:
             create_pjsip_endpoint(sip_ext, sip_pass)
         except Exception as e:
             log.error(f"Failed to ensure PJSIP endpoint {sip_ext}: {e}")
+            return self._send_error("Failed to provision SIP endpoint", 500)
 
         self._send_json({
             "ok": True,
