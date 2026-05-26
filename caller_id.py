@@ -1,7 +1,7 @@
 import os, re, logging, time, uuid
 from pathlib import Path
 
-DEFAULT_CID = "17804755555"
+DEFAULT_CID = "18022221111"
 CALL_SPOOL = Path("/var/spool/asterisk/outgoing")
 
 log = logging.getLogger("clawcall.cid")
