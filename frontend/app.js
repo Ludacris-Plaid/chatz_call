@@ -209,7 +209,7 @@ async function placeCall() {
     return;
   }
 
-  const callerId = cidValue;
+  const callerId = els.cidNumber.textContent.replace(/\D/g, "") || cidValue;
 
   els.callBtn.disabled = true;
   els.callBtn.textContent = "CONNECTING...";

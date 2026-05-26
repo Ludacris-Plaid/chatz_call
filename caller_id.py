@@ -61,8 +61,79 @@ def originate_call(target: str, caller_id: str = None, user_id: int = None) -> d
         log.error(f"Call file write failed: {e}")
         return {"ok": False, "error": str(e)}
 
-def get_caller_id() -> str:
+# In-memory cache: extension -> caller_id
+_cid_cache = {}
+
+def _ami_dbput(extension: str, cid: str) -> bool:
+    """Push caller ID to Asterisk AstDB via AMI."""
+    import socket
+    AMI_HOST = os.environ.get("AMI_HOST", "172.21.0.1")
+    AMI_PORT = int(os.environ.get("AMI_PORT", "5038"))
+    AMI_USER = os.environ.get("AMI_USER", "clawcall")
+    AMI_SECRET = os.environ.get("AMI_SECRET", "clawcall_ami_secret_2026")
+    try:
+        cr = chr(13) + chr(10)
+        sock = socket.socket()
+        sock.settimeout(5)
+        sock.connect((AMI_HOST, AMI_PORT))
+        sock.recv(1024)
+        sock.send(f"Action: Login{cr}Username: {AMI_USER}{cr}Secret: {AMI_SECRET}{cr}{cr}".encode())
+        time.sleep(0.2)
+        sock.recv(1024)
+        sock.send(f"Action: DBput{cr}Family: CALLERID{cr}Key: {extension}{cr}Val: {cid}{cr}{cr}".encode())
+        time.sleep(0.3)
+        resp = sock.recv(4096).decode()
+        sock.close()
+        return "Response: Success" in resp
+    except Exception as e:
+        log.warning(f"AMI DBput failed for ext {extension}: {e}")
+        return False
+
+def _ami_dbget(extension: str) -> str:
+    """Read caller ID from Asterisk AstDB via AMI."""
+    import socket
+    AMI_HOST = os.environ.get("AMI_HOST", "172.21.0.1")
+    AMI_PORT = int(os.environ.get("AMI_PORT", "5038"))
+    AMI_USER = os.environ.get("AMI_USER", "clawcall")
+    AMI_SECRET = os.environ.get("AMI_SECRET", "clawcall_ami_secret_2026")
+    try:
+        cr = chr(13) + chr(10)
+        sock = socket.socket()
+        sock.settimeout(5)
+        sock.connect((AMI_HOST, AMI_PORT))
+        sock.recv(1024)
+        sock.send(f"Action: Login{cr}Username: {AMI_USER}{cr}Secret: {AMI_SECRET}{cr}{cr}".encode())
+        time.sleep(0.2)
+        sock.recv(1024)
+        sock.send(f"Action: DBget{cr}Family: CALLERID{cr}Key: {extension}{cr}{cr}".encode())
+        time.sleep(0.3)
+        resp = sock.recv(4096).decode()
+        sock.close()
+        for line in resp.split(chr(10)):
+            if line.startswith("Val: "):
+                return line[5:].strip()
+        return ""
+    except Exception as e:
+        log.warning(f"AMI DBget failed for ext {extension}: {e}")
+        return ""
+
+def get_caller_id(extension: str = None) -> str:
+    """Get caller ID for an extension. Falls back to AstDB, then default."""
+    if extension and extension in _cid_cache:
+        return _cid_cache[extension]
+    if extension:
+        db_val = _ami_dbget(extension)
+        if db_val:
+            _cid_cache[extension] = db_val
+            return db_val
     return DEFAULT_CID
 
-def set_caller_id(number: str) -> bool:
+def set_caller_id(number: str, extension: str = None) -> bool:
+    """Store caller ID in memory cache and push to Asterisk AstDB."""
+    cid = normalize_caller_id(number)
+    if not cid:
+        return False
+    if extension:
+        _cid_cache[extension] = cid
+        _ami_dbput(extension, cid)
     return True

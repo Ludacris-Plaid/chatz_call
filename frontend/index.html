@@ -2178,13 +2178,29 @@
 	      if (typeof showCallHud === 'function') showCallHud(dest, cid);
 	      if (typeof setHudStatus === 'function') setHudStatus('DIALING');
 
-	      placeBrowserSipCall(dest, cid, token)
-	        .catch(function(e) {
-	          console.error('[SIP] browser call failed, falling back:', e);
-	          if (typeof setHudStatus === 'function') setHudStatus('SERVER DIAL');
-	          return placeServerFallbackCall(dest, cid, token);
-	        })
-	        .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
+	      	      // Push caller ID to server, then place call (awaited)
+	      fetch('/api/caller-id', {
+	        method: 'POST',
+	        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+	        body: JSON.stringify({ caller_id: cid })
+	      }).then(function() {
+	        placeBrowserSipCall(dest, cid, token)
+	          .catch(function(e) {
+	            console.error('[SIP] browser call failed, falling back:', e);
+	            if (typeof setHudStatus === 'function') setHudStatus('SERVER DIAL');
+	            return placeServerFallbackCall(dest, cid, token);
+	          })
+	          .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
+	      }).catch(function() {
+	        // Push failed, try call anyway
+	        placeBrowserSipCall(dest, cid, token)
+	          .catch(function(e) {
+	            console.error('[SIP] browser call failed, falling back:', e);
+	            if (typeof setHudStatus === 'function') setHudStatus('SERVER DIAL');
+	            return placeServerFallbackCall(dest, cid, token);
+	          })
+	          .catch(function(){ toast('NETWORK ERROR'); if (typeof hideCallHud === 'function') hideCallHud(); });
+	      });
 	    }
 
     function showNoTokensBanner() {
@@ -2303,7 +2319,7 @@
     bindClick($('#settingsSave'), function(){
       var cid = $('#settingsCID').value.trim();
       var token = localStorage.getItem('clawcall_token')||'';
-      fetch('/api/me/callerid', { method:'POST', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify({caller_id:cid}) })
+      fetch('/api/caller-id', { method:'POST', headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify({caller_id:cid}) })
         .then(function(r){ return r.json(); })
         .then(function(d){
           if (d.ok) toast('CALLER ID SAVED');

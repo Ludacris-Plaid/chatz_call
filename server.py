@@ -152,12 +152,17 @@ def create_pjsip_endpoint(extension, password):
     Writes to /asterisk-config/pjsip.conf (shared volume with Asterisk container)."""
     conf_path = "/asterisk-config/pjsip.conf"
     
-    # Guard: check if already exists
+    # Guard: remove old block if it exists (so we can recreate with current password)
     try:
         with open(conf_path) as f:
-            if f"[auth{extension}]" in f.read():
-                log.info(f"PJSIP endpoint {extension} already exists, skipping")
-                return True
+            existing = f.read()
+        if f"[auth{extension}]" in existing:
+            log.info(f"PJSIP endpoint {extension} exists — removing old block to recreate")
+            import re
+            pattern = "\n; Extension " + re.escape(extension) + ".*?aors=" + re.escape(extension) + "-aor\n"
+            existing = re.sub(pattern, "", existing, flags=re.DOTALL)
+            with open(conf_path, "w") as f2:
+                f2.write(existing)
     except FileNotFoundError:
         pass
     
@@ -552,8 +557,8 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         except Exception as e:
             log.error(f"Failed to ensure PJSIP endpoint {sip_ext}: {e}")
             return self._send_error("Failed to provision SIP endpoint", 500)
-
         self._send_json({
+        
             "ok": True,
             "extension": sip_ext,
             "password": sip_pass,
@@ -1617,10 +1622,18 @@ class ClawCallHandler(BaseHTTPRequestHandler):
             return self._send_error('Invalid caller ID. Must be at least 10 digits.')
         if len(digits) == 10:
             digits = '1' + digits
-        success = set_caller_id(digits)
+        extension = str(profile.get("sip_extension") or profile.get("id", ""))
+        success = set_caller_id(digits, extension)
+        
+        # Persist to Supabase
+        try:
+            update_profile(profile["id"], {"caller_id": digits})
+        except Exception as e:
+            log.warning(f"Failed to persist caller_id to Supabase: {e}")
+        
         if success:
-            return self._send_json({'ok': True, 'caller_id': get_caller_id()})
-        return self._send_error('Failed to update caller ID')
+            return self._send_json({"ok": True, "caller_id": get_caller_id(extension)})
+        return self._send_error("Failed to update caller ID")
 
     def _handle_originate_call(self):
         profile, err = self._require_auth()
@@ -1649,6 +1662,15 @@ class ClawCallHandler(BaseHTTPRequestHandler):
         if not is_admin and not is_vip:
             if balance < MIN_CALL_TOKENS:
                 return self._send_error(f'Insufficient tokens. Minimum {MIN_CALL_TOKENS} tokens required. Have {balance:.2f}.', 402)
+        
+        # Push caller ID to AstDB so it persists for WebRTC-originated calls
+        if caller_id:
+            extension = str(profile.get("sip_extension") or profile.get("id", ""))
+            try:
+                set_caller_id(caller_id, extension)
+                log.info(f"Pushed caller ID {caller_id} to AstDB for ext {extension}")
+            except Exception as e:
+                log.warning(f"Failed to push caller ID to AstDB: {e}")
         
         result = originate_call(target, caller_id)
         
