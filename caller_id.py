@@ -39,7 +39,7 @@ def originate_call(target: str, caller_id: str = None, user_id: int = None) -> d
     call_file = CALL_SPOOL / f"clawcall_{digits}_{ts}.call"
     
     content = (
-        f"Channel: Local/{digits}@public\n"
+        f"Channel: Local/+{digits}@public\n"
         f"CallerID: {cid} <{cid}>\n"
         f"MaxRetries: 0\n"
         f"RetryTime: 1\n"
